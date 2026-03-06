@@ -4,6 +4,11 @@ import Link from "next/link";
 import Nav from "@/components/layout/Nav";
 import Footer from "@/components/layout/Footer";
 import ShopClient from "@/components/shop/ShopClient";
+import { adminDb } from "@/lib/supabase/admin";
+import { dbToProduct } from "@/lib/products";
+import type { DbProduct } from "@/lib/supabase/types";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Shop — Essakobea",
@@ -11,7 +16,12 @@ export const metadata: Metadata = {
     "Premium wigs and hair accessories. Lace fronts, full lace, closure units — curated for quality.",
 };
 
-export default function ShopPage() {
+export default async function ShopPage() {
+  const { data } = await adminDb
+    .from("products")
+    .select("*")
+    .order("display_order", { ascending: true });
+  const products = (data as DbProduct[] ?? []).map(dbToProduct);
   return (
     <>
       <Nav />
@@ -48,11 +58,11 @@ export default function ShopPage() {
           {/* Hero image */}
           <div className="relative min-h-[50vw] md:min-h-auto order-1 md:order-2">
             <Image
-              src="https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=1200&q=90"
+              src="/images/shop-hero.jpg"
               alt="Essakobea Shop"
               fill
               priority
-              className="object-cover object-top"
+              className="object-cover object-center"
               sizes="(max-width: 768px) 100vw, 50vw"
             />
           </div>
@@ -61,7 +71,7 @@ export default function ShopPage() {
 
       {/* Collection anchor + client-side shop */}
       <section id="collection" className="scroll-mt-0">
-        <ShopClient />
+        <ShopClient products={products} />
       </section>
 
       {/* Bottom CTA */}

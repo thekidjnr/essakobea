@@ -3,17 +3,12 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useBag } from "@/contexts/BagContext";
-import { PRODUCTS, type Product } from "./shopData";
+import { useBag, type Product } from "@/contexts/BagContext";
 
-export default function ProductDetail({ product }: { product: Product }) {
+export default function ProductDetail({ product, related }: { product: Product; related: Product[] }) {
   const { addItem } = useBag();
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
-
-  const related = PRODUCTS.filter(
-    (p) => p.category === product.category && p.id !== product.id
-  ).slice(0, 3);
 
   const handleAdd = () => {
     addItem(product.id, qty);

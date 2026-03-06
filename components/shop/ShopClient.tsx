@@ -4,17 +4,30 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useBag } from "@/contexts/BagContext";
-import { PRODUCTS, CATEGORIES, type Product, type ProductCategory } from "./shopData";
+import type { Product } from "@/contexts/BagContext";
 
-export default function ShopClient() {
+interface Category { id: string; label: string; }
+
+export default function ShopClient({ products }: { products: Product[] }) {
   const { addItem, count: bagCount } = useBag();
-  const [activeCategory, setActiveCategory] = useState<ProductCategory>("all");
+  const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [activeTag, setActiveTag] = useState<string>("all");
   const [addedId, setAddedId] = useState<string | null>(null);
 
-  const filtered =
-    activeCategory === "all"
-      ? PRODUCTS
-      : PRODUCTS.filter((p) => p.category === activeCategory);
+  // Derive categories from product data
+  const categories: Category[] = [
+    { id: "all", label: "All" },
+    ...Array.from(
+      new Map(products.map((p) => [p.category, p.categoryLabel])).entries()
+    ).map(([id, label]) => ({ id, label })),
+  ];
+
+  // Derive tags that are actually in use
+  const tags = Array.from(new Set(products.map((p) => p.tag).filter(Boolean))) as string[];
+
+  const filtered = products
+    .filter((p) => activeCategory === "all" || p.category === activeCategory)
+    .filter((p) => activeTag === "all" || p.tag === activeTag);
 
   const handleAdd = (product: Product) => {
     addItem(product.id);
@@ -27,10 +40,10 @@ export default function ShopClient() {
       {/* Sticky filter bar */}
       <div className="sticky top-[57px] z-30 bg-paper border-b border-ink/10">
         <div className="max-w-[1400px] mx-auto px-6 md:px-16">
+          {/* Category tabs + bag */}
           <div className="flex items-center justify-between">
-            {/* Category tabs */}
             <div className="flex items-stretch overflow-x-auto hide-scrollbar">
-              {CATEGORIES.map((cat) => (
+              {categories.map((cat) => (
                 <button
                   key={cat.id}
                   onClick={() => setActiveCategory(cat.id)}
@@ -44,8 +57,6 @@ export default function ShopClient() {
                 </button>
               ))}
             </div>
-
-            {/* Bag link */}
             <Link
               href="/bag"
               className="flex items-center gap-2 font-sans text-[11px] tracking-widest uppercase text-ink flex-shrink-0 pl-4 hover:opacity-60 transition-opacity"
@@ -58,6 +69,31 @@ export default function ShopClient() {
               )}
             </Link>
           </div>
+
+          {/* Tag pills — only shown when tags exist */}
+          {tags.length > 0 && (
+            <div className="flex items-center gap-2 py-2.5 overflow-x-auto hide-scrollbar">
+              <button
+                onClick={() => setActiveTag("all")}
+                className={`flex-shrink-0 px-3 py-1 font-sans text-[9px] tracking-widest uppercase border transition-all duration-200 ${
+                  activeTag === "all" ? "border-ink bg-ink text-paper" : "border-ink/20 text-ink/45 hover:border-ink/50 hover:text-ink"
+                }`}
+              >
+                All
+              </button>
+              {tags.map((tag) => (
+                <button
+                  key={tag}
+                  onClick={() => setActiveTag(activeTag === tag ? "all" : tag)}
+                  className={`flex-shrink-0 px-3 py-1 font-sans text-[9px] tracking-widest uppercase border transition-all duration-200 ${
+                    activeTag === tag ? "border-ink bg-ink text-paper" : "border-ink/20 text-ink/45 hover:border-ink/50 hover:text-ink"
+                  }`}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -134,7 +170,6 @@ function ProductCard({
 }) {
   return (
     <div className="group">
-      {/* Image — clicking goes to product page */}
       <Link href={`/shop/${product.id}`}>
         <div className="relative aspect-[3/4] overflow-hidden bg-mist mb-4">
           <Image
@@ -150,25 +185,29 @@ function ProductCard({
               {product.tag}
             </span>
           )}
-
-          {/* Add to bag overlay */}
-          <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                onAdd(product);
-              }}
-              className={`w-full font-sans text-[10px] tracking-widest uppercase py-3.5 transition-all duration-200 ${
-                added ? "bg-paper text-ink" : "bg-ink text-paper hover:bg-ink/90"
-              }`}
-            >
-              {added ? "Added ✓" : "Add to Bag"}
-            </button>
-          </div>
+          {!product.inStock && (
+            <div className="absolute inset-0 bg-paper/60 flex items-center justify-center">
+              <span className="font-sans text-[10px] tracking-widest uppercase text-ink/50">Sold Out</span>
+            </div>
+          )}
+          {product.inStock && (
+            <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  onAdd(product);
+                }}
+                className={`w-full font-sans text-[10px] tracking-widest uppercase py-3.5 transition-all duration-200 ${
+                  added ? "bg-paper text-ink" : "bg-ink text-paper hover:bg-ink/90"
+                }`}
+              >
+                {added ? "Added ✓" : "Add to Bag"}
+              </button>
+            </div>
+          )}
         </div>
       </Link>
 
-      {/* Info */}
       <div>
         <div className="flex items-start justify-between gap-2">
           <div>

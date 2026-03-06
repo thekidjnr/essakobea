@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { homeImages } from "@/public/images";
 
 export default function Hero() {
   return (
@@ -7,7 +8,7 @@ export default function Hero() {
       {/* Background portrait */}
       <div className="absolute inset-0 ken-burns">
         <Image
-          src="https://images.pexels.com/photos/3763188/pexels-photo-3763188.jpeg?auto=compress&cs=tinysrgb&w=1920&q=90"
+          src={homeImages.hero}
           alt="Essakobea — Premium Beauty"
           fill
           priority
@@ -42,13 +43,13 @@ export default function Hero() {
         {/* CTAs */}
         <div className="fade-up fade-up-delay-4 flex flex-col sm:flex-row gap-3">
           <Link
-            href="#book"
+            href="/services"
             className="inline-block bg-paper text-ink font-sans text-[11px] tracking-widest uppercase px-8 py-4 hover:bg-paper/90 transition-colors duration-300"
           >
             Book a Service
           </Link>
           <Link
-            href="#collection"
+            href="/shop"
             className="inline-block border border-paper text-paper font-sans text-[11px] tracking-widest uppercase px-8 py-4 hover:bg-paper hover:text-ink transition-all duration-300"
           >
             Shop Wigs

@@ -2,73 +2,61 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import type { DbService, ServiceBookingOption } from "@/lib/supabase/types";
 
-// ─── Data ─────────────────────────────────────────────────────────────────────
+// ─── Service shape used inside BookingFlow ────────────────────────────────────
 
-const SERVICES = [
-  {
-    id: "wig-making",
-    number: "01",
-    name: "Wig Making",
-    description: "Custom-crafted units built to your measurements",
-    options: [
-      { id: "frontal-wig", name: "Frontal Wig Making", price: "₵300" },
-      { id: "closure-mini", name: "Closure (5×5 / 6×6 / Mini Frontal)", price: "₵250" },
-      { id: "closure-standard", name: "Closure (4×4, 2×4, 2×6)", price: "₵200" },
-      { id: "express", name: "Express Service", price: "₵100 – ₵300" },
-      { id: "bleach", name: "Bleach Only", price: "₵100" },
-      { id: "plucking", name: "Plucking Only", price: "₵100 – ₵200" },
-    ],
-  },
-  {
-    id: "installations",
-    number: "02",
-    name: "Installations",
-    description: "Seamless lace installs and revamp services",
-    options: [
-      { id: "glueless-frontal", name: "Glueless Frontal", price: "₵250 – ₵450" },
-      { id: "closure-install", name: "Closure (2×6, 4×4, 5×5, 6×6)", price: "₵200 – ₵550" },
-      { id: "adhesive-frontal", name: "Adhesive Frontal", price: "₵300 – ₵600" },
-      { id: "revamp", name: "Revamp & Treatment", price: "From ₵200" },
-      { id: "wash", name: "Wash Only", price: "₵100 – ₵150" },
-    ],
-  },
-  {
-    id: "coloring",
-    number: "03",
-    name: "Coloring",
-    description: "Rich, dimensional colour for any hair length",
-    options: [
-      { id: "black", name: "Black / Jet Black", price: "₵400 – ₵750" },
-      { id: "blonde", name: "Simple Blonde Colors", price: "₵400 – ₵750" },
-      { id: "loud-colors", name: "Loud Colors (Red, Ginger etc.)", price: "₵400 – ₵750" },
-      { id: "highlights", name: "Highlights", price: "₵550 – ₵850" },
-      { id: "balayage", name: "Balayage with Highlights", price: "₵650 – ₵1000" },
-    ],
-  },
-  {
-    id: "frontal-styling",
-    number: "04",
-    name: "Frontal Styling",
-    description: "Ponytails and half-up styles on natural or relaxed hair",
-    options: [
-      { id: "normal-ponytail-natural", name: "Normal Ponytail — Natural Hair", price: "₵200" },
-      { id: "normal-ponytail-relaxed", name: "Normal Ponytail — Relaxed Hair", price: "₵150" },
-      { id: "frontal-ponytail-natural", name: "Frontal Ponytail — Natural Hair", price: "₵450" },
-      { id: "frontal-ponytail-relaxed", name: "Frontal Ponytail — Relaxed Hair", price: "₵400" },
-      { id: "half-up-natural", name: "Half Up Half Down — Natural Hair", price: "₵270" },
-      { id: "half-up-relaxed", name: "Half Up Half Down — Relaxed Hair", price: "₵250" },
-      { id: "frontal-half-up-natural", name: "Frontal Half Up Half Down — Natural Hair", price: "₵500+" },
-      { id: "frontal-half-up-relaxed", name: "Frontal Half Up Half Down — Relaxed Hair", price: "₵450+" },
-    ],
-  },
-];
+interface BookingService {
+  id:          string   // = slug
+  number:      string
+  name:        string
+  description: string
+  options:     ServiceBookingOption[]
+}
 
-const TIME_SLOTS = [
-  { period: "Morning", slots: ["8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM"] },
-  { period: "Afternoon", slots: ["12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM"] },
-  { period: "Evening", slots: ["4:00 PM", "5:00 PM", "6:00 PM"] },
-];
+function dbToBookingService(s: DbService): BookingService {
+  return {
+    id:          s.slug,
+    number:      s.number,
+    name:        s.name,
+    description: s.description,
+    options:     s.booking_options,
+  }
+}
+
+// Generate time slots from open/close times and interval
+function generateTimeSlots(
+  openTime: string,
+  closeTime: string,
+  intervalMinutes: number
+): { period: string; slots: string[] }[] {
+  const toMins = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+  const toLabel = (mins: number) => {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    const period = h < 12 ? "AM" : "PM";
+    const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    return `${h12}:${String(m).padStart(2, "0")} ${period}`;
+  };
+
+  const allSlots: string[] = [];
+  let cur = toMins(openTime || "08:00");
+  const end = toMins(closeTime || "18:00");
+  while (cur < end) { allSlots.push(toLabel(cur)); cur += intervalMinutes; }
+
+  const groups = [
+    { period: "Morning",   test: (s: string) => s.includes("AM") && !s.startsWith("12") },
+    { period: "Afternoon", test: (s: string) => s.includes("PM") && (s.startsWith("12") || parseInt(s) < 5) },
+    { period: "Evening",   test: (s: string) => s.includes("PM") && parseInt(s) >= 5 },
+  ];
+
+  return groups
+    .map(({ period, test }) => ({ period, slots: allSlots.filter(test) }))
+    .filter(({ slots }) => slots.length > 0);
+}
+
+// Fallback for when no date is selected yet
+const DEFAULT_TIME_SLOTS = generateTimeSlots("08:00", "18:00", 60);
 
 const STEPS = ["Service", "Date", "Time", "Details"];
 
@@ -92,8 +80,14 @@ export default function BookingFlow() {
   const searchParams = useSearchParams();
   const preselectedService = searchParams.get("service") ?? "";
 
+  const [services, setServices] = useState<BookingService[]>([]);
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [blockedDates, setBlockedDates] = useState<string[]>([]);
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+  const [dayAvail, setDayAvail] = useState<{ openTime: string; closeTime: string; slotInterval: number } | null>(null);
   const [booking, setBooking] = useState<BookingState>({
     serviceId: preselectedService,
     optionId: "",
@@ -105,6 +99,39 @@ export default function BookingFlow() {
     email: "",
     notes: "",
   });
+
+  // Fetch services from DB on mount
+  useEffect(() => {
+    fetch("/api/services")
+      .then((r) => r.json())
+      .then((data: DbService[]) => {
+        if (Array.isArray(data)) setServices(data.map(dbToBookingService));
+      })
+      .catch(() => {});
+  }, []);
+
+  // Fetch blocked dates on mount
+  useEffect(() => {
+    fetch("/api/availability/blocked")
+      .then(r => r.json())
+      .then((data: { date: string }[]) => {
+        if (Array.isArray(data)) setBlockedDates(data.map(d => d.date));
+      })
+      .catch(() => {});
+  }, []);
+
+  // Fetch booked slots + opening hours when date changes
+  useEffect(() => {
+    if (!booking.date) return;
+    const dateStr = booking.date.toISOString().slice(0, 10);
+    fetch(`/api/availability?date=${dateStr}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.bookedSlots) setBookedSlots(data.bookedSlots);
+        if (data.openTime) setDayAvail({ openTime: data.openTime, closeTime: data.closeTime, slotInterval: data.slotInterval ?? 60 });
+      })
+      .catch(() => {});
+  }, [booking.date]);
 
   // If a service was pre-selected via URL, scroll the sub-options into view
   useEffect(() => {
@@ -124,15 +151,42 @@ export default function BookingFlow() {
     if (step === 0) return booking.serviceId && booking.optionId;
     if (step === 1) return !!booking.date;
     if (step === 2) return !!booking.time;
-    if (step === 3) return booking.firstName && booking.phone;
+    if (step === 3) return booking.firstName && booking.phone && booking.email;
     return false;
   };
 
-  const selectedService = SERVICES.find((s) => s.id === booking.serviceId);
+  const selectedService = services.find((s) => s.id === booking.serviceId);
   const selectedOption = selectedService?.options.find((o) => o.id === booking.optionId);
 
-  const handleSubmit = () => {
-    // TODO: wire to backend
+  const handleSubmit = async () => {
+    if (!selectedService || !selectedOption || !booking.date) return;
+    setSubmitting(true);
+    setSubmitError("");
+
+    const res = await fetch("/api/bookings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        clientName:    `${booking.firstName} ${booking.lastName}`.trim(),
+        clientEmail:   booking.email,
+        clientPhone:   booking.phone,
+        serviceId:     booking.serviceId,
+        optionId:      booking.optionId,
+        serviceName:   selectedService.name,
+        treatment:     selectedOption.name,
+        price:         selectedOption.price,
+        bookingDate:   booking.date.toISOString().slice(0, 10),
+        timeSlot:      booking.time,
+        notes:         booking.notes,
+        paymentMethod: "online",
+      }),
+    });
+
+    const data = await res.json();
+    setSubmitting(false);
+
+    if (data.error) { setSubmitError(data.error); return; }
+    if (data.paystackUrl) { window.location.href = data.paystackUrl; return; }
     setSubmitted(true);
   };
 
@@ -189,15 +243,17 @@ export default function BookingFlow() {
 
         {/* Step content */}
         <div className="min-h-[520px]">
-          {step === 0 && <StepService booking={booking} set={set} />}
-          {step === 1 && <StepDate booking={booking} set={set} />}
-          {step === 2 && <StepTime booking={booking} set={set} />}
+          {step === 0 && <StepService booking={booking} set={set} services={services} />}
+          {step === 1 && <StepDate booking={booking} set={set} blockedDates={blockedDates} />}
+          {step === 2 && <StepTime booking={booking} set={set} bookedSlots={bookedSlots} dayAvail={dayAvail} />}
           {step === 3 && (
             <StepDetails
               booking={booking}
               set={set}
               selectedService={selectedService}
               selectedOption={selectedOption}
+              submitting={submitting}
+              submitError={submitError}
             />
           )}
         </div>
@@ -230,14 +286,14 @@ export default function BookingFlow() {
           ) : (
             <button
               onClick={handleSubmit}
-              disabled={!canAdvance()}
+              disabled={!canAdvance() || submitting}
               className={`font-sans text-[11px] tracking-widest uppercase px-8 py-4 transition-all duration-300 ${
-                canAdvance()
+                canAdvance() && !submitting
                   ? "bg-ink text-paper hover:bg-ink/80"
                   : "bg-ink/10 text-ink/30 cursor-not-allowed"
               }`}
             >
-              Confirm Booking →
+              {submitting ? "Processing…" : `Pay ₵${(selectedOption?.price_raw || 100).toLocaleString()} →`}
             </button>
           )}
         </div>
@@ -251,11 +307,13 @@ export default function BookingFlow() {
 function StepService({
   booking,
   set,
+  services,
 }: {
   booking: BookingState;
   set: <K extends keyof BookingState>(k: K, v: BookingState[K]) => void;
+  services: BookingService[];
 }) {
-  const selectedService = SERVICES.find((s) => s.id === booking.serviceId);
+  const selectedService = services.find((s) => s.id === booking.serviceId);
   const hasPreselected = !!booking.serviceId;
 
   return (
@@ -278,7 +336,7 @@ function StepService({
       {/* Service tabs — compact when pre-selected, full cards when not */}
       {hasPreselected ? (
         <div className="flex flex-wrap gap-2 mb-10">
-          {SERVICES.map((service) => (
+          {services.map((service) => (
             <button
               key={service.id}
               onClick={() => {
@@ -298,7 +356,7 @@ function StepService({
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-8">
-          {SERVICES.map((service) => (
+          {services.map((service) => (
             <button
               key={service.id}
               onClick={() => {
@@ -383,9 +441,11 @@ function StepService({
 function StepDate({
   booking,
   set,
+  blockedDates,
 }: {
   booking: BookingState;
   set: <K extends keyof BookingState>(k: K, v: BookingState[K]) => void;
+  blockedDates: string[];
 }) {
   const [viewDate, setViewDate] = useState(() => {
     const d = new Date();
@@ -468,10 +528,11 @@ function StepDate({
             const day = new Date(year, month, i + 1);
             const isPast = day < today;
             const isSunday = day.getDay() === 0;
+            const isBlocked = blockedDates.includes(day.toISOString().slice(0, 10));
             const isSelected =
               booking.date?.toDateString() === day.toDateString();
             const isToday = day.toDateString() === today.toDateString();
-            const disabled = isPast || isSunday;
+            const disabled = isPast || isSunday || isBlocked;
 
             return (
               <button
@@ -525,10 +586,18 @@ function StepDate({
 function StepTime({
   booking,
   set,
+  bookedSlots,
+  dayAvail,
 }: {
   booking: BookingState;
   set: <K extends keyof BookingState>(k: K, v: BookingState[K]) => void;
+  bookedSlots: string[];
+  dayAvail: { openTime: string; closeTime: string; slotInterval: number } | null;
 }) {
+  const timeSlots = dayAvail
+    ? generateTimeSlots(dayAvail.openTime, dayAvail.closeTime, dayAvail.slotInterval)
+    : DEFAULT_TIME_SLOTS;
+
   return (
     <div className="max-w-[560px]">
       <h2 className="font-serif text-[clamp(2rem,4vw,3rem)] font-light text-ink leading-none mb-2">
@@ -545,25 +614,31 @@ function StepTime({
       </p>
 
       <div className="flex flex-col gap-8">
-        {TIME_SLOTS.map((group) => (
+        {timeSlots.map((group) => (
           <div key={group.period}>
             <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-3">
               {group.period}
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {group.slots.map((slot) => (
-                <button
-                  key={slot}
-                  onClick={() => set("time", slot)}
-                  className={`py-3 px-4 font-sans text-[12px] tracking-wide border transition-all duration-200 ${
-                    booking.time === slot
-                      ? "bg-ink text-paper border-ink"
-                      : "border-ink/15 text-ink/65 hover:border-ink/40 hover:text-ink"
-                  }`}
-                >
-                  {slot}
-                </button>
-              ))}
+              {group.slots.map((slot) => {
+                const isBooked = bookedSlots.includes(slot);
+                return (
+                  <button
+                    key={slot}
+                    disabled={isBooked}
+                    onClick={() => !isBooked && set("time", slot)}
+                    className={`py-3 px-4 font-sans text-[12px] tracking-wide border transition-all duration-200 ${
+                      isBooked
+                        ? "border-ink/8 text-ink/20 cursor-not-allowed line-through"
+                        : booking.time === slot
+                        ? "bg-ink text-paper border-ink"
+                        : "border-ink/15 text-ink/65 hover:border-ink/40 hover:text-ink"
+                    }`}
+                  >
+                    {slot}
+                  </button>
+                );
+              })}
             </div>
           </div>
         ))}
@@ -579,11 +654,15 @@ function StepDetails({
   set,
   selectedService,
   selectedOption,
+  submitting,
+  submitError,
 }: {
   booking: BookingState;
   set: <K extends keyof BookingState>(k: K, v: BookingState[K]) => void;
-  selectedService: (typeof SERVICES)[0] | undefined;
-  selectedOption: (typeof SERVICES)[0]["options"][0] | undefined;
+  selectedService: BookingService | undefined;
+  selectedOption: ServiceBookingOption | undefined;
+  submitting: boolean;
+  submitError: string;
 }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
@@ -624,6 +703,7 @@ function StepDetails({
 
           <Field
             label="Email Address"
+            required
             type="email"
             value={booking.email}
             onChange={(v) => set("email", v)}
@@ -687,7 +767,23 @@ function StepDetails({
             />
           </div>
 
-          <p className="font-sans text-[11px] text-ink/35 font-light mt-8 leading-relaxed">
+          <div className="mt-6 pt-6 border-t border-ink/10">
+            <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 mb-2">
+              Payment
+            </p>
+            <p className="font-sans text-[12px] font-medium text-ink">
+              Pay ₵{(selectedOption?.price_raw || 100).toLocaleString()} Deposit via Paystack
+            </p>
+            <p className="font-sans text-[11px] text-ink/35 mt-1">
+              Secure your slot with a deposit (Card / Mobile Money). Balance due at studio.
+            </p>
+          </div>
+
+          {submitError && (
+            <p className="font-sans text-[12px] text-red-500 mt-3">{submitError}</p>
+          )}
+
+          <p className="font-sans text-[11px] text-ink/35 font-light mt-4 leading-relaxed">
             We will confirm your booking via phone or WhatsApp within 24 hours.
           </p>
         </div>
@@ -704,8 +800,8 @@ function ConfirmationScreen({
   selectedOption,
 }: {
   booking: BookingState;
-  selectedService: (typeof SERVICES)[0] | undefined;
-  selectedOption: (typeof SERVICES)[0]["options"][0] | undefined;
+  selectedService: BookingService | undefined;
+  selectedOption: ServiceBookingOption | undefined;
 }) {
   return (
     <div className="min-h-screen bg-paper pt-28 md:pt-36 pb-24 flex items-center">

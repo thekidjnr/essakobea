@@ -171,13 +171,12 @@ export default function BagClient() {
               </p>
 
               {/* Checkout CTA */}
-              <button
-                disabled
-                className="w-full bg-ink/20 text-ink/30 font-sans text-[11px] tracking-widest uppercase py-4 cursor-not-allowed mb-3"
-                title="Checkout coming soon"
+              <Link
+                href="/checkout"
+                className="w-full block text-center bg-ink text-paper font-sans text-[11px] tracking-widest uppercase py-4 hover:bg-ink/80 transition-colors mb-3"
               >
-                Checkout — Coming Soon
-              </button>
+                Proceed to Checkout →
+              </Link>
 
               <Link
                 href="/shop"
