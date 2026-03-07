@@ -99,6 +99,17 @@ export interface DbService {
   created_at:      string
 }
 
+// ─── Service Works ─────────────────────────────────────────────────────────────
+
+export interface ServiceWork {
+  id:            string
+  service_id:    string
+  image_url:     string
+  caption:       string | null
+  display_order: number
+  created_at:    string
+}
+
 // ─── Products ─────────────────────────────────────────────────────────────────
 
 export interface DbProduct {

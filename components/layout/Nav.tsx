@@ -50,6 +50,9 @@ export default function Nav() {
             <Link href="/services" className="hover:opacity-50 transition-opacity duration-300">
               Services
             </Link>
+            <Link href="/works" className="hover:opacity-50 transition-opacity duration-300">
+              Works
+            </Link>
             <Link href="/shop" className="hover:opacity-50 transition-opacity duration-300">
               Shop
             </Link>
@@ -131,6 +134,7 @@ export default function Nav() {
         <div className="flex flex-col gap-8">
           {[
             ["Services", "/services"],
+            ["Works", "/works"],
             ["Shop", "/shop"],
             ["About", "/about"],
             ["Book Now", "/book"],

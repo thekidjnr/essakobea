@@ -50,7 +50,7 @@ export default async function Services() {
               <span className="absolute top-5 left-5 font-sans text-[10px] tracking-widest text-paper/70 bg-ink/40 backdrop-blur-sm px-2.5 py-1">
                 {service.number}
               </span>
-              <div className="absolute bottom-5 left-5 right-5 translate-y-2 opacity-0 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+              <div className="absolute bottom-5 left-5 right-5 md:translate-y-2 md:opacity-0 md:group-hover:opacity-100 md:group-hover:translate-y-0 transition-all duration-300">
                 <Link
                   href={`/book?service=${service.slug}`}
                   className="inline-flex items-center gap-2 font-sans text-[10px] tracking-widest uppercase text-paper bg-ink px-4 py-2.5"
@@ -60,12 +60,20 @@ export default async function Services() {
               </div>
             </div>
             <div className="pt-5 pb-2">
-              <Link href={`/book?service=${service.slug}`}>
-                <h3 className="font-serif text-[clamp(1.4rem,2vw,1.75rem)] font-light text-ink leading-none group-hover:italic transition-all duration-300 mb-2">
-                  {service.name}
-                </h3>
-              </Link>
-              <p className="font-sans text-[12px] text-ink/50 font-light leading-relaxed">
+              <div className="flex items-baseline justify-between gap-3">
+                <Link href={`/services#${service.slug}`}>
+                  <h3 className="font-serif text-[clamp(1.4rem,2vw,1.75rem)] font-light text-ink leading-none group-hover:italic transition-all duration-300">
+                    {service.name}
+                  </h3>
+                </Link>
+                <Link
+                  href={`/works/${service.slug}`}
+                  className="flex-shrink-0 inline-flex items-center gap-1.5 font-sans text-[10px] tracking-widest uppercase text-ink/40 hover:text-ink transition-colors"
+                >
+                  See Our Work <span>→</span>
+                </Link>
+              </div>
+              <p className="hidden md:block font-sans text-[12px] text-ink/50 font-light leading-relaxed mt-2">
                 {service.description}
               </p>
             </div>

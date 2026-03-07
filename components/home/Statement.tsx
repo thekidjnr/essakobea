@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { homeImages } from "@/public/images";
 
 export default function Statement() {
   return (
@@ -11,8 +12,8 @@ export default function Statement() {
           </p>
           <blockquote className="font-serif text-[clamp(2rem,4vw,3.75rem)] leading-[1.1] text-paper font-light">
             &ldquo;Beauty is not an
-            <span className="italic"> accessory</span> —
-            it is an <span className="italic">identity.</span>&rdquo;
+            <span className="italic"> accessory</span> — it is an{" "}
+            <span className="italic">identity.</span>&rdquo;
           </blockquote>
           <p className="font-sans text-[13px] text-paper/40 font-light mt-10 max-w-sm leading-relaxed">
             We built Essakobea for women who know exactly who they are. Premium
@@ -21,7 +22,7 @@ export default function Statement() {
           <div className="flex items-center gap-6 mt-16">
             <div className="h-px flex-1 bg-paper/10" />
             <p className="font-sans text-[10px] tracking-widest2 uppercase text-paper/20">
-              Est. 2024
+              Est. 2018
             </p>
           </div>
         </div>
@@ -29,8 +30,8 @@ export default function Statement() {
         {/* Portrait */}
         <div className="relative min-h-[50vh] md:min-h-auto order-1 md:order-2">
           <Image
-            src="https://images.pexels.com/photos/3765114/pexels-photo-3765114.jpeg?auto=compress&cs=tinysrgb&w=1200&q=90"
-            alt="Essakobea — The Art of Beauty"
+            src={homeImages.eskWay}
+            alt="The Essakobea Way"
             fill
             className="object-cover object-top"
             sizes="(max-width: 768px) 100vw, 50vw"

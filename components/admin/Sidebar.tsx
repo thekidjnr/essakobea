@@ -73,6 +73,18 @@ const NAV = [
       </svg>
     ),
   },
+  {
+    href: "/admin/works",
+    label: "Works",
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+        <rect x="1" y="1" width="5.5" height="7" rx="0.5" stroke="currentColor" strokeWidth="1.2"/>
+        <rect x="8.5" y="1" width="5.5" height="4" rx="0.5" stroke="currentColor" strokeWidth="1.2"/>
+        <rect x="8.5" y="7" width="5.5" height="7" rx="0.5" stroke="currentColor" strokeWidth="1.2"/>
+        <rect x="1" y="10" width="5.5" height="4" rx="0.5" stroke="currentColor" strokeWidth="1.2"/>
+      </svg>
+    ),
+  },
 ];
 
 export default function Sidebar() {

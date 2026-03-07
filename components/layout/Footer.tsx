@@ -21,10 +21,10 @@ export default function Footer() {
             Navigate
           </p>
           {[
-            ["Book a Service", "#book"],
-            ["Shop Collection", "#collection"],
-            ["Our Services", "#services"],
-            ["About", "#about"],
+            ["Our Services", "/services"],
+            ["Our Works", "/works"],
+            ["Shop Collection", "/shop"],
+            ["About", "/about"],
           ].map(([label, href]) => (
             <Link
               key={label}
@@ -42,14 +42,16 @@ export default function Footer() {
             Connect
           </p>
           {[
-            ["Instagram", "#"],
-            ["TikTok", "#"],
-            ["Email Us", "mailto:hello@essakobea.com"],
-            ["Book a Consultation", "#book"],
+            ["Instagram", "https://www.instagram.com/houseofessakobea/"],
+            ["TikTok", "https://www.tiktok.com/@essakobeaa"],
+            ["Email Us", "mailto:essakobea@gmail.com"],
+            ["WhatsApp Us", "https://wa.me/233557205803"],
           ].map(([label, href]) => (
             <Link
               key={label}
               href={href}
+              target="_blank"
+              rel="noopener noreferrer"
               className="font-sans text-[12px] text-paper/50 hover:text-paper transition-colors tracking-wide"
             >
               {label}

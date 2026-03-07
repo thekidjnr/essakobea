@@ -26,7 +26,8 @@ export default function Gateway() {
             <span className="italic">Service</span>
           </h2>
           <p className="font-sans text-[13px] text-paper/60 font-light max-w-xs mb-8 leading-relaxed">
-            Wig making, braids, installs, and more — crafted by professionals, tailored to you.
+            Wig making, braids, installs, and more — crafted by professionals,
+            tailored to you.
           </p>
           <Link
             href="/book"
@@ -35,7 +36,9 @@ export default function Gateway() {
             <span className="border-b border-paper/40 pb-px group-hover/link:border-paper transition-colors">
               Schedule Appointment
             </span>
-            <span className="transition-transform group-hover/link:translate-x-1">→</span>
+            <span className="transition-transform group-hover/link:translate-x-1">
+              →
+            </span>
           </Link>
         </div>
       </div>
@@ -57,20 +60,24 @@ export default function Gateway() {
             02 — Collection
           </span>
           <h2 className="font-serif text-[clamp(2.5rem,4vw,4.5rem)] leading-none text-paper font-light mb-4">
-            Shop the<br />
+            Shop the
+            <br />
             <span className="italic">Collection</span>
           </h2>
           <p className="font-sans text-[13px] text-paper/60 font-light max-w-xs mb-8 leading-relaxed">
-            Premium wigs, curated for quality. Find your perfect unit and wear it with confidence.
+            Premium wigs, curated for quality. Find your perfect unit and wear
+            it with confidence.
           </p>
           <Link
             href="/shop"
             className="inline-flex items-center gap-3 font-sans text-[11px] tracking-widest uppercase text-paper group/link"
           >
             <span className="border-b border-paper/40 pb-px group-hover/link:border-paper transition-colors">
-              Browse All Wigs
+              Browse All Products
             </span>
-            <span className="transition-transform group-hover/link:translate-x-1">→</span>
+            <span className="transition-transform group-hover/link:translate-x-1">
+              →
+            </span>
           </Link>
         </div>
       </div>

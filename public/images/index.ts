@@ -4,6 +4,7 @@ export const homeImages = {
   hero: "/images/home/hero.jpg",
   bookService: "/images/home/bookservice.jpg",
   shopCollection: "/images/home/shopcollection.jpg",
+  eskWay: "/images/home/eskway.jpg",
 };
 
 export const servicesImages: Record<string, string> = {
@@ -14,6 +15,7 @@ export const shopImages: Record<string, string> = {
   // Add shop/product images here as they are added to public/images/shop/
 };
 
-export const aboutImages: Record<string, string> = {
-  // Add about page images here as they are added to public/images/about/
+export const aboutImages = {
+  team: "/images/about/team.jpg",
+  portrait: "/images/about/portrait.jpg",
 };
