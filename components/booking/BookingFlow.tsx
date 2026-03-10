@@ -164,19 +164,25 @@ function MiniCalendar({
 
 // ─── Hair Unit Photo Upload ────────────────────────────────────────────────────
 
-function PhotoUpload({ photos, onChange }: { photos: string[]; onChange: (urls: string[]) => void }) {
+function PhotoUpload({ photos, onChange, onUploadingChange }: {
+  photos: string[];
+  onChange: (urls: string[]) => void;
+  onUploadingChange?: (uploading: boolean) => void;
+}) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
   const handleFile = async (file: File) => {
     if (!file.type.startsWith("image/")) return;
     setUploading(true);
+    onUploadingChange?.(true);
     const fd = new FormData();
     fd.append("file", file);
     const res = await fetch("/api/bookings/upload", { method: "POST", body: fd });
     const data = await res.json();
     if (data.url) onChange([...photos, data.url]);
     setUploading(false);
+    onUploadingChange?.(false);
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -282,12 +288,13 @@ function TermsModal({ depositAmount, isRange, onAgree, onClose }: { depositAmoun
 // ─── Step footer ──────────────────────────────────────────────────────────────
 
 function StepFooter({
-  canNext, onNext, showBack, onBack, nextLabel = "Continue",
+  canNext, onNext, showBack, onBack, backDisabled = false, nextLabel = "Continue",
 }: {
   canNext: boolean;
   onNext: () => void;
   showBack: boolean;
   onBack: () => void;
+  backDisabled?: boolean;
   nextLabel?: string;
 }) {
   return (
@@ -295,7 +302,8 @@ function StepFooter({
       {showBack && (
         <button
           onClick={onBack}
-          className="font-sans text-[11px] tracking-widest uppercase text-ink/35 hover:text-ink transition-colors"
+          disabled={backDisabled}
+          className="font-sans text-[11px] tracking-widest uppercase text-ink/35 hover:text-ink transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         >
           ← Back
         </button>
@@ -351,8 +359,9 @@ export default function BookingFlow() {
   const [disabledDays, setDisabled] = useState<number[]>([]);
 
   // ── UI
-  const [step, setStep]       = useState(0);
-  const [visible, setVisible] = useState(true);
+  const [step, setStep]           = useState(0);
+  const [visible, setVisible]     = useState(true);
+  const [photoUploading, setPhotoUploading] = useState(false);
 
   // ── Booking state
   const [booking, setBooking] = useState<BookingState>({
@@ -467,9 +476,11 @@ export default function BookingFlow() {
   const back = () => goTo(step - 1);
 
   // ── Validation
+  const needsPhoto = booking.hairUnitType === "own_new" || booking.hairUnitType === "own_existing";
+
   const canNext = () => {
     if (step === 0) return !!booking.serviceId && !!booking.optionId;
-    if (step === 1) return !!booking.hairUnitType;
+    if (step === 1) return !!booking.hairUnitType && (!needsPhoto || (booking.unitPhotos.length > 0 && !photoUploading));
     if (step === 2) return !!booking.date && !!booking.time;
     if (step === 3) return true;
     if (step === 4) return !!booking.firstName && !!booking.phone && !!booking.email;
@@ -650,15 +661,19 @@ export default function BookingFlow() {
 
             {(booking.hairUnitType === "own_new" || booking.hairUnitType === "own_existing") && (
               <div className="border border-ink/10 p-6 mb-10">
-                <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/40 mb-1">Photos <span className="normal-case tracking-normal text-ink/25">(optional)</span></p>
+                <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/40 mb-1">Unit photo <span className="normal-case tracking-normal text-red-400/70">*required</span></p>
                 <p className="font-sans text-[12px] text-ink/40 font-light mb-5 leading-relaxed">
-                  Share a photo of your unit so your stylist can prepare in advance.
+                  Add at least one photo of your unit so your stylist can prepare in advance.
                 </p>
-                <PhotoUpload photos={booking.unitPhotos} onChange={(urls) => set("unitPhotos", urls)} />
+                <PhotoUpload
+                  photos={booking.unitPhotos}
+                  onChange={(urls) => set("unitPhotos", urls)}
+                  onUploadingChange={setPhotoUploading}
+                />
               </div>
             )}
 
-            <StepFooter canNext={canNext()} onNext={next} showBack={true} onBack={back} />
+            <StepFooter canNext={canNext()} onNext={next} showBack={true} onBack={back} backDisabled={photoUploading} />
           </div>
         )}
 
