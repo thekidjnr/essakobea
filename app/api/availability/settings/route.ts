@@ -16,10 +16,12 @@ export async function PUT(req: Request) {
   for (const day of days) {
     await adminDb.from('availability')
       .update({
-        is_available: day.is_available,
-        open_time: day.open_time,
-        close_time: day.close_time,
+        is_available:          day.is_available,
+        open_time:             day.open_time,
+        close_time:            day.close_time,
         slot_interval_minutes: day.slot_interval_minutes ?? 60,
+        max_bookings_per_slot: day.max_bookings_per_slot ?? 1,
+        max_bookings_per_day:  day.max_bookings_per_day  ?? 0,
       })
       .eq('day_of_week', day.day_of_week)
   }

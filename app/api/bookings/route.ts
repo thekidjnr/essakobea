@@ -14,6 +14,8 @@ export async function POST(req: Request) {
       serviceId, optionId,
       serviceName, treatment,
       bookingDate, timeSlot, notes,
+      stylistId, stylistName, stylistFeeAdjustment,
+      hairUnitType, unitPhotos,
     } = body
 
     if (!clientName || !clientPhone || !serviceId || !optionId || !bookingDate || !timeSlot) {
@@ -30,7 +32,8 @@ export async function POST(req: Request) {
     const option = (svc?.booking_options as ServiceBookingOption[] | null)
       ?.find((o) => o.id === optionId)
 
-    const depositGHS = (option?.price_raw ?? 0) > 0 ? (option!.price_raw) : 100
+    const baseDepositGHS = (option?.price_raw ?? 0) > 0 ? (option!.price_raw) : 100
+    const depositGHS = baseDepositGHS + (stylistFeeAdjustment ?? 0)
 
     // ── 2. Release stale pending slots (abandoned payments older than 30 min) ──
     const staleThreshold = new Date(Date.now() - SLOT_HOLD_MS).toISOString()
@@ -59,6 +62,10 @@ export async function POST(req: Request) {
         status: 'pending',
         payment_status: 'unpaid',
         amount: depositGHS * 100, // stored in pesewas
+        stylist_id: stylistId || null,
+        stylist_name: stylistName || null,
+        hair_unit_type: hairUnitType || null,
+        unit_photos: unitPhotos || [],
       })
       .select()
       .single()

@@ -23,25 +23,38 @@ export async function GET(req: Request) {
   ])
 
   const staleThreshold = Date.now() - SLOT_HOLD_MS
+  const maxPerSlot: number = avail?.max_bookings_per_slot ?? 1
+  const maxPerDay: number  = avail?.max_bookings_per_day  ?? 0  // 0 = unlimited
 
-  // A slot is "booked" if:
-  // - status is 'confirmed' (always blocks), OR
-  // - status is 'pending' AND the booking is recent (< 30 min) — payment in progress
-  const bookedSlots = (bookings ?? [])
-    .filter((b) => {
-      if (b.status === 'confirmed') return true
-      if (b.status === 'pending' && b.payment_status === 'unpaid') {
-        return new Date(b.created_at).getTime() > staleThreshold
-      }
-      return true
-    })
-    .map((b) => b.time_slot)
+  // Active bookings = confirmed, OR pending-unpaid within the hold window
+  const activeBookings = (bookings ?? []).filter((b) => {
+    if (b.status === 'confirmed') return true
+    if (b.status === 'pending' && b.payment_status === 'unpaid') {
+      return new Date(b.created_at).getTime() > staleThreshold
+    }
+    return true
+  })
+
+  // Count bookings per slot — a slot is "full" when its count >= maxPerSlot
+  const slotCounts: Record<string, number> = {}
+  for (const b of activeBookings) {
+    slotCounts[b.time_slot] = (slotCounts[b.time_slot] ?? 0) + 1
+  }
+  const bookedSlots = Object.entries(slotCounts)
+    .filter(([, count]) => count >= maxPerSlot)
+    .map(([slot]) => slot)
+
+  // Day is full when total active bookings reaches the daily cap (0 = no cap)
+  const dayFull = maxPerDay > 0 && activeBookings.length >= maxPerDay
 
   return NextResponse.json({
-    available: !blocked && (avail?.is_available ?? false),
+    available: !blocked && !dayFull && (avail?.is_available ?? false),
     bookedSlots,
-    openTime: avail?.open_time,
-    closeTime: avail?.close_time,
-    slotInterval: avail?.slot_interval_minutes ?? 60,
+    openTime:      avail?.open_time,
+    closeTime:     avail?.close_time,
+    slotInterval:  avail?.slot_interval_minutes ?? 60,
+    maxPerSlot,
+    maxPerDay,
+    bookingsToday: activeBookings.length,
   })
 }

@@ -26,6 +26,10 @@ export interface Booking {
   cancellation_reason: string | null
   cancelled_at:        string | null
   cancel_token:        string
+  stylist_id:          string | null
+  stylist_name:        string | null
+  hair_unit_type:      'own_new' | 'own_existing' | 'none' | null
+  unit_photos:         string[]
 }
 
 export interface OrderItem {
@@ -97,6 +101,20 @@ export interface DbService {
   is_active:       boolean
   display_order:   number
   created_at:      string
+}
+
+// ─── Stylists ──────────────────────────────────────────────────────────────────
+
+export interface Stylist {
+  id:             string
+  name:           string
+  title:          string
+  bio:            string | null
+  photo_url:      string | null
+  fee_adjustment: number   // GHS cedis added to base deposit
+  is_available:   boolean
+  display_order:  number
+  created_at:     string
 }
 
 // ─── Service Works ─────────────────────────────────────────────────────────────

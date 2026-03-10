@@ -9,6 +9,8 @@ interface AvailDay {
   open_time: string;
   close_time: string;
   slot_interval_minutes: number;
+  max_bookings_per_slot: number;
+  max_bookings_per_day: number;
 }
 interface BlockedDate { id: string; date: string; reason: string | null; }
 
@@ -82,10 +84,18 @@ export default function AdminAvailability() {
   const updateTime = (dow: number, field: "open_time" | "close_time", value: string) =>
     setSchedule((prev) => prev.map((d) => d.day_of_week === dow ? { ...d, [field]: value } : d));
 
-  // Interval is global — same for all days; read from first row
+  // These are global settings — same for all days; read from first row
   const slotInterval = schedule[0]?.slot_interval_minutes ?? 60;
   const setSlotInterval = (mins: number) =>
     setSchedule((prev) => prev.map((d) => ({ ...d, slot_interval_minutes: mins })));
+
+  const maxPerSlot = schedule[0]?.max_bookings_per_slot ?? 1;
+  const setMaxPerSlot = (n: number) =>
+    setSchedule((prev) => prev.map((d) => ({ ...d, max_bookings_per_slot: Math.max(1, n) })));
+
+  const maxPerDay = schedule[0]?.max_bookings_per_day ?? 0;
+  const setMaxPerDay = (n: number) =>
+    setSchedule((prev) => prev.map((d) => ({ ...d, max_bookings_per_day: Math.max(0, n) })));
 
   const saveSchedule = async () => {
     setSaving(true);
@@ -155,6 +165,47 @@ export default function AdminAvailability() {
             </div>
           </div>
 
+          {/* Capacity controls */}
+          <div className="flex flex-col gap-4 mb-6 pb-6 border-b border-ink/[0.05]">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="font-sans text-[11px] text-ink">Bookings per slot</p>
+                <p className="font-sans text-[10px] text-ink/35 mt-0.5">How many clients can book the same time slot (= no. of active stylists)</p>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  onClick={() => setMaxPerSlot(maxPerSlot - 1)}
+                  disabled={maxPerSlot <= 1}
+                  className="w-7 h-7 border border-ink/15 flex items-center justify-center font-sans text-[14px] text-ink hover:bg-ink/5 disabled:opacity-30 transition-colors"
+                >−</button>
+                <span className="font-sans text-[14px] text-ink w-6 text-center">{maxPerSlot}</span>
+                <button
+                  onClick={() => setMaxPerSlot(maxPerSlot + 1)}
+                  className="w-7 h-7 border border-ink/15 flex items-center justify-center font-sans text-[14px] text-ink hover:bg-ink/5 transition-colors"
+                >+</button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="font-sans text-[11px] text-ink">Daily booking cap</p>
+                <p className="font-sans text-[10px] text-ink/35 mt-0.5">Max total bookings per day (0 = no limit)</p>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  onClick={() => setMaxPerDay(maxPerDay - 1)}
+                  disabled={maxPerDay <= 0}
+                  className="w-7 h-7 border border-ink/15 flex items-center justify-center font-sans text-[14px] text-ink hover:bg-ink/5 disabled:opacity-30 transition-colors"
+                >−</button>
+                <span className="font-sans text-[14px] text-ink w-6 text-center">{maxPerDay === 0 ? "∞" : maxPerDay}</span>
+                <button
+                  onClick={() => setMaxPerDay(maxPerDay + 1)}
+                  className="w-7 h-7 border border-ink/15 flex items-center justify-center font-sans text-[14px] text-ink hover:bg-ink/5 transition-colors"
+                >+</button>
+              </div>
+            </div>
+          </div>
+
           <div className="flex flex-col divide-y divide-ink/[0.05]">
             {sortedSchedule.map((day) => (
               <div key={day.day_of_week} className="py-3">
@@ -202,7 +253,7 @@ export default function AdminAvailability() {
             {saving ? "Saving…" : saveOk ? "Saved ✓" : "Save Schedule"}
           </button>
           <p className="font-sans text-[10px] text-ink/30 mt-3 text-center">
-            Slot interval applies to all days
+            Interval and capacity settings apply to all days
           </p>
         </div>
 

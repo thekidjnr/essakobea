@@ -85,6 +85,16 @@ const NAV = [
       </svg>
     ),
   },
+  {
+    href: "/admin/stylists",
+    label: "Stylists",
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+        <circle cx="7.5" cy="4.5" r="2.5" stroke="currentColor" strokeWidth="1.2"/>
+        <path d="M2 13c0-2.761 2.462-5 5.5-5s5.5 2.239 5.5 5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+      </svg>
+    ),
+  },
 ];
 
 export default function Sidebar() {
@@ -98,7 +108,7 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="w-56 flex-shrink-0 bg-ink min-h-screen flex flex-col">
+    <aside className="w-56 flex-shrink-0 bg-ink h-screen sticky top-0 flex flex-col">
       {/* Brand */}
       <div className="px-6 pt-8 pb-8 border-b border-paper/[0.07]">
         <p className="font-sans text-[9px] tracking-widest2 uppercase text-paper/25 mb-1.5">
@@ -110,7 +120,7 @@ export default function Sidebar() {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 pt-4 flex flex-col gap-0.5">
+      <nav className="flex-1 px-3 pt-4 flex flex-col gap-0.5 overflow-y-auto">
         {NAV.map((item) => {
           const active =
             item.href === "/admin"
