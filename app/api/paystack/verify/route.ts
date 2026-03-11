@@ -30,21 +30,31 @@ export async function POST(req: Request) {
         const formattedDate = new Date(booking.booking_date).toLocaleDateString('en-GB', {
           weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
         })
+        const depositGHS = Math.round((booking.amount ?? 0) / 100)
+        // Determine if this was a deposit (range-priced service) by checking the option's display price
+        let isDeposit = false
+        if (booking.service_id && booking.treatment) {
+          const { data: svc } = await adminDb.from('services').select('booking_options').eq('slug', booking.service_id).single()
+          const options = svc?.booking_options as { name?: string; price?: string }[] | null
+          const opt = options?.find((o) => o.name === booking.treatment)
+          if (opt?.price && /[-–]/.test(opt.price)) isDeposit = true
+        }
         await getResend().emails.send({
           from: FROM,
           to: booking.client_email,
           subject: `Booking confirmed — ${booking.service_name} on ${formattedDate}`,
           html: bookingConfirmationHtml({
-            clientName: booking.client_name,
+            clientName:  booking.client_name,
             serviceName: booking.service_name,
-            treatment: booking.treatment,
+            treatment:   booking.treatment,
             bookingDate: formattedDate,
-            timeSlot: booking.time_slot,
-            price: 'Deposit: ₵100 paid',
-            bookingId: booking.id,
+            timeSlot:    booking.time_slot,
+            depositGHS,
+            isDeposit,
+            stylistName: booking.stylist_name ?? null,
+            bookingId:   booking.id,
             cancelToken: booking.cancel_token,
-            appUrl: process.env.NEXT_PUBLIC_APP_URL ?? '',
-            paidDeposit: true,
+            appUrl:      process.env.NEXT_PUBLIC_APP_URL ?? '',
           }),
         })
       }

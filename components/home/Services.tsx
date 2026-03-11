@@ -34,8 +34,9 @@ export default async function Services() {
       <div className="px-6 md:px-16 max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
         {services.map((service, i) => (
           <div key={service.slug} className="group cursor-pointer">
-            <div
-              className={`relative overflow-hidden bg-mist ${
+            <Link
+              href={`/book?service=${service.slug}`}
+              className={`block relative overflow-hidden bg-mist ${
                 i === 1 ? "aspect-[3/4] md:aspect-[3/5]" : "aspect-[3/4]"
               }`}
             >
@@ -51,14 +52,11 @@ export default async function Services() {
                 {service.number}
               </span>
               <div className="absolute bottom-5 left-5 right-5 md:translate-y-2 md:opacity-0 md:group-hover:opacity-100 md:group-hover:translate-y-0 transition-all duration-300">
-                <Link
-                  href={`/book?service=${service.slug}`}
-                  className="inline-flex items-center gap-2 font-sans text-[10px] tracking-widest uppercase text-paper bg-ink px-4 py-2.5"
-                >
+                <span className="inline-flex items-center gap-2 font-sans text-[10px] tracking-widest uppercase text-paper bg-ink px-4 py-2.5">
                   Book This <span>→</span>
-                </Link>
+                </span>
               </div>
-            </div>
+            </Link>
             <div className="pt-5 pb-2">
               <div className="flex items-baseline justify-between gap-3">
                 <Link href={`/services#${service.slug}`}>
