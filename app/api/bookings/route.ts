@@ -16,6 +16,7 @@ export async function POST(req: Request) {
       bookingDate, timeSlot, notes,
       stylistId, stylistName, stylistFeeAdjustment,
       hairUnitType, unitPhotos,
+      customizationType, isEmergency,
     } = body
 
     if (!clientName || !clientPhone || !serviceId || !optionId || !bookingDate || !timeSlot) {
@@ -33,7 +34,15 @@ export async function POST(req: Request) {
       ?.find((o) => o.id === optionId)
 
     const baseDepositGHS = (option?.price_raw ?? 0) > 0 ? (option!.price_raw) : 100
-    const depositGHS = baseDepositGHS + (stylistFeeAdjustment ?? 0)
+    const stylistAdj     = stylistFeeAdjustment ?? 0
+
+    // ── 1b. Calculate add-on fees server-side ─────────────────────────────────
+    const customizationFeeGHS = customizationType === 'standard' ? 100
+                              : customizationType === 'express'  ? 150 : 0
+    const emergencyFeeGHS     = isEmergency ? 200 : 0
+    const subtotalGHS         = baseDepositGHS + stylistAdj + customizationFeeGHS + emergencyFeeGHS
+    const serviceChargeGHS    = Math.round(subtotalGHS * 0.05)
+    const depositGHS          = subtotalGHS + serviceChargeGHS
 
     // ── 2. Release stale pending slots (abandoned payments older than 30 min) ──
     const staleThreshold = new Date(Date.now() - SLOT_HOLD_MS).toISOString()
@@ -66,6 +75,11 @@ export async function POST(req: Request) {
         stylist_name: stylistName || null,
         hair_unit_type: hairUnitType || null,
         unit_photos: unitPhotos || [],
+        customization_type: customizationType || null,
+        is_emergency: isEmergency ?? false,
+        customization_fee: customizationFeeGHS * 100,
+        emergency_fee: emergencyFeeGHS * 100,
+        service_charge: serviceChargeGHS * 100,
       })
       .select()
       .single()

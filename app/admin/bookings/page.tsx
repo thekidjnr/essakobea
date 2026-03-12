@@ -6,6 +6,8 @@ interface Booking {
   id: string; client_name: string; client_email: string; client_phone: string;
   service_name: string; treatment: string; booking_date: string; time_slot: string;
   notes: string | null; status: string; payment_status: string; amount: number; created_at: string;
+  customization_type: string | null; is_emergency: boolean;
+  customization_fee: number; emergency_fee: number; service_charge: number;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -104,6 +106,18 @@ export default function AdminBookings() {
                   <td className="px-5 py-4">
                     <p className="font-sans text-[12px] text-ink">{b.service_name}</p>
                     <p className="font-sans text-[11px] text-ink/45">{b.treatment}</p>
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                      {b.is_emergency && (
+                        <span className="inline-block px-1.5 py-0.5 rounded-sm font-sans text-[9px] tracking-wide uppercase font-medium bg-amber-100 text-amber-800">
+                          ⚡ Emergency
+                        </span>
+                      )}
+                      {b.customization_type && (
+                        <span className="inline-block px-1.5 py-0.5 rounded-sm font-sans text-[9px] tracking-wide uppercase font-medium bg-ink/[0.07] text-ink/60">
+                          {b.customization_type} customization
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-5 py-4">
                     <p className="font-sans text-[12px] text-ink">
@@ -122,6 +136,13 @@ export default function AdminBookings() {
                     </span>
                     {b.amount > 0 && (
                       <p className="font-sans text-[10px] text-ink/35 mt-1">₵{(b.amount / 100).toLocaleString()}</p>
+                    )}
+                    {(b.customization_fee > 0 || b.emergency_fee > 0) && (
+                      <div className="mt-1 flex flex-col gap-0.5">
+                        {b.customization_fee > 0 && <p className="font-sans text-[9px] text-ink/30">+₵{b.customization_fee / 100} customization</p>}
+                        {b.emergency_fee > 0 && <p className="font-sans text-[9px] text-ink/30">+₵{b.emergency_fee / 100} emergency</p>}
+                        {b.service_charge > 0 && <p className="font-sans text-[9px] text-ink/30">+₵{b.service_charge / 100} service charge</p>}
+                      </div>
                     )}
                   </td>
                   <td className="px-5 py-4">

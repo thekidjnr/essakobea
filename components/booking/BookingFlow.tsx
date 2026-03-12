@@ -54,9 +54,11 @@ function formatDate(d: Date) {
   return d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 }
 
-// ─── Step labels ───────────────────────────────────────────────────────────────
+// ─── Fees ──────────────────────────────────────────────────────────────────────
 
-const STEP_LABELS = ["Service", "Hair", "Schedule", "Stylist", "Details", "Review"];
+const CUSTOMIZATION_FEES = { standard: 100, express: 150 } as const;
+const EMERGENCY_FEE = 200;
+const SERVICE_CHARGE_PCT = 0.05;
 
 // ─── State ────────────────────────────────────────────────────────────────────
 
@@ -66,7 +68,9 @@ interface BookingState {
   serviceId: string;
   optionId: string;
   hairUnitType: HairUnitType | "";
+  customizationType: "standard" | "express" | "";
   unitPhotos: string[];
+  isEmergency: boolean;
   date: Date | null;
   time: string;
   stylistId: string;
@@ -368,7 +372,9 @@ export default function BookingFlow() {
     serviceId: preselected,
     optionId: "",
     hairUnitType: "",
+    customizationType: "",
     unitPhotos: [],
+    isEmergency: false,
     date: null,
     time: "",
     stylistId: "",
@@ -392,15 +398,34 @@ export default function BookingFlow() {
   const [showTerms, setShowTerms]   = useState(false);
 
   // ── Derived
-  const selectedService = services.find(s => s.id === booking.serviceId);
-  const selectedOption  = selectedService?.options.find(o => o.id === booking.optionId);
-  const baseDeposit     = selectedOption?.price_raw ?? 0;
+  const selectedService  = services.find(s => s.id === booking.serviceId);
+  const selectedOption   = selectedService?.options.find(o => o.id === booking.optionId);
+  const baseDeposit      = selectedOption?.price_raw ?? 0;
   // A price is a "range" when the display string contains a dash/en-dash (e.g. "₵250 – ₵450")
-  const isPriceRange    = !!(selectedOption?.price && /[-–]/.test(selectedOption.price));
-  const totalDeposit    = baseDeposit + booking.stylistFeeAdj;
-  const timeSlots       = dayAvail
-    ? generateTimeSlots(dayAvail.openTime, dayAvail.closeTime, dayAvail.slotInterval)
-    : DEFAULT_SLOTS;
+  const isPriceRange     = !!(selectedOption?.price && /[-–]/.test(selectedOption.price));
+  const needsCustomization = booking.hairUnitType === "own_new" || booking.hairUnitType === "own_existing";
+  const customizationFee = booking.customizationType === "standard" ? CUSTOMIZATION_FEES.standard
+                         : booking.customizationType === "express"  ? CUSTOMIZATION_FEES.express : 0;
+  const emergencyFee     = booking.isEmergency ? EMERGENCY_FEE : 0;
+  const subtotal         = baseDeposit + booking.stylistFeeAdj + customizationFee + emergencyFee;
+  const serviceFee       = Math.round(subtotal * SERVICE_CHARGE_PCT);
+  const totalDeposit     = subtotal + serviceFee;
+  const timeSlots        = booking.isEmergency
+    ? DEFAULT_SLOTS
+    : dayAvail
+      ? generateTimeSlots(dayAvail.openTime, dayAvail.closeTime, dayAvail.slotInterval)
+      : DEFAULT_SLOTS;
+
+  // ── Step layout (Customization step only shown when new/existing unit)
+  const stepLabels = needsCustomization
+    ? ["Service", "Hair", "Customization", "Schedule", "Stylist", "Details", "Review"]
+    : ["Service", "Hair", "Schedule", "Stylist", "Details", "Review"];
+  const totalSteps  = stepLabels.length;
+  // Map actual step index → bar index (customization step = index 2 only exists when needsCustomization)
+  const barIndex    = step <= 1 ? step : (needsCustomization ? step : step - 1);
+  const stepNum     = (step <= 2 || needsCustomization) ? step + 1 : step;
+  // Map bar index → actual step (for click handlers)
+  const barToStep   = (i: number) => needsCustomization ? i : (i <= 1 ? i : i + 1);
 
   // ── Fetch on mount
   useEffect(() => {
@@ -472,18 +497,25 @@ export default function BookingFlow() {
     setVisible(false);
     setTimeout(() => { setStep(target); setVisible(true); }, 230);
   };
-  const next = () => goTo(step + 1);
-  const back = () => goTo(step - 1);
+  const next = () => {
+    // Skip customization step (2) when hair = "none"
+    if (step === 1 && !needsCustomization) goTo(3);
+    else goTo(step + 1);
+  };
+  const back = () => {
+    // Skip back over customization step (2) when hair = "none"
+    if (step === 3 && !needsCustomization) goTo(1);
+    else goTo(step - 1);
+  };
 
   // ── Validation
-  const needsPhoto = booking.hairUnitType === "own_new" || booking.hairUnitType === "own_existing";
-
   const canNext = () => {
     if (step === 0) return !!booking.serviceId && !!booking.optionId;
-    if (step === 1) return !!booking.hairUnitType && (!needsPhoto || (booking.unitPhotos.length > 0 && !photoUploading));
-    if (step === 2) return !!booking.date && !!booking.time;
-    if (step === 3) return true;
-    if (step === 4) return !!booking.firstName && !!booking.phone && !!booking.email;
+    if (step === 1) return !!booking.hairUnitType;
+    if (step === 2) return !!booking.customizationType && booking.unitPhotos.length > 0 && !photoUploading;
+    if (step === 3) return !!booking.date && !!booking.time;
+    if (step === 4) return true;
+    if (step === 5) return !!booking.firstName && !!booking.phone && !!booking.email;
     return false;
   };
 
@@ -512,6 +544,11 @@ export default function BookingFlow() {
           stylistFeeAdjustment: booking.stylistFeeAdj,
           hairUnitType: booking.hairUnitType || null,
           unitPhotos: booking.unitPhotos,
+          customizationType: booking.customizationType || null,
+          isEmergency: booking.isEmergency,
+          customizationFee,
+          emergencyFee,
+          serviceFee,
         }),
       });
       const data = await res.json();
@@ -535,30 +572,30 @@ export default function BookingFlow() {
       <div className="sticky top-[54px] z-30 bg-paper border-b border-ink/[0.07]">
         <div className="max-w-[900px] mx-auto px-6 py-4 overflow-x-auto">
           <div className="flex items-center gap-0 min-w-max">
-            {STEP_LABELS.map((label, i) => (
+            {stepLabels.map((label, i) => (
               <div key={label} className="flex items-center">
                 <button
-                  disabled={i > step}
-                  onClick={() => i < step && goTo(i)}
+                  disabled={i > barIndex}
+                  onClick={() => i < barIndex && goTo(barToStep(i))}
                   className="flex items-center gap-2 group disabled:cursor-default"
                 >
                   <span className={`w-5 h-5 rounded-full flex items-center justify-center font-sans text-[9px] flex-shrink-0 transition-all duration-300 ${
-                    i < step  ? "bg-ink text-paper" :
-                    i === step ? "bg-ink text-paper" :
+                    i < barIndex  ? "bg-ink text-paper" :
+                    i === barIndex ? "bg-ink text-paper" :
                     "border border-ink/20 text-ink/25"
                   }`}>
-                    {i < step ? (
+                    {i < barIndex ? (
                       <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     ) : i + 1}
                   </span>
                   <span className={`font-sans text-[9px] tracking-widest uppercase transition-colors duration-300 ${
-                    i === step ? "text-ink" : i < step ? "text-ink/45 group-hover:text-ink" : "text-ink/20"
+                    i === barIndex ? "text-ink" : i < barIndex ? "text-ink/45 group-hover:text-ink" : "text-ink/20"
                   }`}>
                     {label}
                   </span>
                 </button>
-                {i < STEP_LABELS.length - 1 && (
-                  <div className={`w-6 md:w-10 h-px mx-2.5 flex-shrink-0 transition-colors duration-300 ${i < step ? "bg-ink/25" : "bg-ink/[0.08]"}`} />
+                {i < stepLabels.length - 1 && (
+                  <div className={`w-6 md:w-10 h-px mx-2.5 flex-shrink-0 transition-colors duration-300 ${i < barIndex ? "bg-ink/25" : "bg-ink/[0.08]"}`} />
                 )}
               </div>
             ))}
@@ -575,7 +612,7 @@ export default function BookingFlow() {
         {/* ─ STEP 0: Service ─────────────────────────────────────────────────── */}
         {step === 0 && (
           <div>
-            <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-3">Step 1 of 6</p>
+            <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-3">Step 1 of {totalSteps}</p>
             <h2 className="font-serif text-[clamp(2rem,5vw,3.5rem)] font-light text-ink leading-none mb-10">
               Choose your <span className="italic">service.</span>
             </h2>
@@ -631,7 +668,7 @@ export default function BookingFlow() {
         {/* ─ STEP 1: Hair ────────────────────────────────────────────────────── */}
         {step === 1 && (
           <div>
-            <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-3">Step 2 of 6</p>
+            <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-3">Step 2 of {totalSteps}</p>
             <h2 className="font-serif text-[clamp(2rem,5vw,3.5rem)] font-light text-ink leading-none mb-3">
               Your <span className="italic">hair unit.</span>
             </h2>
@@ -647,7 +684,13 @@ export default function BookingFlow() {
               ]).map(opt => (
                 <button
                   key={opt.id}
-                  onClick={() => set("hairUnitType", opt.id)}
+                  onClick={() => {
+                    set("hairUnitType", opt.id);
+                    if (opt.id === "none") {
+                      set("customizationType", "");
+                      set("unitPhotos", []);
+                    }
+                  }}
                   className={`text-left border p-6 transition-all duration-200 ${
                     booking.hairUnitType === opt.id ? "border-ink bg-ink" : "border-ink/15 hover:border-ink/40"
                   }`}
@@ -659,31 +702,102 @@ export default function BookingFlow() {
               ))}
             </div>
 
-            {(booking.hairUnitType === "own_new" || booking.hairUnitType === "own_existing") && (
-              <div className="border border-ink/10 p-6 mb-10">
-                <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/40 mb-1">Unit photo <span className="normal-case tracking-normal text-red-400/70">*required</span></p>
-                <p className="font-sans text-[12px] text-ink/40 font-light mb-5 leading-relaxed">
-                  Add at least one photo of your unit so your stylist can prepare in advance.
+            <StepFooter canNext={canNext()} onNext={next} showBack={true} onBack={back} />
+          </div>
+        )}
+
+        {/* ─ STEP 2: Customization ───────────────────────────────────────────── */}
+        {step === 2 && (
+          <div>
+            <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-3">Step 3 of {totalSteps}</p>
+            <h2 className="font-serif text-[clamp(2rem,5vw,3.5rem)] font-light text-ink leading-none mb-3">
+              Unit <span className="italic">customization.</span>
+            </h2>
+            <p className="font-sans text-[13px] text-ink/45 font-light mb-10 max-w-sm leading-relaxed">
+              How would you like your unit prepared?
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-10">
+              <button
+                onClick={() => set("customizationType", "standard")}
+                className={`text-left border p-6 transition-all duration-200 ${
+                  booking.customizationType === "standard" ? "border-ink bg-ink" : "border-ink/15 hover:border-ink/40"
+                }`}
+              >
+                <span className={`text-[1.25rem] mb-4 block ${booking.customizationType === "standard" ? "text-paper/50" : "text-ink/20"}`}>◎</span>
+                <p className={`font-sans text-[12px] tracking-wide uppercase mb-1 ${booking.customizationType === "standard" ? "text-paper" : "text-ink"}`}>Standard</p>
+                <p className={`font-sans text-[11px] font-light mb-3 ${booking.customizationType === "standard" ? "text-paper/55" : "text-ink/40"}`}>Drop off your unit 48–72 hrs before your appointment</p>
+                <p className={`font-sans text-[11px] font-medium ${booking.customizationType === "standard" ? "text-paper/80" : "text-ink/60"}`}>+₵{CUSTOMIZATION_FEES.standard}</p>
+              </button>
+
+              <button
+                onClick={() => set("customizationType", "express")}
+                className={`text-left border p-6 transition-all duration-200 ${
+                  booking.customizationType === "express" ? "border-ink bg-ink" : "border-ink/15 hover:border-ink/40"
+                }`}
+              >
+                <span className={`text-[1.25rem] mb-4 block ${booking.customizationType === "express" ? "text-paper/50" : "text-ink/20"}`}>◈</span>
+                <p className={`font-sans text-[12px] tracking-wide uppercase mb-1 ${booking.customizationType === "express" ? "text-paper" : "text-ink"}`}>Express</p>
+                <p className={`font-sans text-[11px] font-light mb-3 ${booking.customizationType === "express" ? "text-paper/55" : "text-ink/40"}`}>Bring your unit on the day — allow 45 min–2 hrs extra depending on density</p>
+                <p className={`font-sans text-[11px] font-medium ${booking.customizationType === "express" ? "text-paper/80" : "text-ink/60"}`}>+₵{CUSTOMIZATION_FEES.express}</p>
+              </button>
+            </div>
+
+            {booking.customizationType && (
+              <div className={`border p-4 mb-10 flex gap-3 ${booking.customizationType === "standard" ? "border-ink/10 bg-ink/[0.02]" : "border-amber-200 bg-amber-50/60"}`}>
+                <span className="text-[0.85rem] flex-shrink-0 mt-0.5 text-ink/30">ℹ</span>
+                <p className="font-sans text-[12px] text-ink/55 font-light leading-relaxed">
+                  {booking.customizationType === "standard"
+                    ? "You'll need to drop off your unit at the salon 48–72 hours before your appointment date. We'll have everything ready for you on the day."
+                    : "Bring your unit along to your appointment. Please allow an additional 45 minutes to 2 hours on top of your scheduled time — exact duration depends on the density of the unit."}
                 </p>
-                <PhotoUpload
-                  photos={booking.unitPhotos}
-                  onChange={(urls) => set("unitPhotos", urls)}
-                  onUploadingChange={setPhotoUploading}
-                />
               </div>
             )}
+
+            <div className="border border-ink/10 p-6 mb-10">
+              <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/40 mb-1">Unit photo <span className="normal-case tracking-normal text-red-400/70">*required</span></p>
+              <p className="font-sans text-[12px] text-ink/40 font-light mb-5 leading-relaxed">
+                Add at least one photo of your unit so your stylist can prepare in advance.
+              </p>
+              <PhotoUpload
+                photos={booking.unitPhotos}
+                onChange={(urls) => set("unitPhotos", urls)}
+                onUploadingChange={setPhotoUploading}
+              />
+            </div>
 
             <StepFooter canNext={canNext()} onNext={next} showBack={true} onBack={back} backDisabled={photoUploading} />
           </div>
         )}
 
-        {/* ─ STEP 2: Schedule ────────────────────────────────────────────────── */}
-        {step === 2 && (
+        {/* ─ STEP 3: Schedule ────────────────────────────────────────────────── */}
+        {step === 3 && (
           <div>
-            <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-3">Step 3 of 6</p>
+            <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-3">Step {stepNum} of {totalSteps}</p>
             <h2 className="font-serif text-[clamp(2rem,5vw,3.5rem)] font-light text-ink leading-none mb-10">
               Pick a <span className="italic">date & time.</span>
             </h2>
+
+            {/* Emergency toggle */}
+            <div className="mb-10">
+              <button
+                onClick={() => {
+                  const toggled = !booking.isEmergency;
+                  setBooking(b => ({ ...b, isEmergency: toggled, date: null, time: "" }));
+                }}
+                className={`w-full sm:w-auto text-left border p-5 transition-all duration-200 flex items-start gap-4 ${
+                  booking.isEmergency ? "border-ink bg-ink" : "border-ink/15 hover:border-ink/40"
+                }`}
+              >
+                <span className={`text-[1.1rem] flex-shrink-0 mt-0.5 ${booking.isEmergency ? "text-paper/50" : "text-ink/20"}`}>⚡</span>
+                <div>
+                  <p className={`font-sans text-[12px] tracking-wide uppercase mb-1 ${booking.isEmergency ? "text-paper" : "text-ink"}`}>Emergency Booking</p>
+                  <p className={`font-sans text-[11px] font-light ${booking.isEmergency ? "text-paper/55" : "text-ink/40"}`}>
+                    Need this urgently? Book any date & time — priority handling. <span className={`font-medium ${booking.isEmergency ? "text-paper/80" : "text-ink/60"}`}>+₵{EMERGENCY_FEE}</span>
+                  </p>
+                </div>
+              </button>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-14">
               <div>
@@ -691,8 +805,8 @@ export default function BookingFlow() {
                 <MiniCalendar
                   selected={booking.date}
                   onSelect={(d) => { set("date", d); set("time", ""); }}
-                  blocked={blockedDates}
-                  disabledDays={disabledDays}
+                  blocked={booking.isEmergency ? [] : blockedDates}
+                  disabledDays={booking.isEmergency ? [] : disabledDays}
                 />
                 {booking.date && (
                   <p className="font-sans text-[11px] text-ink/45 mt-4">{formatDate(booking.date)}</p>
@@ -737,10 +851,10 @@ export default function BookingFlow() {
           </div>
         )}
 
-        {/* ─ STEP 3: Stylist ─────────────────────────────────────────────────── */}
-        {step === 3 && (
+        {/* ─ STEP 4: Stylist ─────────────────────────────────────────────────── */}
+        {step === 4 && (
           <div>
-            <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-3">Step 4 of 6</p>
+            <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-3">Step {stepNum} of {totalSteps}</p>
             <h2 className="font-serif text-[clamp(2rem,5vw,3.5rem)] font-light text-ink leading-none mb-3">
               Choose your <span className="italic">stylist.</span>
             </h2>
@@ -813,10 +927,10 @@ export default function BookingFlow() {
           </div>
         )}
 
-        {/* ─ STEP 4: Details ─────────────────────────────────────────────────── */}
-        {step === 4 && (
+        {/* ─ STEP 5: Details ─────────────────────────────────────────────────── */}
+        {step === 5 && (
           <div>
-            <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-3">Step 5 of 6</p>
+            <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-3">Step {stepNum} of {totalSteps}</p>
             <h2 className="font-serif text-[clamp(2rem,5vw,3.5rem)] font-light text-ink leading-none mb-10">
               Your <span className="italic">details.</span>
             </h2>
@@ -900,10 +1014,10 @@ export default function BookingFlow() {
           </div>
         )}
 
-        {/* ─ STEP 5: Review ──────────────────────────────────────────────────── */}
-        {step === 5 && (
+        {/* ─ STEP 6: Review ──────────────────────────────────────────────────── */}
+        {step === 6 && (
           <div>
-            <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-3">Step 6 of 6</p>
+            <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-3">Step {stepNum} of {totalSteps}</p>
             <h2 className="font-serif text-[clamp(2rem,5vw,3.5rem)] font-light text-ink leading-none mb-10">
               Review & <span className="italic">confirm.</span>
             </h2>
@@ -925,16 +1039,32 @@ export default function BookingFlow() {
                 )}
               </ReviewRow>
 
-              <ReviewRow label="Schedule" onEdit={() => goTo(2)}>
-                <p className="font-sans text-[14px] text-ink">{booking.date ? formatDate(booking.date) : "—"}</p>
+              {needsCustomization && (
+                <ReviewRow label="Customization" onEdit={() => goTo(2)}>
+                  <p className="font-sans text-[14px] text-ink capitalize">{booking.customizationType}</p>
+                  <p className="font-sans text-[12px] text-ink/50">
+                    {booking.customizationType === "standard"
+                      ? "Drop off 48–72 hrs before appointment"
+                      : "Bring unit on the day — allow 45 min–2 hrs extra"}
+                  </p>
+                </ReviewRow>
+              )}
+
+              <ReviewRow label="Schedule" onEdit={() => goTo(3)}>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-sans text-[14px] text-ink">{booking.date ? formatDate(booking.date) : "—"}</p>
+                  {booking.isEmergency && (
+                    <span className="font-sans text-[9px] tracking-widest uppercase bg-amber-100 text-amber-800 px-2 py-0.5 rounded-sm">Emergency</span>
+                  )}
+                </div>
                 <p className="font-sans text-[12px] text-ink/50">{booking.time}</p>
               </ReviewRow>
 
-              <ReviewRow label="Stylist" onEdit={() => goTo(3)}>
+              <ReviewRow label="Stylist" onEdit={() => goTo(4)}>
                 <p className="font-sans text-[14px] text-ink">{booking.stylistId ? booking.stylistName : "Any Available"}</p>
               </ReviewRow>
 
-              <ReviewRow label="Details" onEdit={() => goTo(4)}>
+              <ReviewRow label="Details" onEdit={() => goTo(5)}>
                 <p className="font-sans text-[14px] text-ink">{`${booking.firstName} ${booking.lastName}`.trim()}</p>
                 <p className="font-sans text-[12px] text-ink/50">{booking.phone}</p>
                 <p className="font-sans text-[12px] text-ink/50">{booking.email}</p>
@@ -943,13 +1073,35 @@ export default function BookingFlow() {
                 )}
               </ReviewRow>
 
-              {/* Deposit */}
-              <div className="py-6 flex items-end justify-between">
-                <div>
-                  <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-1">{isPriceRange ? "Deposit due now" : "Total"}</p>
-                  <p className="font-sans text-[10px] text-ink/30 font-light">{isPriceRange ? "Balance confirmed and paid on the day" : "Full payment collected upfront"}</p>
+              {/* Price breakdown */}
+              <div className="py-6 flex flex-col gap-2.5">
+                <div className="flex items-center justify-between">
+                  <p className="font-sans text-[12px] text-ink/50">{isPriceRange ? "Deposit" : "Service"}</p>
+                  <p className="font-sans text-[12px] text-ink">₵{baseDeposit + booking.stylistFeeAdj}</p>
                 </div>
-                <p className="font-serif text-[2rem] font-light text-ink">₵{totalDeposit}</p>
+                {customizationFee > 0 && (
+                  <div className="flex items-center justify-between">
+                    <p className="font-sans text-[12px] text-ink/50">Customization ({booking.customizationType})</p>
+                    <p className="font-sans text-[12px] text-ink">+₵{customizationFee}</p>
+                  </div>
+                )}
+                {emergencyFee > 0 && (
+                  <div className="flex items-center justify-between">
+                    <p className="font-sans text-[12px] text-ink/50">Emergency fee</p>
+                    <p className="font-sans text-[12px] text-ink">+₵{emergencyFee}</p>
+                  </div>
+                )}
+                <div className="flex items-center justify-between">
+                  <p className="font-sans text-[12px] text-ink/50">Service charge (5%)</p>
+                  <p className="font-sans text-[12px] text-ink">+₵{serviceFee}</p>
+                </div>
+                <div className="flex items-end justify-between pt-3 border-t border-ink/[0.07]">
+                  <div>
+                    <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-1">{isPriceRange ? "Deposit due now" : "Total"}</p>
+                    <p className="font-sans text-[10px] text-ink/30 font-light">{isPriceRange ? "Balance confirmed and paid on the day" : "Full payment collected upfront"}</p>
+                  </div>
+                  <p className="font-serif text-[2rem] font-light text-ink">₵{totalDeposit}</p>
+                </div>
               </div>
             </div>
 
