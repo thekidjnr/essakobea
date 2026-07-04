@@ -10,7 +10,7 @@ import type { DbService } from "@/lib/supabase/types";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Services — Essakobea",
+  title: "Services | Essakobea",
   description:
     "Professional wig making, installations, coloring, and frontal styling in Accra, East Legon. Book your appointment today.",
 };
@@ -33,7 +33,7 @@ export default async function ServicesPage() {
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8">
           <div>
             <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 mb-5">
-              Accra, East Legon — Book: 0557205803
+              Accra, East Legon · Book: 0557205803
             </p>
             <h1 className="font-serif text-[clamp(3.5rem,8vw,8rem)] leading-[0.88] font-light text-ink">
               Our<br />
@@ -42,7 +42,7 @@ export default async function ServicesPage() {
           </div>
           <div className="max-w-sm md:pb-3">
             <p className="font-sans text-[13px] text-ink/50 font-light leading-relaxed mb-7">
-              {services.length} signature services. Transparent pricing. Every appointment is a collaboration — your vision, our craft.
+              {services.length} signature services. Transparent pricing. Every appointment is a collaboration: your vision, our craft.
             </p>
             <p className="font-sans text-[11px] text-ink/30 font-light">
               Prices are subject to change based on hair length, density, and condition.
@@ -70,14 +70,14 @@ export default async function ServicesPage() {
             >
               <Image
                 src={service.image_url}
-                alt={`${service.name} — Essakobea`}
+                alt={`${service.name} | Essakobea`}
                 fill
                 className={`object-cover ${service.image_position}`}
                 sizes="(max-width: 768px) 100vw, 50vw"
               />
               <div className="absolute top-6 left-6">
                 <span className="font-sans text-[10px] tracking-widest text-paper/70 bg-ink/50 backdrop-blur-sm px-3 py-1.5">
-                  {service.number} — {service.name}
+                  {service.number} · {service.name}
                 </span>
               </div>
             </div>
@@ -156,7 +156,7 @@ export default async function ServicesPage() {
           </div>
           <div className="flex flex-col gap-5 md:items-end">
             <p className="font-sans text-[13px] text-paper/40 font-light max-w-xs leading-relaxed md:text-right">
-              Reach out and we&apos;ll walk you through every option — no pressure, no obligation.
+              Reach out and we&apos;ll walk you through every option, no pressure, no obligation.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <Link

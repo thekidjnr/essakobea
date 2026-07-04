@@ -93,7 +93,7 @@ export const PRODUCTS: Product[] = [
     price: "₵1,800",
     priceRaw: 1800,
     length: "24 inch",
-    description: "Rich ginger auburn, full lace construction. Wear it up, wear it down — anywhere.",
+    description: "Rich ginger auburn, full lace construction. Wear it up, wear it down, anywhere.",
     image:
       "https://images.pexels.com/photos/2876486/pexels-photo-2876486.jpeg?auto=compress&cs=tinysrgb&w=800&q=85",
     tag: "New",
@@ -164,7 +164,7 @@ export const PRODUCTS: Product[] = [
     categoryLabel: "Accessories",
     price: "₵80",
     priceRaw: 80,
-    description: "Long-hold edge control. No flaking, no white cast — clean finish every time.",
+    description: "Long-hold edge control. No flaking, no white cast, clean finish every time.",
     image:
       "https://images.pexels.com/photos/5069432/pexels-photo-5069432.jpeg?auto=compress&cs=tinysrgb&w=800&q=85",
     inStock: true,
@@ -176,7 +176,7 @@ export const PRODUCTS: Product[] = [
     categoryLabel: "Accessories",
     price: "₵60",
     priceRaw: 60,
-    description: "Velvet grip band. Keeps your unit secure all day — no glue needed.",
+    description: "Velvet grip band. Keeps your unit secure all day, no glue needed.",
     image:
       "https://images.pexels.com/photos/4041392/pexels-photo-4041392.jpeg?auto=compress&cs=tinysrgb&w=800&q=85",
     inStock: true,
@@ -201,7 +201,7 @@ export const PRODUCTS: Product[] = [
     categoryLabel: "Accessories",
     price: "₵350",
     priceRaw: 350,
-    description: "Everything you need to keep your unit fresh — shampoo, conditioner, detangler & stand.",
+    description: "Everything you need to keep your unit fresh: shampoo, conditioner, detangler & stand.",
     image:
       "https://images.pexels.com/photos/4465124/pexels-photo-4465124.jpeg?auto=compress&cs=tinysrgb&w=800&q=85",
     inStock: true,

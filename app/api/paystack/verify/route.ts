@@ -42,7 +42,7 @@ export async function POST(req: Request) {
         await getResend().emails.send({
           from: FROM,
           to: booking.client_email,
-          subject: `Booking confirmed — ${booking.service_name} on ${formattedDate}`,
+          subject: `Booking confirmed: ${booking.service_name} on ${formattedDate}`,
           html: bookingConfirmationHtml({
             clientName:        booking.client_name,
             serviceName:       booking.service_name,
@@ -82,7 +82,7 @@ export async function POST(req: Request) {
         await getResend().emails.send({
           from: FROM,
           to: order.client_email,
-          subject: `Order confirmed — Essakobea`,
+          subject: `Order confirmed | Essakobea`,
           html: orderConfirmationHtml({
             clientName: order.client_name,
             orderId: order.id,

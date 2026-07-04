@@ -3,12 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useBag } from "@/contexts/BagContext";
 
 export default function Nav() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const { count: bagCount } = useBag();
   const pathname = usePathname();
   const isHome = pathname === "/";
   const transparent = isHome && !scrolled;
@@ -53,9 +51,6 @@ export default function Nav() {
             <Link href="/works" className="hover:opacity-50 transition-opacity duration-300">
               Works
             </Link>
-            <Link href="/shop" className="hover:opacity-50 transition-opacity duration-300">
-              Shop
-            </Link>
             <Link href="/about" className="hover:opacity-50 transition-opacity duration-300">
               About
             </Link>
@@ -72,29 +67,6 @@ export default function Nav() {
               }`}
             >
               Book Now
-            </Link>
-            <Link
-              href="/shop"
-              className={`font-sans text-[11px] tracking-widest font-medium uppercase px-5 py-2.5 transition-all duration-300 ${
-                transparent
-                  ? "bg-paper text-ink hover:bg-paper/80"
-                  : "bg-ink text-paper hover:bg-ink/80"
-              }`}
-            >
-              Shop
-            </Link>
-            <Link
-              href="/bag"
-              className={`relative font-sans text-[11px] tracking-widest font-medium uppercase px-3 py-2.5 transition-colors duration-300 ${
-                transparent ? "text-paper hover:opacity-60" : "text-ink hover:opacity-60"
-              }`}
-            >
-              Bag
-              {bagCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-ink text-paper text-[8px] flex items-center justify-center border-2 border-paper">
-                  {bagCount}
-                </span>
-              )}
             </Link>
           </div>
 
@@ -135,7 +107,6 @@ export default function Nav() {
           {[
             ["Services", "/services"],
             ["Works", "/works"],
-            ["Shop", "/shop"],
             ["About", "/about"],
             ["Book Now", "/book"],
           ].map(([label, href]) => (

@@ -92,7 +92,7 @@ export default function WorksGallery({ photos, serviceName }: { photos: Photo[];
           >
             <Image
               src={photo.image_url}
-              alt={photo.caption ?? `${serviceName} — Essakobea`}
+              alt={photo.caption ?? `${serviceName} | Essakobea`}
               width={800}
               height={1000}
               className="w-full h-auto object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
@@ -170,7 +170,7 @@ export default function WorksGallery({ photos, serviceName }: { photos: Photo[];
               <>
                 <Image
                   src={current.image_url}
-                  alt={current.caption ?? `${serviceName} — Essakobea`}
+                  alt={current.caption ?? `${serviceName} | Essakobea`}
                   width={1200}
                   height={1600}
                   className="max-w-[82vw] max-h-[78vh] w-auto h-auto object-contain"

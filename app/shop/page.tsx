@@ -11,9 +11,9 @@ import type { DbProduct } from "@/lib/supabase/types";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Shop — Essakobea",
+  title: "Shop | Essakobea",
   description:
-    "Premium wigs and hair accessories. Lace fronts, full lace, closure units — curated for quality.",
+    "Premium wigs and hair accessories. Lace fronts, full lace, closure units, curated for quality.",
 };
 
 export default async function ShopPage() {
@@ -33,14 +33,14 @@ export default async function ShopPage() {
           {/* Text side */}
           <div className="flex flex-col justify-end px-6 md:px-16 pt-52 pb-16 md:pt-64 md:pb-20 bg-paper order-2 md:order-1">
             <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 mb-5">
-              Essakobea — The Collection
+              The Essakobea Collection
             </p>
             <h1 className="font-serif text-[clamp(3rem,7vw,7rem)] leading-[0.88] font-light text-ink mb-8">
               Wear it<br />
               <span className="italic">well.</span>
             </h1>
             <p className="font-sans text-[13px] text-ink/50 font-light max-w-xs leading-relaxed mb-10">
-              Premium wigs and hair accessories — every piece selected for quality, craftsmanship, and beauty.
+              Premium wigs and hair accessories, every piece selected for quality, craftsmanship, and beauty.
             </p>
             <div className="flex items-center gap-3">
               <Link

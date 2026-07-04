@@ -48,7 +48,7 @@ export async function POST(req: Request) {
     const staleThreshold = new Date(Date.now() - SLOT_HOLD_MS).toISOString()
     await adminDb
       .from('bookings')
-      .update({ status: 'cancelled', cancellation_reason: 'Payment timeout — slot released' })
+      .update({ status: 'cancelled', cancellation_reason: 'Payment timeout, slot released' })
       .eq('booking_date', bookingDate)
       .eq('time_slot', timeSlot)
       .eq('status', 'pending')

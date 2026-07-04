@@ -43,7 +43,7 @@ export function orderConfirmationHtml(opts: {
 
   <div class="row">
     <span class="label">Delivery</span>
-    <span class="value">${opts.deliveryMethod === 'pickup' ? 'Pickup — East Legon Studio' : `Delivery — ${opts.deliveryAddress}`}</span>
+    <span class="value">${opts.deliveryMethod === 'pickup' ? 'Pickup: East Legon Studio' : `Delivery: ${opts.deliveryAddress}`}</span>
   </div>
 
   <div class="total-row">

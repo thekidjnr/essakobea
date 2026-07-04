@@ -12,7 +12,7 @@ export default function Statement() {
           </p>
           <blockquote className="font-serif text-[clamp(2rem,4vw,3.75rem)] leading-[1.1] text-paper font-light">
             &ldquo;Beauty is not an
-            <span className="italic"> accessory</span> — it is an{" "}
+            <span className="italic"> accessory</span>, it is an{" "}
             <span className="italic">identity.</span>&rdquo;
           </blockquote>
           <p className="font-sans text-[13px] text-paper/40 font-light mt-10 max-w-sm leading-relaxed">

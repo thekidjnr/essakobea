@@ -9,7 +9,7 @@ export default async function Services() {
     .select("slug,number,name,description,image_url,image_position")
     .eq("is_active", true)
     .order("display_order", { ascending: true })
-    .limit(3);
+    .limit(4);
 
   const services = (data as Pick<DbService, "slug" | "number" | "name" | "description" | "image_url" | "image_position">[] | null) ?? [];
 
@@ -31,18 +31,16 @@ export default async function Services() {
       </div>
 
       {/* Service cards */}
-      <div className="px-6 md:px-16 max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-        {services.map((service, i) => (
+      <div className="px-6 md:px-16 max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+        {services.map((service) => (
           <div key={service.slug} className="group cursor-pointer">
             <Link
               href={`/book?service=${service.slug}`}
-              className={`block relative overflow-hidden bg-mist ${
-                i === 1 ? "aspect-[3/4] md:aspect-[3/5]" : "aspect-[3/4]"
-              }`}
+              className="block relative overflow-hidden bg-mist aspect-[3/4]"
             >
               <Image
                 src={service.image_url}
-                alt={`${service.name} — Essakobea`}
+                alt={`${service.name} | Essakobea`}
                 fill
                 className={`object-cover ${service.image_position} transition-transform duration-700 group-hover:scale-105`}
                 sizes="(max-width: 768px) 100vw, 33vw"
@@ -58,22 +56,20 @@ export default async function Services() {
               </div>
             </Link>
             <div className="pt-5 pb-2">
-              <div className="flex items-baseline justify-between gap-3">
-                <Link href={`/services#${service.slug}`}>
-                  <h3 className="font-serif text-[clamp(1.4rem,2vw,1.75rem)] font-light text-ink leading-none group-hover:italic transition-all duration-300">
-                    {service.name}
-                  </h3>
-                </Link>
-                <Link
-                  href={`/works/${service.slug}`}
-                  className="flex-shrink-0 inline-flex items-center gap-1.5 font-sans text-[10px] tracking-widest uppercase text-ink/40 hover:text-ink transition-colors"
-                >
-                  See Our Work <span>→</span>
-                </Link>
-              </div>
-              <p className="hidden md:block font-sans text-[12px] text-ink/50 font-light leading-relaxed mt-2">
+              <Link href={`/services#${service.slug}`}>
+                <h3 className="font-serif text-[clamp(1.15rem,1.6vw,1.5rem)] font-light text-ink leading-none group-hover:italic transition-all duration-300">
+                  {service.name}
+                </h3>
+              </Link>
+              <p className="hidden md:block font-sans text-[12px] text-ink/50 font-light leading-relaxed mt-2 line-clamp-2">
                 {service.description}
               </p>
+              <Link
+                href={`/works/${service.slug}`}
+                className="mt-3 inline-flex items-center gap-1.5 font-sans text-[10px] tracking-widest uppercase text-ink/40 hover:text-ink transition-colors"
+              >
+                See Our Work <span>→</span>
+              </Link>
             </div>
           </div>
         ))}

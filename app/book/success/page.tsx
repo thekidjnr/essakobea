@@ -65,7 +65,7 @@ function BookingSuccess() {
           You&apos;re all set,<br /><span className="italic">{clientName}.</span>
         </h1>
         <p className="font-sans text-[13px] text-ink/50 font-light leading-relaxed mb-12 max-w-sm mx-auto">
-          Deposit received. Your appointment is confirmed — we&apos;ll message you on WhatsApp ahead of your visit.
+          Deposit received. Your appointment is confirmed, we&apos;ll message you on WhatsApp ahead of your visit.
         </p>
 
         {booking && (
@@ -73,7 +73,7 @@ function BookingSuccess() {
             {([
               ["Service",  booking.service_name],
               ["Treatment",booking.treatment],
-              booking.is_emergency ? ["Booking Type", "⚡ Emergency — Priority Handling"] : null,
+              booking.is_emergency ? ["Booking Type", "⚡ Emergency (Priority Handling)"] : null,
               booking.customization_type ? ["Customization", booking.customization_type === "standard" ? "Standard (drop off 48–72 hrs before)" : "Express (bring unit on the day)"] : null,
               ["Date", new Date(booking.booking_date).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })],
               ["Time",     booking.time_slot],

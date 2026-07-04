@@ -16,9 +16,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params;
   const { data } = await adminDb.from("products").select("name,description").eq("slug", id).single();
-  if (!data) return { title: "Product Not Found — Essakobea" };
+  if (!data) return { title: "Product Not Found | Essakobea" };
   return {
-    title: `${data.name} — Essakobea`,
+    title: `${data.name} | Essakobea`,
     description: data.description,
   };
 }

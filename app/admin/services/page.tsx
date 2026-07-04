@@ -236,7 +236,7 @@ export default function AdminServicesPage() {
               ×
             </button>
             <h2 className="font-serif text-[1.75rem] font-light text-ink mb-6">
-              {modal === "add" ? "Add Service" : `Edit — ${editing?.name}`}
+              {modal === "add" ? "Add Service" : `Edit ${editing?.name}`}
             </h2>
 
             <div className="flex flex-col gap-6">
@@ -329,7 +329,7 @@ function BookingOptionsBuilder({
   return (
     <div className="flex flex-col gap-2">
       {options.length === 0 && (
-        <p className="font-sans text-[11px] text-ink/30 py-1">No options yet — add at least one for clients to select.</p>
+        <p className="font-sans text-[11px] text-ink/30 py-1">No options yet. Add at least one for clients to select.</p>
       )}
       {/* Column headers */}
       {options.length > 0 && (

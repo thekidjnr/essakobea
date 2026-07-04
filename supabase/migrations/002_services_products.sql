@@ -55,7 +55,7 @@ INSERT INTO services (slug, name, number, tagline, description, image_url, image
 (
   'wig-making', 'Wig Making', '01',
   'Built for you. Only you.',
-  'Every unit we make starts with a consultation — your texture, your density, your aesthetic. We source quality hair and construct each wig by hand from cap construction to knot bleaching, plucking, and finish.',
+  'Hand-built from consultation to finish, tailored to your texture, density, and aesthetic.',
   'https://images.pexels.com/photos/3065209/pexels-photo-3065209.jpeg?auto=compress&cs=tinysrgb&w=1200&q=90',
   'object-top', false,
   '[
@@ -90,7 +90,7 @@ INSERT INTO services (slug, name, number, tagline, description, image_url, image
 (
   'installations', 'Installations', '02',
   'Seamless. Undetectable. Natural.',
-  'A great unit deserves a great install. We use professional technique — proper lace melting, edge styling, and adhesive or glueless methods — for a finish that looks second-skin. We also offer full revamp and treatment for existing wigs.',
+  'Professional lace melting, edge styling, and adhesive or glueless methods for a seamless, second-skin finish.',
   'https://images.pexels.com/photos/3993449/pexels-photo-3993449.jpeg?auto=compress&cs=tinysrgb&w=1200&q=90',
   'object-top', true,
   '[
@@ -116,7 +116,7 @@ INSERT INTO services (slug, name, number, tagline, description, image_url, image
 (
   'coloring', 'Coloring', '03',
   'Rich. Dimensional. Lasting.',
-  'From classic black to vibrant statement colours — our coloring service is tailored to your wig''s hair type, length, and density. All pricing is by inch range to keep it simple and transparent.',
+  'From classic black to vibrant statement colours, priced simply by inch range.',
   'https://images.pexels.com/photos/2876486/pexels-photo-2876486.jpeg?auto=compress&cs=tinysrgb&w=1200&q=90',
   'object-center', false,
   '[
@@ -140,32 +140,32 @@ INSERT INTO services (slug, name, number, tagline, description, image_url, image
 (
   'frontal-styling', 'Frontal Styling', '04',
   'Versatile. Elevated. Effortless.',
-  'Ponytails, half-up-half-down, and frontal styles — done right on both natural and relaxed hair. Quick turnaround, clean finish, every time.',
+  'Ponytails, half-up-half-down, and frontal styles, done right on both natural and relaxed hair.',
   'https://images.pexels.com/photos/3764119/pexels-photo-3764119.jpeg?auto=compress&cs=tinysrgb&w=1200&q=90',
   'object-center', true,
   '[
     {"label":"Ponytails","items":[
-      {"name":"Normal Ponytail — Natural Hair (no extensions)","price":"₵200"},
-      {"name":"Normal Ponytail — Relaxed Hair (no extensions)","price":"₵150"},
-      {"name":"Frontal Ponytail — Natural Hair","price":"₵450"},
-      {"name":"Frontal Ponytail — Relaxed Hair","price":"₵400"}
+      {"name":"Normal Ponytail (Natural Hair, no extensions)","price":"₵200"},
+      {"name":"Normal Ponytail (Relaxed Hair, no extensions)","price":"₵150"},
+      {"name":"Frontal Ponytail (Natural Hair)","price":"₵450"},
+      {"name":"Frontal Ponytail (Relaxed Hair)","price":"₵400"}
     ]},
     {"label":"Half Up / Half Down","items":[
-      {"name":"Half Up Half Down — Natural Hair","price":"₵270"},
-      {"name":"Half Up Half Down — Relaxed Hair","price":"₵250"},
-      {"name":"Frontal Half Up Half Down — Natural Hair","price":"₵500+"},
-      {"name":"Frontal Half Up Half Down — Relaxed Hair","price":"₵450+"}
+      {"name":"Half Up Half Down (Natural Hair)","price":"₵270"},
+      {"name":"Half Up Half Down (Relaxed Hair)","price":"₵250"},
+      {"name":"Frontal Half Up Half Down (Natural Hair)","price":"₵500+"},
+      {"name":"Frontal Half Up Half Down (Relaxed Hair)","price":"₵450+"}
     ]}
   ]',
   '[
-    {"id":"normal-ponytail-natural","name":"Normal Ponytail — Natural Hair","price":"₵200"},
-    {"id":"normal-ponytail-relaxed","name":"Normal Ponytail — Relaxed Hair","price":"₵150"},
-    {"id":"frontal-ponytail-natural","name":"Frontal Ponytail — Natural Hair","price":"₵450"},
-    {"id":"frontal-ponytail-relaxed","name":"Frontal Ponytail — Relaxed Hair","price":"₵400"},
-    {"id":"half-up-natural","name":"Half Up Half Down — Natural Hair","price":"₵270"},
-    {"id":"half-up-relaxed","name":"Half Up Half Down — Relaxed Hair","price":"₵250"},
-    {"id":"frontal-half-up-natural","name":"Frontal Half Up Half Down — Natural Hair","price":"₵500+"},
-    {"id":"frontal-half-up-relaxed","name":"Frontal Half Up Half Down — Relaxed Hair","price":"₵450+"}
+    {"id":"normal-ponytail-natural","name":"Normal Ponytail (Natural Hair)","price":"₵200"},
+    {"id":"normal-ponytail-relaxed","name":"Normal Ponytail (Relaxed Hair)","price":"₵150"},
+    {"id":"frontal-ponytail-natural","name":"Frontal Ponytail (Natural Hair)","price":"₵450"},
+    {"id":"frontal-ponytail-relaxed","name":"Frontal Ponytail (Relaxed Hair)","price":"₵400"},
+    {"id":"half-up-natural","name":"Half Up Half Down (Natural Hair)","price":"₵270"},
+    {"id":"half-up-relaxed","name":"Half Up Half Down (Relaxed Hair)","price":"₵250"},
+    {"id":"frontal-half-up-natural","name":"Frontal Half Up Half Down (Natural Hair)","price":"₵500+"},
+    {"id":"frontal-half-up-relaxed","name":"Frontal Half Up Half Down (Relaxed Hair)","price":"₵450+"}
   ]',
   3
 )
@@ -178,13 +178,13 @@ INSERT INTO products (slug, name, category, category_label, price_raw, length, d
 ('silk-press-unit', 'The Silk Press',     'lace-front', 'Lace Front',    1400, '26 inch', 'Blown-out silk press finish. Long, voluminous, and flawless.',        'https://images.pexels.com/photos/2065195/pexels-photo-2065195.jpeg?auto=compress&cs=tinysrgb&w=800&q=85',  NULL,         true, 1),
 ('chestnut-bob',    'The Chestnut Bob',   'lace-front', 'Lace Front',     800, '10 inch', 'Classic bob cut, chestnut brown. Clean lines, bold presence.',        'https://images.pexels.com/photos/3763188/pexels-photo-3763188.jpeg?auto=compress&cs=tinysrgb&w=800&q=85',  'New',        true, 2),
 ('midnight-wave',   'The Midnight Wave',  'lace-front', 'Lace Front',    1100, '20 inch', 'Deep body wave, natural black. Movement, dimension, and depth.',       'https://images.pexels.com/photos/3764119/pexels-photo-3764119.jpeg?auto=compress&q=85&cs=tinysrgb&w=800',   NULL,         true, 3),
-('ginger-goddess',  'The Ginger Goddess', 'full-lace',  'Full Lace',     1800, '24 inch', 'Rich ginger auburn, full lace construction. Wear it up, wear it down — anywhere.', 'https://images.pexels.com/photos/2876486/pexels-photo-2876486.jpeg?auto=compress&cs=tinysrgb&w=800&q=85', 'New', true, 4),
+('ginger-goddess',  'The Ginger Goddess', 'full-lace',  'Full Lace',     1800, '24 inch', 'Rich ginger auburn, full lace construction. Wear it up, wear it down, anywhere.', 'https://images.pexels.com/photos/2876486/pexels-photo-2876486.jpeg?auto=compress&cs=tinysrgb&w=800&q=85', 'New', true, 4),
 ('golden-hour',     'The Golden Hour',    'full-lace',  'Full Lace',     1650, '22 inch', 'Honey blonde, full lace. Catches the light exactly the way it should.', 'https://images.pexels.com/photos/3065209/pexels-photo-3065209.jpeg?auto=compress&cs=tinysrgb&w=800&q=85', 'Bestseller', true, 5),
 ('deep-curl-queen', 'The Deep Curl',      'full-lace',  'Full Lace',     1900, '20 inch', 'Defined deep curls, full lace. Bouncy, moisturised texture right out of the box.', 'https://images.pexels.com/photos/3993449/pexels-photo-3993449.jpeg?auto=compress&cs=tinysrgb&w=800&q=85', NULL, true, 6),
 ('natural-wave',    'The Natural Wave',   'closure',    'Closure Unit',   750, '16 inch', 'Natural texture body wave. 4×4 closure, soft density, everyday-ready.', 'https://images.pexels.com/photos/3765114/pexels-photo-3765114.jpeg?auto=compress&cs=tinysrgb&w=800&q=85', NULL, true, 7),
 ('classic-straight','The Classic',        'closure',    'Closure Unit',   680, '18 inch', 'Jet black, bone straight. 5×5 closure. The everyday essential.',        'https://images.pexels.com/photos/3992656/pexels-photo-3992656.jpeg?auto=compress&cs=tinysrgb&w=800&q=85', 'Bestseller', true, 8),
-('edge-control-kit','Edge Control Kit',   'accessories','Accessories',     80, NULL,      'Long-hold edge control. No flaking, no white cast — clean finish every time.', 'https://images.pexels.com/photos/5069432/pexels-photo-5069432.jpeg?auto=compress&cs=tinysrgb&w=800&q=85', NULL, true, 9),
-('wig-grip-band',   'Wig Grip Band',      'accessories','Accessories',     60, NULL,      'Velvet grip band. Keeps your unit secure all day — no glue needed.',    'https://images.pexels.com/photos/4041392/pexels-photo-4041392.jpeg?auto=compress&cs=tinysrgb&w=800&q=85', NULL, true, 10),
+('edge-control-kit','Edge Control Kit',   'accessories','Accessories',     80, NULL,      'Long-hold edge control. No flaking, no white cast, clean finish every time.', 'https://images.pexels.com/photos/5069432/pexels-photo-5069432.jpeg?auto=compress&cs=tinysrgb&w=800&q=85', NULL, true, 9),
+('wig-grip-band',   'Wig Grip Band',      'accessories','Accessories',     60, NULL,      'Velvet grip band. Keeps your unit secure all day, no glue needed.',    'https://images.pexels.com/photos/4041392/pexels-photo-4041392.jpeg?auto=compress&cs=tinysrgb&w=800&q=85', NULL, true, 10),
 ('lace-tint-spray', 'Lace Tint Spray',    'accessories','Accessories',    120, NULL,      'Tints transparent lace to match your skin tone in seconds.',           'https://images.pexels.com/photos/3785147/pexels-photo-3785147.jpeg?auto=compress&cs=tinysrgb&w=800&q=85', 'New', true, 11),
-('maintenance-kit', 'Wig Maintenance Kit','accessories','Accessories',    350, NULL,      'Everything you need to keep your unit fresh — shampoo, conditioner, detangler & stand.', 'https://images.pexels.com/photos/4465124/pexels-photo-4465124.jpeg?auto=compress&cs=tinysrgb&w=800&q=85', NULL, true, 12)
+('maintenance-kit', 'Wig Maintenance Kit','accessories','Accessories',    350, NULL,      'Everything you need to keep your unit fresh: shampoo, conditioner, detangler & stand.', 'https://images.pexels.com/photos/4465124/pexels-photo-4465124.jpeg?auto=compress&cs=tinysrgb&w=800&q=85', NULL, true, 12)
 ON CONFLICT (slug) DO NOTHING;

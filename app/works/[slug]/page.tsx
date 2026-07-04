@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     .single();
   if (!service) return {};
   return {
-    title: `${service.name} — Our Work | Essakobea`,
+    title: `${service.name} · Our Work | Essakobea`,
     description: service.tagline,
   };
 }
@@ -68,7 +68,7 @@ export default async function WorksPage({ params }: { params: Promise<{ slug: st
       <div className="pt-14">
         <div className="px-6 md:px-12 max-w-[1400px] mx-auto pt-16 pb-12 md:pt-20 md:pb-16">
           <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-4">
-            {service.number} — Our Work
+            {service.number} · Our Work
           </p>
           <h1 className="font-serif text-[clamp(3rem,7vw,7rem)] font-light text-ink leading-none">
             {service.name}<span className="italic">.</span>

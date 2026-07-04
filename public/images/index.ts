@@ -2,13 +2,18 @@
 
 export const homeImages = {
   hero: "/images/home/hero.jpg",
+  heroVideoPoster: "/images/home/hero-video-poster.jpg",
+  heroVideoPosterMobile: "/images/home/hero-video-poster-mobile.jpg",
   bookService: "/images/home/bookservice.jpg",
   shopCollection: "/images/home/shopcollection.jpg",
   eskWay: "/images/home/eskway.jpg",
 };
 
 export const servicesImages: Record<string, string> = {
-  // Add service images here as they are added to public/images/services/
+  wigMaking: "/images/services/wig-making.jpg",
+  coloring: "/images/services/coloring.jpg",
+  installations: "/images/services/installations.jpg",
+  frontalStyling: "/images/services/frontal-styling.jpg",
 };
 
 export const shopImages: Record<string, string> = {

@@ -17,9 +17,9 @@ const cormorant = Cormorant({
 });
 
 export const metadata: Metadata = {
-  title: "Essakobea — Premium Beauty, Elevated",
+  title: "Essakobea | Premium Beauty, Elevated",
   description:
-    "Book professional beauty services or shop a curated wig collection. Wig making, braids, and installations — all in one place.",
+    "Book professional beauty services or shop a curated wig collection. Wig making, braids, and installations, all in one place.",
   openGraph: {
     title: "Essakobea",
     description: "Premium beauty services & wig ecommerce.",

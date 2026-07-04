@@ -274,7 +274,7 @@ function TermsModal({ depositAmount, isRange, onAgree, onClose }: { depositAmoun
               onClick={onAgree}
               className="w-full bg-ink text-paper font-sans text-[11px] tracking-widest uppercase py-4 hover:bg-ink/80 transition-colors"
             >
-              {isRange ? `I Agree — Pay ₵${depositAmount} Deposit` : `I Agree — Pay ₵${depositAmount} Now`}
+              {isRange ? `I Agree, Pay ₵${depositAmount} Deposit` : `I Agree, Pay ₵${depositAmount} Now`}
             </button>
             <button
               onClick={onClose}
@@ -567,9 +567,9 @@ export default function BookingFlow() {
   // ─────────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-paper pt-[54px]">
-      {/* Step bar — sticks just below fixed Nav (~54px tall) */}
-      <div className="sticky top-[54px] z-30 bg-paper border-b border-ink/[0.07]">
+    <div className="min-h-screen bg-paper pt-[72px]">
+      {/* Step bar — sticks just below fixed Nav (72px tall) */}
+      <div className="sticky top-[72px] z-30 bg-paper border-b border-ink/[0.07]">
         <div className="max-w-[900px] mx-auto px-6 py-4 overflow-x-auto">
           <div className="flex items-center gap-0 min-w-max">
             {stepLabels.map((label, i) => (
@@ -678,7 +678,7 @@ export default function BookingFlow() {
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-10">
               {([
-                { id: "own_new" as HairUnitType, label: "I have a new unit", sub: "Brand new — never installed", icon: "✦" },
+                { id: "own_new" as HairUnitType, label: "I have a new unit", sub: "Brand new, never installed", icon: "✦" },
                 { id: "own_existing" as HairUnitType, label: "I have an existing unit", sub: "Previously worn or installed", icon: "◈" },
                 { id: "none" as HairUnitType, label: "Just the service", sub: "No unit needed from me", icon: "◇" },
               ]).map(opt => (
@@ -738,7 +738,7 @@ export default function BookingFlow() {
               >
                 <span className={`text-[1.25rem] mb-4 block ${booking.customizationType === "express" ? "text-paper/50" : "text-ink/20"}`}>◈</span>
                 <p className={`font-sans text-[12px] tracking-wide uppercase mb-1 ${booking.customizationType === "express" ? "text-paper" : "text-ink"}`}>Express</p>
-                <p className={`font-sans text-[11px] font-light mb-3 ${booking.customizationType === "express" ? "text-paper/55" : "text-ink/40"}`}>Bring your unit on the day — allow 45 min–2 hrs extra depending on density</p>
+                <p className={`font-sans text-[11px] font-light mb-3 ${booking.customizationType === "express" ? "text-paper/55" : "text-ink/40"}`}>Bring your unit on the day, allow 45 min–2 hrs extra depending on density</p>
                 <p className={`font-sans text-[11px] font-medium ${booking.customizationType === "express" ? "text-paper/80" : "text-ink/60"}`}>+₵{CUSTOMIZATION_FEES.express}</p>
               </button>
             </div>
@@ -749,7 +749,7 @@ export default function BookingFlow() {
                 <p className="font-sans text-[12px] text-ink/55 font-light leading-relaxed">
                   {booking.customizationType === "standard"
                     ? "You'll need to drop off your unit at the salon 48–72 hours before your appointment date. We'll have everything ready for you on the day."
-                    : "Bring your unit along to your appointment. Please allow an additional 45 minutes to 2 hours on top of your scheduled time — exact duration depends on the density of the unit."}
+                    : "Bring your unit along to your appointment. Please allow an additional 45 minutes to 2 hours on top of your scheduled time, exact duration depends on the density of the unit."}
                 </p>
               </div>
             )}
@@ -793,7 +793,7 @@ export default function BookingFlow() {
                 <div>
                   <p className={`font-sans text-[12px] tracking-wide uppercase mb-1 ${booking.isEmergency ? "text-paper" : "text-ink"}`}>Emergency Booking</p>
                   <p className={`font-sans text-[11px] font-light ${booking.isEmergency ? "text-paper/55" : "text-ink/40"}`}>
-                    Need this urgently? Book any date & time — priority handling. <span className={`font-medium ${booking.isEmergency ? "text-paper/80" : "text-ink/60"}`}>+₵{EMERGENCY_FEE}</span>
+                    Need this urgently? Book any date & time, priority handling. <span className={`font-medium ${booking.isEmergency ? "text-paper/80" : "text-ink/60"}`}>+₵{EMERGENCY_FEE}</span>
                   </p>
                 </div>
               </button>
@@ -956,7 +956,7 @@ export default function BookingFlow() {
                 <div className="bg-ink/[0.04] border border-ink/10 px-4 py-3 flex items-start gap-3">
                   <span className="text-ink/40 text-[0.85rem] flex-shrink-0 mt-0.5">◎</span>
                   <p className="font-sans text-[11px] text-ink/55 leading-relaxed">
-                    Welcome back, <span className="text-ink font-medium">{foundClient.name.split(" ")[0]}</span>. We've filled in your details — feel free to update anything.
+                    Welcome back, <span className="text-ink font-medium">{foundClient.name.split(" ")[0]}</span>. We've filled in your details, feel free to update anything.
                   </p>
                 </div>
               )}
@@ -1032,7 +1032,7 @@ export default function BookingFlow() {
                 <p className="font-sans text-[14px] text-ink">
                   {booking.hairUnitType === "own_new"      ? "New unit (bringing)" :
                    booking.hairUnitType === "own_existing" ? "Existing unit (bringing)" :
-                   "No unit — service only"}
+                   "No unit, service only"}
                 </p>
                 {booking.unitPhotos.length > 0 && (
                   <p className="font-sans text-[11px] text-ink/35">{booking.unitPhotos.length} photo{booking.unitPhotos.length > 1 ? "s" : ""} attached</p>
@@ -1045,14 +1045,14 @@ export default function BookingFlow() {
                   <p className="font-sans text-[12px] text-ink/50">
                     {booking.customizationType === "standard"
                       ? "Drop off 48–72 hrs before appointment"
-                      : "Bring unit on the day — allow 45 min–2 hrs extra"}
+                      : "Bring unit on the day, allow 45 min–2 hrs extra"}
                   </p>
                 </ReviewRow>
               )}
 
               <ReviewRow label="Schedule" onEdit={() => goTo(3)}>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <p className="font-sans text-[14px] text-ink">{booking.date ? formatDate(booking.date) : "—"}</p>
+                  <p className="font-sans text-[14px] text-ink">{booking.date ? formatDate(booking.date) : "–"}</p>
                   {booking.isEmergency && (
                     <span className="font-sans text-[9px] tracking-widest uppercase bg-amber-100 text-amber-800 px-2 py-0.5 rounded-sm">Emergency</span>
                   )}

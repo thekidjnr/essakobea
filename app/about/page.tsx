@@ -6,9 +6,9 @@ import Footer from "@/components/layout/Footer";
 import { aboutImages } from "@/public/images";
 
 export const metadata: Metadata = {
-  title: "About — Essakobea",
+  title: "About | Essakobea",
   description:
-    "Essakobea is a premium beauty studio in Accra, East Legon — combining professional hair services with a curated wig collection.",
+    "Essakobea is a premium beauty studio in Accra, East Legon, combining professional hair services with a curated wig collection.",
 };
 
 const pillars = [
@@ -22,13 +22,13 @@ const pillars = [
     number: "02",
     name: "Care",
     description:
-      "Your hair's health is always the priority. Every service begins with a consultation and ends with aftercare guidance — because your hair doesn't stop mattering after you leave.",
+      "Your hair's health is always the priority. Every service begins with a consultation and ends with aftercare guidance, because your hair doesn't stop mattering after you leave.",
   },
   {
     number: "03",
     name: "Confidence",
     description:
-      "We believe great hair isn't vanity — it's armour. When you feel good in your hair, you move differently. That's what we're here for.",
+      "We believe great hair isn't vanity, it's armour. When you feel good in your hair, you move differently. That's what we're here for.",
   },
 ];
 
@@ -81,18 +81,18 @@ export default function AboutPage() {
             </p>
             <div className="flex flex-col gap-6">
               <p className="font-serif text-[1.5rem] md:text-[1.75rem] font-light text-ink leading-snug">
-                Essakobea was born from a simple conviction — that premium hair
+                Essakobea was born from a simple conviction: that premium hair
                 services shouldn&apos;t feel inaccessible.
               </p>
               <p className="font-sans text-[13px] text-ink/55 font-light leading-relaxed">
                 We started in Accra, East Legon, with one studio and an
                 obsession with doing things properly. No shortcuts, no
-                mediocrity — just well-crafted hair and a client experience that
+                mediocrity, just well-crafted hair and a client experience that
                 actually feels good.
               </p>
               <p className="font-sans text-[13px] text-ink/55 font-light leading-relaxed">
                 Today, Essakobea sits at the intersection of in-studio service
-                and ecommerce — so whether you want to book a full installation
+                and ecommerce, so whether you want to book a full installation
                 or pick up a ready-made unit, everything lives in one place.
               </p>
               <p className="font-sans text-[13px] text-ink/55 font-light leading-relaxed">
@@ -108,7 +108,7 @@ export default function AboutPage() {
             <div className="relative aspect-[3/4] overflow-hidden">
               <Image
                 src={aboutImages.portrait}
-                alt="Essakobea — Our Story"
+                alt="Essakobea | Our Story"
                 fill
                 className="object-cover object-center"
                 sizes="(max-width: 768px) 100vw, 50vw"
@@ -201,13 +201,13 @@ export default function AboutPage() {
               <span className="italic">Everything.</span>
             </h2>
             <p className="font-sans text-[13px] text-paper/50 font-light leading-relaxed mb-6 max-w-sm">
-              Essakobea is not just a salon. It&apos;s a complete beauty system
-              — book an appointment, shop a wig, manage it all from your phone.
+              Essakobea is not just a salon. It&apos;s a complete beauty system:
+              book an appointment, shop a wig, manage it all from your phone.
             </p>
             <p className="font-sans text-[13px] text-paper/50 font-light leading-relaxed max-w-sm">
               We built the digital side of Essakobea so that our clients never
-              have to chase us down. Your booking, your collection, your history
-              — all in one place.
+              have to chase us down. Your booking, your collection, your history,
+              all in one place.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 mt-12">
@@ -231,7 +231,7 @@ export default function AboutPage() {
             {[
               [
                 "Appointment Booking",
-                "Select your service, date, and time — done in under 2 minutes.",
+                "Select your service, date, and time, done in under 2 minutes.",
               ],
               [
                 "Wig Collection",
@@ -323,7 +323,7 @@ export default function AboutPage() {
               in the room first.&rdquo;
             </blockquote>
             <p className="font-sans text-[11px] tracking-widest uppercase text-ink/30">
-              — Essakobea
+              Essakobea
             </p>
             <div className="mt-12 flex flex-col sm:flex-row gap-3">
               <Link

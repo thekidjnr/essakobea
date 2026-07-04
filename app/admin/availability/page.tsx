@@ -234,7 +234,7 @@ export default function AdminAvailability() {
                       value={day.open_time}
                       onChange={(v) => updateTime(day.day_of_week, "open_time", v)}
                     />
-                    <span className="font-sans text-[10px] text-ink/30">—</span>
+                    <span className="font-sans text-[10px] text-ink/30">–</span>
                     <TimeSelect
                       value={day.close_time}
                       onChange={(v) => updateTime(day.day_of_week, "close_time", v)}

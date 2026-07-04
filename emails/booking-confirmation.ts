@@ -32,7 +32,7 @@ export function bookingConfirmationHtml(opts: {
     opts.stylistName ? ['Stylist', opts.stylistName] : null,
     ['Date',      opts.bookingDate],
     ['Time',      opts.timeSlot],
-    opts.isEmergency ? ['Booking Type', '⚡ Emergency — Priority Handling'] : null,
+    opts.isEmergency ? ['Booking Type', '⚡ Emergency (Priority Handling)'] : null,
     custLabel ? ['Customization', custLabel] : null,
     ['Location',  'East Legon, Accra'],
     ['Booking Ref', ref],
@@ -72,7 +72,7 @@ export function bookingConfirmationHtml(opts: {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Booking Confirmed — Essakobea</title>
+  <title>Booking Confirmed | Essakobea</title>
 </head>
 <body style="margin:0;padding:0;background:#f4f2ef;font-family:Georgia,serif">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f2ef;padding:48px 16px">
@@ -150,7 +150,7 @@ export function bookingConfirmationHtml(opts: {
                   <span style="font-size:14px;color:#1A212B">·</span>
                 </td>
                 <td style="padding:10px 0 10px 10px;border-bottom:1px solid #f8f6f3;font-size:12px;color:#6B6560;font-family:'Inter',Arial,sans-serif;line-height:1.6">
-                  <strong style="color:#1A212B;font-weight:500">Rescheduling</strong> is available up to 48 hours before your appointment — just reach out on WhatsApp.
+                  <strong style="color:#1A212B;font-weight:500">Rescheduling</strong> is available up to 48 hours before your appointment, just reach out on WhatsApp.
                 </td>
               </tr>
               <tr>

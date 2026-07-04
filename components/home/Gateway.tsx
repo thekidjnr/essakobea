@@ -19,14 +19,14 @@ export default function Gateway() {
         <div className="absolute inset-0 bg-ink/50 group-hover:bg-ink/40 transition-colors duration-500" />
         <div className="relative z-10 h-full flex flex-col justify-end p-10 md:p-16 min-h-[50vh] md:min-h-[90vh]">
           <span className="font-sans text-[10px] tracking-widest2 uppercase text-paper/50 mb-4 block">
-            01 — Services
+            01 · Services
           </span>
           <h2 className="font-serif text-[clamp(2.5rem,4vw,4.5rem)] leading-none text-paper font-light mb-4">
             Book a<br />
             <span className="italic">Service</span>
           </h2>
           <p className="font-sans text-[13px] text-paper/60 font-light max-w-xs mb-8 leading-relaxed">
-            Wig making, braids, installs, and more — crafted by professionals,
+            Wig making, braids, installs, and more, crafted by professionals,
             tailored to you.
           </p>
           <Link
@@ -57,7 +57,7 @@ export default function Gateway() {
         <div className="absolute inset-0 bg-ink/50 group-hover:bg-ink/40 transition-colors duration-500" />
         <div className="relative z-10 h-full flex flex-col justify-end p-10 md:p-16 min-h-[50vh] md:min-h-[90vh]">
           <span className="font-sans text-[10px] tracking-widest2 uppercase text-paper/50 mb-4 block">
-            02 — Collection
+            02 · Collection
           </span>
           <h2 className="font-serif text-[clamp(2.5rem,4vw,4.5rem)] leading-none text-paper font-light mb-4">
             Shop the

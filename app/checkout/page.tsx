@@ -121,7 +121,7 @@ export default function CheckoutPage() {
                         form.deliveryMethod === m ? "bg-ink text-paper border-ink" : "border-ink/20 text-ink/50 hover:border-ink/50"
                       }`}
                     >
-                      {m === "pickup" ? "Pickup — Free" : `Delivery — ₵${DELIVERY_FEE}`}
+                      {m === "pickup" ? "Pickup (Free)" : `Delivery (₵${DELIVERY_FEE})`}
                     </button>
                   ))}
                 </div>
@@ -161,7 +161,7 @@ export default function CheckoutPage() {
                 {loading ? "Redirecting to Paystack…" : `Pay ₵${total.toLocaleString()} via Paystack →`}
               </button>
               <p className="font-sans text-[11px] text-ink/30 -mt-2">
-                Secure payment via Paystack — Card or Mobile Money accepted.
+                Secure payment via Paystack. Card or Mobile Money accepted.
               </p>
             </form>
 

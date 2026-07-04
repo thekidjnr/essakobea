@@ -39,12 +39,12 @@ UPDATE services SET booking_options = '[
 ]'::jsonb WHERE slug = 'coloring';
 
 UPDATE services SET booking_options = '[
-  {"id":"normal-ponytail-natural","name":"Normal Ponytail — Natural Hair","price":"₵200","price_raw":200},
-  {"id":"normal-ponytail-relaxed","name":"Normal Ponytail — Relaxed Hair","price":"₵150","price_raw":150},
-  {"id":"frontal-ponytail-natural","name":"Frontal Ponytail — Natural Hair","price":"₵450","price_raw":450},
-  {"id":"frontal-ponytail-relaxed","name":"Frontal Ponytail — Relaxed Hair","price":"₵400","price_raw":400},
-  {"id":"half-up-natural","name":"Half Up Half Down — Natural Hair","price":"₵270","price_raw":270},
-  {"id":"half-up-relaxed","name":"Half Up Half Down — Relaxed Hair","price":"₵250","price_raw":250},
-  {"id":"frontal-half-up-natural","name":"Frontal Half Up Half Down — Natural Hair","price":"₵500+","price_raw":500},
-  {"id":"frontal-half-up-relaxed","name":"Frontal Half Up Half Down — Relaxed Hair","price":"₵450+","price_raw":450}
+  {"id":"normal-ponytail-natural","name":"Normal Ponytail (Natural Hair)","price":"₵200","price_raw":200},
+  {"id":"normal-ponytail-relaxed","name":"Normal Ponytail (Relaxed Hair)","price":"₵150","price_raw":150},
+  {"id":"frontal-ponytail-natural","name":"Frontal Ponytail (Natural Hair)","price":"₵450","price_raw":450},
+  {"id":"frontal-ponytail-relaxed","name":"Frontal Ponytail (Relaxed Hair)","price":"₵400","price_raw":400},
+  {"id":"half-up-natural","name":"Half Up Half Down (Natural Hair)","price":"₵270","price_raw":270},
+  {"id":"half-up-relaxed","name":"Half Up Half Down (Relaxed Hair)","price":"₵250","price_raw":250},
+  {"id":"frontal-half-up-natural","name":"Frontal Half Up Half Down (Natural Hair)","price":"₵500+","price_raw":500},
+  {"id":"frontal-half-up-relaxed","name":"Frontal Half Up Half Down (Relaxed Hair)","price":"₵450+","price_raw":450}
 ]'::jsonb WHERE slug = 'frontal-styling';

@@ -8,7 +8,7 @@ import { adminDb } from "@/lib/supabase/admin";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Our Work — Essakobea",
+  title: "Our Work | Essakobea",
   description: "A portfolio of our wig installations, frontal styling, coloring, and more. Real clients. Real results.",
 };
 

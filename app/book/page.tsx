@@ -4,7 +4,7 @@ import Nav from "@/components/layout/Nav";
 import BookingFlow from "@/components/booking/BookingFlow";
 
 export const metadata: Metadata = {
-  title: "Book an Appointment — Essakobea",
+  title: "Book an Appointment | Essakobea",
   description: "Book a professional beauty appointment in Accra, East Legon.",
 };
 

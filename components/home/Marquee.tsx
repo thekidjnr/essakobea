@@ -20,7 +20,7 @@ export default function Marquee() {
             className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 mx-8 flex-shrink-0"
           >
             {item}
-            <span className="ml-8 text-ink/20">—</span>
+            <span className="ml-8 text-ink/20">·</span>
           </span>
         ))}
       </div>
