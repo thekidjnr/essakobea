@@ -64,7 +64,7 @@ function BookingSuccess() {
         <h1 className="font-serif text-[clamp(2.5rem,6vw,5rem)] font-light text-ink leading-none mb-6">
           You&apos;re all set,<br /><span className="italic">{clientName}.</span>
         </h1>
-        <p className="font-sans text-[13px] text-ink/50 font-light leading-relaxed mb-12 max-w-sm mx-auto">
+        <p className="font-sans text-[14px] text-ink/65 font-light leading-relaxed mb-12 max-w-sm mx-auto">
           Deposit received. Your appointment is confirmed, we&apos;ll message you on WhatsApp ahead of your visit.
         </p>
 
@@ -80,8 +80,8 @@ function BookingSuccess() {
               ["Location", "East Legon, Accra"],
             ] as ([string, string] | null)[]).filter((r): r is [string, string] => r !== null).map(([label, value]) => (
               <div key={label} className="flex items-start justify-between py-3 border-b border-ink/[0.07] last:border-0">
-                <span className="font-sans text-[10px] tracking-widest uppercase text-ink/35">{label}</span>
-                <span className="font-sans text-[13px] text-ink font-light text-right">{value}</span>
+                <span className="font-sans text-[10px] tracking-widest uppercase text-ink/45">{label}</span>
+                <span className="font-sans text-[14px] text-ink font-light text-right">{value}</span>
               </div>
             ))}
             {/* Fee breakdown */}

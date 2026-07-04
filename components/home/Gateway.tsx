@@ -25,7 +25,7 @@ export default function Gateway() {
             Book a<br />
             <span className="italic">Service</span>
           </h2>
-          <p className="font-sans text-[13px] text-paper/60 font-light max-w-xs mb-8 leading-relaxed">
+          <p className="font-sans text-[14px] text-paper/70 font-light max-w-xs mb-8 leading-relaxed">
             Wig making, braids, installs, and more, crafted by professionals,
             tailored to you.
           </p>
@@ -64,7 +64,7 @@ export default function Gateway() {
             <br />
             <span className="italic">Collection</span>
           </h2>
-          <p className="font-sans text-[13px] text-paper/60 font-light max-w-xs mb-8 leading-relaxed">
+          <p className="font-sans text-[14px] text-paper/70 font-light max-w-xs mb-8 leading-relaxed">
             Premium wigs, curated for quality. Find your perfect unit and wear
             it with confidence.
           </p>

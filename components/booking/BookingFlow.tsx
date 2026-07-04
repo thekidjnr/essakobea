@@ -207,8 +207,8 @@ function PhotoUpload({ photos, onChange, onUploadingChange }: {
           <p className="font-sans text-[12px] text-ink/40">Uploading…</p>
         ) : (
           <>
-            <p className="font-sans text-[12px] text-ink/50">Drop a photo here or <span className="underline">browse</span></p>
-            <p className="font-sans text-[10px] text-ink/25 mt-1">JPG, PNG up to 10 MB</p>
+            <p className="font-sans text-[13px] text-ink/60">Drop a photo here or <span className="underline">browse</span></p>
+            <p className="font-sans text-[11px] text-ink/45 mt-1">JPG, PNG up to 10 MB</p>
           </>
         )}
       </div>
@@ -264,7 +264,7 @@ function TermsModal({ depositAmount, isRange, onAgree, onClose }: { depositAmoun
                 <span className="font-sans text-[10px] text-ink/20 flex-shrink-0 pt-0.5 w-5">{String(i + 1).padStart(2, "0")}</span>
                 <div>
                   <p className="font-sans text-[11px] tracking-wide uppercase text-ink/60 mb-1">{title}</p>
-                  <p className="font-sans text-[12px] text-ink/45 leading-relaxed font-light">{body}</p>
+                  <p className="font-sans text-[13px] text-ink/60 leading-relaxed font-light">{body}</p>
                 </div>
               </div>
             ))}
@@ -301,24 +301,31 @@ function StepFooter({
   backDisabled?: boolean;
   nextLabel?: string;
 }) {
+  const visible = canNext || showBack;
+
   return (
-    <div className="flex items-center gap-6 mt-12">
-      {showBack && (
+    <div
+      className="fixed bottom-0 left-0 right-0 z-40 bg-paper/95 backdrop-blur-sm border-t border-ink/[0.07] transition-transform duration-300 ease-out"
+      style={{ transform: visible ? "translateY(0)" : "translateY(100%)" }}
+    >
+      <div className="max-w-[900px] mx-auto px-6 py-4 flex items-center gap-6">
+        {showBack && (
+          <button
+            onClick={onBack}
+            disabled={backDisabled}
+            className="font-sans text-[11px] tracking-widest uppercase text-ink/35 hover:text-ink transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            ← Back
+          </button>
+        )}
         <button
-          onClick={onBack}
-          disabled={backDisabled}
-          className="font-sans text-[11px] tracking-widest uppercase text-ink/35 hover:text-ink transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          onClick={onNext}
+          disabled={!canNext}
+          className="ml-auto bg-ink text-paper font-sans text-[11px] tracking-widest uppercase px-10 py-4 hover:bg-ink/80 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         >
-          ← Back
+          {nextLabel}
         </button>
-      )}
-      <button
-        onClick={onNext}
-        disabled={!canNext}
-        className="bg-ink text-paper font-sans text-[11px] tracking-widest uppercase px-10 py-4 hover:bg-ink/80 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-      >
-        {nextLabel}
-      </button>
+      </div>
     </div>
   );
 }
@@ -605,8 +612,8 @@ export default function BookingFlow() {
 
       {/* Content */}
       <div
-        className="max-w-[900px] mx-auto px-6 py-12 md:py-16"
-        style={{ opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(10px)", transition: "opacity 230ms ease, transform 230ms ease" }}
+        className="max-w-[900px] mx-auto px-6 py-12 md:py-16 pb-32"
+        style={{ opacity: visible ? 1 : 0, transform: visible ? undefined : "translateY(10px)", transition: "opacity 230ms ease, transform 230ms ease" }}
       >
 
         {/* ─ STEP 0: Service ─────────────────────────────────────────────────── */}
@@ -661,7 +668,6 @@ export default function BookingFlow() {
                 </div>
               ))}
             </div>
-            <StepFooter canNext={canNext()} onNext={next} showBack={false} onBack={back} />
           </div>
         )}
 
@@ -672,7 +678,7 @@ export default function BookingFlow() {
             <h2 className="font-serif text-[clamp(2rem,5vw,3.5rem)] font-light text-ink leading-none mb-3">
               Your <span className="italic">hair unit.</span>
             </h2>
-            <p className="font-sans text-[13px] text-ink/45 font-light mb-10 max-w-sm leading-relaxed">
+            <p className="font-sans text-[14px] text-ink/60 font-light mb-10 max-w-sm leading-relaxed">
               Will you be bringing a hair unit, or do you only need the service?
             </p>
 
@@ -702,7 +708,6 @@ export default function BookingFlow() {
               ))}
             </div>
 
-            <StepFooter canNext={canNext()} onNext={next} showBack={true} onBack={back} />
           </div>
         )}
 
@@ -713,7 +718,7 @@ export default function BookingFlow() {
             <h2 className="font-serif text-[clamp(2rem,5vw,3.5rem)] font-light text-ink leading-none mb-3">
               Unit <span className="italic">customization.</span>
             </h2>
-            <p className="font-sans text-[13px] text-ink/45 font-light mb-10 max-w-sm leading-relaxed">
+            <p className="font-sans text-[14px] text-ink/60 font-light mb-10 max-w-sm leading-relaxed">
               How would you like your unit prepared?
             </p>
 
@@ -756,7 +761,7 @@ export default function BookingFlow() {
 
             <div className="border border-ink/10 p-6 mb-10">
               <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/40 mb-1">Unit photo <span className="normal-case tracking-normal text-red-400/70">*required</span></p>
-              <p className="font-sans text-[12px] text-ink/40 font-light mb-5 leading-relaxed">
+              <p className="font-sans text-[13px] text-ink/55 font-light mb-5 leading-relaxed">
                 Add at least one photo of your unit so your stylist can prepare in advance.
               </p>
               <PhotoUpload
@@ -766,7 +771,6 @@ export default function BookingFlow() {
               />
             </div>
 
-            <StepFooter canNext={canNext()} onNext={next} showBack={true} onBack={back} backDisabled={photoUploading} />
           </div>
         )}
 
@@ -816,7 +820,7 @@ export default function BookingFlow() {
               <div>
                 <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-5">Time</p>
                 {!booking.date ? (
-                  <p className="font-sans text-[12px] text-ink/25 italic mt-2">Select a date first</p>
+                  <p className="font-sans text-[13px] text-ink/40 italic mt-2">Select a date first</p>
                 ) : (
                   <div className="flex flex-col gap-5">
                     {timeSlots.map(group => (
@@ -847,7 +851,6 @@ export default function BookingFlow() {
                 )}
               </div>
             </div>
-            <StepFooter canNext={canNext()} onNext={next} showBack={true} onBack={back} />
           </div>
         )}
 
@@ -858,7 +861,7 @@ export default function BookingFlow() {
             <h2 className="font-serif text-[clamp(2rem,5vw,3.5rem)] font-light text-ink leading-none mb-3">
               Choose your <span className="italic">stylist.</span>
             </h2>
-            <p className="font-sans text-[13px] text-ink/45 font-light mb-10 max-w-sm leading-relaxed">
+            <p className="font-sans text-[14px] text-ink/60 font-light mb-10 max-w-sm leading-relaxed">
               All our stylists are trained professionals. Pick whoever you're most comfortable with, or let us decide.
             </p>
 
@@ -915,7 +918,7 @@ export default function BookingFlow() {
                 <div className="text-right">
                   <p className="font-serif text-[1.5rem] font-light text-ink leading-none">₵{totalDeposit}</p>
                   {booking.stylistFeeAdj !== 0 && (
-                    <p className="font-sans text-[10px] text-ink/30 mt-0.5">
+                    <p className="font-sans text-[11px] text-ink/45 mt-0.5">
                       ₵{baseDeposit} base {booking.stylistFeeAdj > 0 ? "+" : "−"} ₵{Math.abs(booking.stylistFeeAdj)} stylist fee
                     </p>
                   )}
@@ -923,7 +926,6 @@ export default function BookingFlow() {
               </div>
             )}
 
-            <StepFooter canNext={canNext()} onNext={next} showBack={true} onBack={back} />
           </div>
         )}
 
@@ -993,7 +995,7 @@ export default function BookingFlow() {
                   placeholder="akua@example.com"
                   className="w-full border border-ink/15 focus:border-ink px-4 py-4 font-sans text-[14px] text-ink bg-transparent focus:outline-none transition-colors"
                 />
-                <p className="font-sans text-[10px] text-ink/25 mt-1.5">Confirmation and receipt sent here.</p>
+                <p className="font-sans text-[11px] text-ink/45 mt-1.5">Confirmation and receipt sent here.</p>
               </div>
 
               {/* Notes */}
@@ -1006,11 +1008,10 @@ export default function BookingFlow() {
                   rows={4}
                   className="w-full border border-ink/15 focus:border-ink px-4 py-4 font-sans text-[13px] text-ink bg-transparent focus:outline-none transition-colors resize-none leading-relaxed"
                 />
-                <p className="font-sans text-[10px] text-ink/25 mt-1.5">The more we know, the better we can prepare.</p>
+                <p className="font-sans text-[11px] text-ink/45 mt-1.5">The more we know, the better we can prepare.</p>
               </div>
             </div>
 
-            <StepFooter canNext={canNext()} onNext={next} showBack={true} onBack={back} nextLabel="Review Booking" />
           </div>
         )}
 
@@ -1035,7 +1036,7 @@ export default function BookingFlow() {
                    "No unit, service only"}
                 </p>
                 {booking.unitPhotos.length > 0 && (
-                  <p className="font-sans text-[11px] text-ink/35">{booking.unitPhotos.length} photo{booking.unitPhotos.length > 1 ? "s" : ""} attached</p>
+                  <p className="font-sans text-[12px] text-ink/50">{booking.unitPhotos.length} photo{booking.unitPhotos.length > 1 ? "s" : ""} attached</p>
                 )}
               </ReviewRow>
 
@@ -1069,7 +1070,7 @@ export default function BookingFlow() {
                 <p className="font-sans text-[12px] text-ink/50">{booking.phone}</p>
                 <p className="font-sans text-[12px] text-ink/50">{booking.email}</p>
                 {booking.notes && (
-                  <p className="font-sans text-[12px] text-ink/35 italic mt-1">"{booking.notes}"</p>
+                  <p className="font-sans text-[13px] text-ink/50 italic mt-1">"{booking.notes}"</p>
                 )}
               </ReviewRow>
 
@@ -1098,7 +1099,7 @@ export default function BookingFlow() {
                 <div className="flex items-end justify-between pt-3 border-t border-ink/[0.07]">
                   <div>
                     <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-1">{isPriceRange ? "Deposit due now" : "Total"}</p>
-                    <p className="font-sans text-[10px] text-ink/30 font-light">{isPriceRange ? "Balance confirmed and paid on the day" : "Full payment collected upfront"}</p>
+                    <p className="font-sans text-[11px] text-ink/45 font-light">{isPriceRange ? "Balance confirmed and paid on the day" : "Full payment collected upfront"}</p>
                   </div>
                   <p className="font-serif text-[2rem] font-light text-ink">₵{totalDeposit}</p>
                 </div>
@@ -1117,7 +1118,7 @@ export default function BookingFlow() {
               >
                 {submitting ? "Processing…" : isPriceRange ? `Pay ₵${totalDeposit} Deposit →` : `Pay ₵${totalDeposit} Now →`}
               </button>
-              <p className="font-sans text-[10px] text-ink/25 text-center">
+              <p className="font-sans text-[11px] text-ink/45 text-center">
                 Secured by Paystack · You'll review our booking policy before confirming
               </p>
             </div>
@@ -1130,6 +1131,20 @@ export default function BookingFlow() {
           </div>
         )}
       </div>
+
+      {/* Shared floating step footer — rendered outside the transformed Content
+          wrapper above, since a CSS transform on an ancestor makes `position: fixed`
+          descendants anchor to that ancestor instead of the viewport. */}
+      {step <= 5 && (
+        <StepFooter
+          canNext={canNext()}
+          onNext={next}
+          showBack={step > 0}
+          onBack={back}
+          backDisabled={step === 2 && photoUploading}
+          nextLabel={step === 5 ? "Review Booking" : "Continue"}
+        />
+      )}
 
       {/* Terms modal */}
       {showTerms && (

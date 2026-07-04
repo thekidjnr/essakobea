@@ -81,7 +81,7 @@ export default function AdminWorksPage() {
           <h1 className="font-serif text-[2.5rem] font-light text-ink leading-none">
             Works<span className="italic">.</span>
           </h1>
-          <p className="font-sans text-[13px] text-ink/40 mt-2">
+          <p className="font-sans text-[13px] text-ink/55 mt-2">
             Portfolio photos per service
           </p>
         </div>
@@ -99,7 +99,7 @@ export default function AdminWorksPage() {
       {loadingServices ? (
         <div className="font-sans text-[12px] text-ink/40">Loading…</div>
       ) : services.length === 0 ? (
-        <div className="font-sans text-[13px] text-ink/30">No services found.</div>
+        <div className="font-sans text-[13px] text-ink/50">No services found.</div>
       ) : (
         <>
           <div className="flex flex-wrap gap-2 mb-8">
@@ -122,7 +122,7 @@ export default function AdminWorksPage() {
           <div>
             {/* Stats row */}
             <div className="flex items-center justify-between mb-5">
-              <p className="font-sans text-[11px] text-ink/35">
+              <p className="font-sans text-[12px] text-ink/50">
                 {loadingWorks
                   ? "Loading…"
                   : `${works.length} photo${works.length !== 1 ? "s" : ""} for ${selectedService?.name}`}
@@ -143,7 +143,7 @@ export default function AdminWorksPage() {
               <div className="font-sans text-[12px] text-ink/30 py-12">Loading…</div>
             ) : works.length === 0 ? (
               <div className="border border-dashed border-ink/15 py-20 text-center">
-                <p className="font-sans text-[13px] text-ink/25">No photos yet.</p>
+                <p className="font-sans text-[13px] text-ink/45">No photos yet.</p>
                 <button
                   onClick={() => setShowUpload(true)}
                   className="mt-4 font-sans text-[11px] tracking-widest uppercase text-ink/40 hover:text-ink border border-ink/15 px-5 py-2.5 transition-colors"
@@ -197,7 +197,7 @@ export default function AdminWorksPage() {
             <h2 className="font-serif text-[1.5rem] font-light text-ink mb-1">
               Add Photo
             </h2>
-            <p className="font-sans text-[11px] text-ink/35 mb-6">
+            <p className="font-sans text-[12px] text-ink/50 mb-6">
               {selectedService?.name}
             </p>
 

@@ -81,7 +81,7 @@ export default function AdminBookings() {
       {loading ? (
         <p className="font-sans text-[12px] text-ink/40">Loading…</p>
       ) : bookings.length === 0 ? (
-        <p className="font-sans text-[13px] text-ink/40 py-12 text-center">No bookings found.</p>
+        <p className="font-sans text-[13px] text-ink/55 py-12 text-center">No bookings found.</p>
       ) : (
         <div className="bg-paper border border-ink/[0.07] overflow-x-auto">
           <table className="w-full">
@@ -100,8 +100,8 @@ export default function AdminBookings() {
                   <td className="px-5 py-4">
                     <p className="font-sans text-[13px] text-ink font-medium">{b.client_name}</p>
                     <p className="font-sans text-[11px] text-ink/40">{b.client_phone}</p>
-                    {b.client_email && <p className="font-sans text-[10px] text-ink/30">{b.client_email}</p>}
-                    {b.notes && <p className="font-sans text-[10px] text-ink/30 mt-1 italic">"{b.notes}"</p>}
+                    {b.client_email && <p className="font-sans text-[11px] text-ink/50">{b.client_email}</p>}
+                    {b.notes && <p className="font-sans text-[11px] text-ink/50 mt-1 italic">"{b.notes}"</p>}
                   </td>
                   <td className="px-5 py-4">
                     <p className="font-sans text-[12px] text-ink">{b.service_name}</p>
@@ -135,13 +135,13 @@ export default function AdminBookings() {
                       {b.payment_status}
                     </span>
                     {b.amount > 0 && (
-                      <p className="font-sans text-[10px] text-ink/35 mt-1">₵{(b.amount / 100).toLocaleString()}</p>
+                      <p className="font-sans text-[11px] text-ink/50 mt-1">₵{(b.amount / 100).toLocaleString()}</p>
                     )}
                     {(b.customization_fee > 0 || b.emergency_fee > 0) && (
                       <div className="mt-1 flex flex-col gap-0.5">
-                        {b.customization_fee > 0 && <p className="font-sans text-[9px] text-ink/30">+₵{b.customization_fee / 100} customization</p>}
-                        {b.emergency_fee > 0 && <p className="font-sans text-[9px] text-ink/30">+₵{b.emergency_fee / 100} emergency</p>}
-                        {b.service_charge > 0 && <p className="font-sans text-[9px] text-ink/30">+₵{b.service_charge / 100} service charge</p>}
+                        {b.customization_fee > 0 && <p className="font-sans text-[10px] text-ink/45">+₵{b.customization_fee / 100} customization</p>}
+                        {b.emergency_fee > 0 && <p className="font-sans text-[10px] text-ink/45">+₵{b.emergency_fee / 100} emergency</p>}
+                        {b.service_charge > 0 && <p className="font-sans text-[10px] text-ink/45">+₵{b.service_charge / 100} service charge</p>}
                       </div>
                     )}
                   </td>

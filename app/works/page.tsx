@@ -59,7 +59,7 @@ export default async function WorksPage() {
               </h1>
             </div>
             <div className="max-w-xs md:pb-3">
-              <p className="font-sans text-[13px] text-ink/50 font-light leading-relaxed mb-6">
+              <p className="font-sans text-[14px] text-ink/65 font-light leading-relaxed mb-6">
                 {photos.length} photos across {services.length} services. Every look, a story.
               </p>
               <Link
@@ -76,7 +76,7 @@ export default async function WorksPage() {
         <section className="px-6 md:px-16 max-w-[1400px] mx-auto pb-32">
           {photos.length === 0 ? (
             <div className="py-32 text-center">
-              <p className="font-sans text-[13px] text-ink/20">Photos coming soon.</p>
+              <p className="font-sans text-[14px] text-ink/45">Photos coming soon.</p>
             </div>
           ) : (
             <WorksIndexClient photos={photos} services={services} />

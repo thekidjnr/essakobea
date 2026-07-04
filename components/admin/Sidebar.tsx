@@ -1,8 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { logo } from "@/public/images";
 
 const NAV = [
   {
@@ -111,12 +113,12 @@ export default function Sidebar() {
     <aside className="w-56 flex-shrink-0 bg-ink h-screen sticky top-0 flex flex-col">
       {/* Brand */}
       <div className="px-6 pt-8 pb-8 border-b border-paper/[0.07]">
-        <p className="font-sans text-[9px] tracking-widest2 uppercase text-paper/25 mb-1.5">
+        <p className="font-sans text-[9px] tracking-widest2 uppercase text-paper/25 mb-2">
           Admin Panel
         </p>
-        <p className="font-serif text-[1.15rem] font-light text-paper italic tracking-wide">
-          Essakobea
-        </p>
+        <div className="relative h-3.5 w-[130px]">
+          <Image src={logo.light} alt="Essakobea" fill className="object-contain object-left" />
+        </div>
       </div>
 
       {/* Nav */}

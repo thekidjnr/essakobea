@@ -39,7 +39,7 @@ export default async function ShopPage() {
               Wear it<br />
               <span className="italic">well.</span>
             </h1>
-            <p className="font-sans text-[13px] text-ink/50 font-light max-w-xs leading-relaxed mb-10">
+            <p className="font-sans text-[14px] text-ink/65 font-light max-w-xs leading-relaxed mb-10">
               Premium wigs and hair accessories, every piece selected for quality, craftsmanship, and beauty.
             </p>
             <div className="flex items-center gap-3">
@@ -99,7 +99,7 @@ export default async function ShopPage() {
               <h3 className="font-sans text-[11px] tracking-widest uppercase text-ink font-medium">
                 {item.title}
               </h3>
-              <p className="font-sans text-[13px] text-ink/50 font-light leading-relaxed">
+              <p className="font-sans text-[14px] text-ink/65 font-light leading-relaxed">
                 {item.desc}
               </p>
             </div>

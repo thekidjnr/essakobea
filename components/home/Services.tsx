@@ -16,7 +16,7 @@ export default async function Services() {
   return (
     <section id="services" className="bg-paper py-28 md:py-36">
       {/* Header */}
-      <div className="px-6 md:px-16 max-w-[1400px] mx-auto flex flex-col md:flex-row md:items-end md:justify-between mb-16 gap-6">
+      <div className="px-6 md:px-16 max-w-[1400px] mx-auto mb-16">
         <div>
           <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 mb-4">
             What We Do
@@ -25,9 +25,6 @@ export default async function Services() {
             Our <span className="italic">Services</span>
           </h2>
         </div>
-        <p className="font-sans text-[13px] text-ink/50 font-light max-w-xs leading-relaxed md:text-right">
-          Every service is a craft. Every appointment, an experience.
-        </p>
       </div>
 
       {/* Service cards */}
@@ -61,7 +58,7 @@ export default async function Services() {
                   {service.name}
                 </h3>
               </Link>
-              <p className="hidden md:block font-sans text-[12px] text-ink/50 font-light leading-relaxed mt-2 line-clamp-2">
+              <p className="hidden md:block font-sans text-[13px] text-ink/60 font-light leading-relaxed mt-2 line-clamp-2">
                 {service.description}
               </p>
               <Link

@@ -73,32 +73,41 @@ export default function AboutPage() {
 
       {/* Story */}
       <section className="bg-paper py-28 md:py-36 px-6 md:px-16">
-        <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-24 items-start">
+        <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-24 items-center">
           {/* Text */}
           <div>
             <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 mb-8">
-              Our Story
+              From The Founder
             </p>
             <div className="flex flex-col gap-6">
               <p className="font-serif text-[1.5rem] md:text-[1.75rem] font-light text-ink leading-snug">
-                Essakobea was born from a simple conviction: that premium hair
-                services shouldn&apos;t feel inaccessible.
+                I started Essakobea because I believed premium hair care
+                shouldn&apos;t feel out of reach.
               </p>
-              <p className="font-sans text-[13px] text-ink/55 font-light leading-relaxed">
-                We started in Accra, East Legon, with one studio and an
-                obsession with doing things properly. No shortcuts, no
-                mediocrity, just well-crafted hair and a client experience that
-                actually feels good.
+              <p className="font-sans text-[14px] text-ink/70 font-light leading-relaxed">
+                It began in Accra, East Legon, with one studio and a simple
+                obsession: doing things properly. No shortcuts, no mediocrity,
+                just well-crafted hair and an experience that actually feels
+                good.
               </p>
-              <p className="font-sans text-[13px] text-ink/55 font-light leading-relaxed">
+              <p className="font-sans text-[14px] text-ink/70 font-light leading-relaxed">
                 Today, Essakobea sits at the intersection of in-studio service
-                and ecommerce, so whether you want to book a full installation
-                or pick up a ready-made unit, everything lives in one place.
+                and ecommerce, so whether you&apos;re booking a full
+                installation or picking up a ready-made unit, everything
+                lives in one place.
               </p>
-              <p className="font-sans text-[13px] text-ink/55 font-light leading-relaxed">
-                We built this platform so that booking your next appointment
-                feels as seamless as shopping your next look. Because great hair
+              <p className="font-sans text-[14px] text-ink/70 font-light leading-relaxed">
+                I built this platform so booking your next appointment feels
+                as seamless as shopping your next look, because great hair
                 shouldn&apos;t come with friction.
+              </p>
+            </div>
+            <div className="mt-10 pt-6 border-t border-ink/10">
+              <p className="font-serif text-[1.1rem] font-light text-ink leading-none">
+                Vanessa Bampoe
+              </p>
+              <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 mt-2">
+                Founder &amp; CEO
               </p>
             </div>
           </div>
@@ -108,7 +117,7 @@ export default function AboutPage() {
             <div className="relative aspect-[3/4] overflow-hidden">
               <Image
                 src={aboutImages.portrait}
-                alt="Essakobea | Our Story"
+                alt="Vanessa Bampoe, Founder & CEO of Essakobea"
                 fill
                 className="object-cover object-center"
                 sizes="(max-width: 768px) 100vw, 50vw"
@@ -117,15 +126,10 @@ export default function AboutPage() {
             {/* Floating caption */}
             <div className="absolute -bottom-6 -right-0 md:-right-6 bg-paper p-6 max-w-[220px]">
               <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 mb-2">
-                Location
+                Founder &amp; CEO
               </p>
               <p className="font-serif text-[1.1rem] font-light text-ink leading-snug">
-                Accra,
-                <br />
-                East Legon
-              </p>
-              <p className="font-sans text-[11px] text-ink/40 font-light mt-2">
-                0557205803
+                Vanessa Bampoe
               </p>
             </div>
           </div>
@@ -179,7 +183,7 @@ export default function AboutPage() {
                 <h3 className="font-serif text-[clamp(1.75rem,2.5vw,2.5rem)] font-light text-ink leading-none mb-5">
                   {pillar.name}
                 </h3>
-                <p className="font-sans text-[13px] text-ink/55 font-light leading-relaxed">
+                <p className="font-sans text-[14px] text-ink/70 font-light leading-relaxed">
                   {pillar.description}
                 </p>
               </div>
@@ -200,11 +204,11 @@ export default function AboutPage() {
               <br />
               <span className="italic">Everything.</span>
             </h2>
-            <p className="font-sans text-[13px] text-paper/50 font-light leading-relaxed mb-6 max-w-sm">
+            <p className="font-sans text-[14px] text-paper/65 font-light leading-relaxed mb-6 max-w-sm">
               Essakobea is not just a salon. It&apos;s a complete beauty system:
               book an appointment, shop a wig, manage it all from your phone.
             </p>
-            <p className="font-sans text-[13px] text-paper/50 font-light leading-relaxed max-w-sm">
+            <p className="font-sans text-[14px] text-paper/65 font-light leading-relaxed max-w-sm">
               We built the digital side of Essakobea so that our clients never
               have to chase us down. Your booking, your collection, your history,
               all in one place.
@@ -252,7 +256,7 @@ export default function AboutPage() {
                   <p className="font-sans text-[12px] tracking-wide uppercase text-paper/60 mb-2">
                     {title}
                   </p>
-                  <p className="font-sans text-[13px] text-paper/35 font-light leading-relaxed">
+                  <p className="font-sans text-[14px] text-paper/60 font-light leading-relaxed">
                     {desc}
                   </p>
                 </div>
@@ -322,7 +326,7 @@ export default function AboutPage() {
               &ldquo;We don&apos;t just do hair. We give women a reason to walk
               in the room first.&rdquo;
             </blockquote>
-            <p className="font-sans text-[11px] tracking-widest uppercase text-ink/30">
+            <p className="font-sans text-[11px] tracking-widest uppercase text-ink/45">
               Essakobea
             </p>
             <div className="mt-12 flex flex-col sm:flex-row gap-3">

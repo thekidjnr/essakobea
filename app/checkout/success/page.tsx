@@ -49,7 +49,7 @@ function OrderSuccess() {
         <h1 className="font-serif text-[clamp(2.5rem,6vw,5rem)] font-light text-ink leading-none mb-6">
           Thank you,<br /><span className="italic">{order?.client_name ?? ""}.</span>
         </h1>
-        <p className="font-sans text-[13px] text-ink/50 font-light leading-relaxed mb-12 max-w-sm mx-auto">
+        <p className="font-sans text-[14px] text-ink/65 font-light leading-relaxed mb-12 max-w-sm mx-auto">
           Payment received. We&apos;ll reach out via WhatsApp to arrange{" "}
           {order?.delivery_method === "delivery" ? "delivery" : "your pickup"}.
           Check your email for confirmation.
@@ -58,7 +58,7 @@ function OrderSuccess() {
         {order && (
           <div className="bg-mist p-8 text-left mb-10">
             <div className="flex justify-between py-3 border-b border-ink/[0.07]">
-              <span className="font-sans text-[10px] tracking-widest uppercase text-ink/35">Ref</span>
+              <span className="font-sans text-[10px] tracking-widest uppercase text-ink/45">Ref</span>
               <span className="font-sans text-[12px] text-ink font-mono">{order.id.slice(0, 8).toUpperCase()}</span>
             </div>
             {order.items.map((item, i) => (
@@ -68,7 +68,7 @@ function OrderSuccess() {
               </div>
             ))}
             <div className="flex justify-between py-3">
-              <span className="font-sans text-[11px] tracking-widest uppercase text-ink/35">Total Paid</span>
+              <span className="font-sans text-[11px] tracking-widest uppercase text-ink/45">Total Paid</span>
               <span className="font-serif text-[1.3rem] font-light text-ink">₵{(order.total / 100).toLocaleString()}</span>
             </div>
           </div>

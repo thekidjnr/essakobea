@@ -160,7 +160,7 @@ export default function CheckoutPage() {
               >
                 {loading ? "Redirecting to Paystack…" : `Pay ₵${total.toLocaleString()} via Paystack →`}
               </button>
-              <p className="font-sans text-[11px] text-ink/30 -mt-2">
+              <p className="font-sans text-[12px] text-ink/50 -mt-2">
                 Secure payment via Paystack. Card or Mobile Money accepted.
               </p>
             </form>
@@ -174,10 +174,10 @@ export default function CheckoutPage() {
                   if (!product) return null;
                   return (
                     <div key={item.productId} className="flex items-start justify-between gap-3">
-                      <span className="font-sans text-[12px] text-ink/70 leading-snug">
-                        {product.name} <span className="text-ink/35">×{item.quantity}</span>
+                      <span className="font-sans text-[13px] text-ink/75 leading-snug">
+                        {product.name} <span className="text-ink/45">×{item.quantity}</span>
                       </span>
-                      <span className="font-sans text-[12px] text-ink flex-shrink-0">
+                      <span className="font-sans text-[13px] text-ink flex-shrink-0">
                         ₵{(product.priceRaw * item.quantity).toLocaleString()}
                       </span>
                     </div>
@@ -185,10 +185,10 @@ export default function CheckoutPage() {
                 })}
               </div>
               <div className="border-t border-ink/10 pt-4 flex flex-col gap-2">
-                <div className="flex justify-between font-sans text-[12px] text-ink/50">
+                <div className="flex justify-between font-sans text-[13px] text-ink/60">
                   <span>Subtotal</span><span>₵{subtotal.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between font-sans text-[12px] text-ink/50">
+                <div className="flex justify-between font-sans text-[13px] text-ink/60">
                   <span>Delivery</span>
                   <span>{form.deliveryMethod === "delivery" ? `₵${DELIVERY_FEE}` : "Free"}</span>
                 </div>

@@ -24,14 +24,14 @@ export function orderConfirmationHtml(opts: {
   .card{background:#fff;max-width:560px;margin:0 auto;padding:48px}
   .brand{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#9A9590;margin-bottom:40px}
   h1{font-size:32px;font-weight:300;margin:0 0 8px}
-  .sub{font-size:13px;color:#9A9590;margin:0 0 40px;font-family:Inter,sans-serif}
+  .sub{font-size:14px;color:#6B6560;margin:0 0 40px;font-family:Inter,sans-serif}
   .row{display:flex;justify-content:space-between;padding:14px 0;border-bottom:1px solid #f0ede8;font-family:Inter,sans-serif}
   .label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#9A9590}
-  .value{font-size:13px;color:#1A212B;text-align:right}
+  .value{font-size:14px;color:#1A212B;text-align:right}
   .total-row{display:flex;justify-content:space-between;padding:16px 0;font-family:Inter,sans-serif}
   .total-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#9A9590}
   .total-value{font-size:20px;font-weight:300}
-  .note{font-size:12px;color:#9A9590;font-family:Inter,sans-serif;line-height:1.6;margin-top:32px}
+  .note{font-size:13px;color:#6B6560;font-family:Inter,sans-serif;line-height:1.6;margin-top:32px}
 </style></head>
 <body>
 <div class="card">

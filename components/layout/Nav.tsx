@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { logo } from "@/public/images";
 
 export default function Nav() {
   const [scrolled, setScrolled] = useState(false);
@@ -20,23 +22,24 @@ export default function Nav() {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        className={`fixed top-0 left-0 right-0 z-50 h-[72px] flex items-center transition-all duration-500 ${
           scrolled
-            ? "bg-paper border-b border-ink/[0.08] py-4"
+            ? "bg-paper border-b border-ink/[0.08]"
             : isHome
-            ? "bg-transparent py-6"
-            : "bg-paper border-b border-ink/[0.08] py-4"
+            ? "bg-transparent"
+            : "bg-paper border-b border-ink/[0.08]"
         }`}
       >
-        <nav className="max-w-[1400px] mx-auto px-6 md:px-10 flex items-center justify-between">
+        <nav className="w-full max-w-[1400px] mx-auto px-6 md:px-10 flex items-center justify-between">
           {/* Logo */}
-          <Link
-            href="/"
-            className={`font-sans text-[11px] tracking-widest2 font-medium uppercase transition-colors duration-500 ${
-              transparent ? "text-paper" : "text-ink"
-            }`}
-          >
-            Essakobea
+          <Link href="/" className="relative block h-4 w-[150px] md:w-[170px]">
+            <Image
+              src={transparent ? logo.light : logo.dark}
+              alt="Essakobea"
+              fill
+              priority
+              className="object-contain object-left"
+            />
           </Link>
 
           {/* Desktop links */}

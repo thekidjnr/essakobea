@@ -74,7 +74,7 @@ export default async function WorksPage({ params }: { params: Promise<{ slug: st
             {service.name}<span className="italic">.</span>
           </h1>
           {service.tagline && (
-            <p className="font-sans text-[13px] text-ink/40 font-light mt-4 max-w-sm leading-relaxed">
+            <p className="font-sans text-[14px] text-ink/60 font-light mt-4 max-w-sm leading-relaxed">
               {service.tagline}
             </p>
           )}
@@ -84,7 +84,7 @@ export default async function WorksPage({ params }: { params: Promise<{ slug: st
       {/* Gallery */}
       {photos.length === 0 ? (
         <div className="px-6 md:px-12 pb-32 text-center">
-          <p className="font-sans text-[13px] text-ink/25 py-24">
+          <p className="font-sans text-[14px] text-ink/45 py-24">
             Photos coming soon.
           </p>
         </div>

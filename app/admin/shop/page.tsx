@@ -132,7 +132,7 @@ export default function AdminShopPage() {
           <h1 className="font-serif text-[2.5rem] font-light text-ink leading-none">
             Shop<span className="italic">.</span>
           </h1>
-          <p className="font-sans text-[13px] text-ink/40 mt-2">
+          <p className="font-sans text-[13px] text-ink/55 mt-2">
             {loading ? "Loading…" : `${products.length} products · ${products.filter((p) => p.in_stock).length} in stock`}
           </p>
         </div>
@@ -164,7 +164,7 @@ export default function AdminShopPage() {
       ) : (
         <div className="bg-paper border border-ink/[0.07] divide-y divide-ink/[0.05]">
           {filtered.length === 0 && (
-            <div className="px-6 py-12 text-center font-sans text-[13px] text-ink/30">
+            <div className="px-6 py-12 text-center font-sans text-[13px] text-ink/50">
               No products here yet. Add your first one.
             </div>
           )}

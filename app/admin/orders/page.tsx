@@ -65,7 +65,7 @@ export default function AdminOrders() {
       {loading ? (
         <p className="font-sans text-[12px] text-ink/40">Loading…</p>
       ) : orders.length === 0 ? (
-        <p className="font-sans text-[13px] text-ink/40 py-12 text-center">No orders found.</p>
+        <p className="font-sans text-[13px] text-ink/55 py-12 text-center">No orders found.</p>
       ) : (
         <div className="bg-paper border border-ink/[0.07] overflow-x-auto">
           <table className="w-full">
@@ -85,7 +85,7 @@ export default function AdminOrders() {
                   <td className="px-5 py-4">
                     <p className="font-sans text-[13px] text-ink font-medium">{o.client_name}</p>
                     <p className="font-sans text-[11px] text-ink/40">{o.client_phone}</p>
-                    <p className="font-sans text-[10px] text-ink/30">{o.client_email}</p>
+                    <p className="font-sans text-[11px] text-ink/50">{o.client_email}</p>
                   </td>
                   <td className="px-5 py-4 max-w-[200px]">
                     <div className="flex flex-col gap-1">
@@ -104,7 +104,7 @@ export default function AdminOrders() {
                   </td>
                   <td className="px-5 py-4">
                     <p className="font-sans text-[11px] text-ink capitalize">{o.delivery_method}</p>
-                    {o.delivery_address && <p className="font-sans text-[10px] text-ink/35 mt-0.5">{o.delivery_address}</p>}
+                    {o.delivery_address && <p className="font-sans text-[11px] text-ink/50 mt-0.5">{o.delivery_address}</p>}
                   </td>
                   <td className="px-5 py-4">
                     <span className={`inline-block px-2 py-0.5 rounded-sm font-sans text-[10px] tracking-wide uppercase font-medium ${STATUS_COLORS[o.status] ?? ""}`}>

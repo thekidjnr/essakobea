@@ -87,7 +87,7 @@ export default function ProductDetail({ product, related }: { product: Product; 
             </p>
 
             {/* Description */}
-            <p className="font-sans text-[13px] text-ink/55 font-light leading-relaxed mb-10 max-w-sm">
+            <p className="font-sans text-[14px] text-ink/70 font-light leading-relaxed mb-10 max-w-sm">
               {product.description}
             </p>
 
@@ -148,7 +148,7 @@ export default function ProductDetail({ product, related }: { product: Product; 
                 <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-3">
                   Need it installed?
                 </p>
-                <p className="font-sans text-[12px] text-ink/50 font-light mb-4 leading-relaxed">
+                <p className="font-sans text-[13px] text-ink/65 font-light mb-4 leading-relaxed">
                   Book a professional installation at our East Legon studio and we&apos;ll have it looking second-skin.
                 </p>
                 <Link
@@ -172,7 +172,7 @@ export default function ProductDetail({ product, related }: { product: Product; 
                   <span className="font-sans text-[10px] tracking-widest uppercase text-ink/30 w-24 flex-shrink-0 pt-0.5">
                     {label}
                   </span>
-                  <span className="font-sans text-[12px] text-ink/55 font-light leading-relaxed">
+                  <span className="font-sans text-[13px] text-ink/70 font-light leading-relaxed">
                     {value}
                   </span>
                 </div>
@@ -215,7 +215,7 @@ export default function ProductDetail({ product, related }: { product: Product; 
                   <h3 className="font-serif text-[1rem] font-light text-ink group-hover:italic transition-all duration-300">
                     {p.name}
                   </h3>
-                  <p className="font-sans text-[12px] text-ink/50 mt-0.5">{p.price}</p>
+                  <p className="font-sans text-[13px] text-ink/65 mt-0.5">{p.price}</p>
                 </Link>
               ))}
             </div>

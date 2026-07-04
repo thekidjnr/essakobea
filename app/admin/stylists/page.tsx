@@ -107,7 +107,7 @@ export default function AdminStylistsPage() {
           <h1 className="font-serif text-[2.5rem] font-light text-ink leading-none">
             Stylists<span className="italic">.</span>
           </h1>
-          <p className="font-sans text-[13px] text-ink/40 mt-2">
+          <p className="font-sans text-[13px] text-ink/55 mt-2">
             Manage team members shown during booking
           </p>
         </div>
@@ -123,7 +123,7 @@ export default function AdminStylistsPage() {
         <div className="font-sans text-[12px] text-ink/40 py-12">Loading…</div>
       ) : stylists.length === 0 ? (
         <div className="border border-dashed border-ink/15 py-20 text-center">
-          <p className="font-sans text-[13px] text-ink/25 mb-4">No stylists yet.</p>
+          <p className="font-sans text-[13px] text-ink/45 mb-4">No stylists yet.</p>
           <button
             onClick={openCreate}
             className="font-sans text-[11px] tracking-widest uppercase text-ink/40 hover:text-ink border border-ink/15 px-5 py-2.5 transition-colors"
@@ -163,9 +163,9 @@ export default function AdminStylistsPage() {
                   )}
                 </div>
                 {s.bio && (
-                  <p className="font-sans text-[12px] text-ink/40 mt-0.5 truncate">{s.bio}</p>
+                  <p className="font-sans text-[13px] text-ink/55 mt-0.5 truncate">{s.bio}</p>
                 )}
-                <p className="font-sans text-[11px] text-ink/35 mt-0.5">
+                <p className="font-sans text-[12px] text-ink/50 mt-0.5">
                   {s.fee_adjustment > 0
                     ? `+₵${s.fee_adjustment} deposit`
                     : s.fee_adjustment < 0
@@ -274,7 +274,7 @@ export default function AdminStylistsPage() {
                   placeholder="0"
                   className="w-full border border-ink/15 px-3 py-2.5 font-sans text-[13px] text-ink focus:outline-none focus:border-ink bg-transparent"
                 />
-                <p className="font-sans text-[10px] text-ink/30 mt-1">
+                <p className="font-sans text-[11px] text-ink/45 mt-1">
                   Added to base deposit. Use negative to discount. 0 = no change.
                 </p>
               </div>

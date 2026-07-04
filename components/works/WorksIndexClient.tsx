@@ -120,7 +120,7 @@ export default function WorksIndexClient({
       {/* Grid */}
       {filtered.length === 0 ? (
         <div className="py-24 text-center">
-          <p className="font-sans text-[13px] text-ink/25">No photos yet for this service.</p>
+          <p className="font-sans text-[14px] text-ink/45">No photos yet for this service.</p>
         </div>
       ) : (
         <div className="columns-2 md:columns-3 lg:columns-4 gap-3 md:gap-4 space-y-3 md:space-y-4">
@@ -219,7 +219,7 @@ export default function WorksIndexClient({
                   priority
                 />
                 {current.caption && (
-                  <p className="mt-5 font-sans text-[11px] tracking-wide text-paper/35 text-center max-w-[340px] leading-relaxed">
+                  <p className="mt-5 font-sans text-[12px] tracking-wide text-paper/55 text-center max-w-[340px] leading-relaxed">
                     {current.caption}
                   </p>
                 )}

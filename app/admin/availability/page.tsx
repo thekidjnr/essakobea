@@ -170,7 +170,7 @@ export default function AdminAvailability() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="font-sans text-[11px] text-ink">Bookings per slot</p>
-                <p className="font-sans text-[10px] text-ink/35 mt-0.5">How many clients can book the same time slot (= no. of active stylists)</p>
+                <p className="font-sans text-[11px] text-ink/50 mt-0.5">How many clients can book the same time slot (= no. of active stylists)</p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <button
@@ -189,7 +189,7 @@ export default function AdminAvailability() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="font-sans text-[11px] text-ink">Daily booking cap</p>
-                <p className="font-sans text-[10px] text-ink/35 mt-0.5">Max total bookings per day (0 = no limit)</p>
+                <p className="font-sans text-[11px] text-ink/50 mt-0.5">Max total bookings per day (0 = no limit)</p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <button
@@ -252,7 +252,7 @@ export default function AdminAvailability() {
           >
             {saving ? "Saving…" : saveOk ? "Saved ✓" : "Save Schedule"}
           </button>
-          <p className="font-sans text-[10px] text-ink/30 mt-3 text-center">
+          <p className="font-sans text-[11px] text-ink/50 mt-3 text-center">
             Interval and capacity settings apply to all days
           </p>
         </div>
@@ -296,7 +296,7 @@ export default function AdminAvailability() {
 
           {/* Blocked list */}
           {blocked.length === 0 ? (
-            <p className="font-sans text-[12px] text-ink/35 italic">No dates blocked.</p>
+            <p className="font-sans text-[13px] text-ink/50 italic">No dates blocked.</p>
           ) : (
             <div className="flex flex-col">
               {[...blocked]
@@ -309,7 +309,7 @@ export default function AdminAvailability() {
                           weekday: "short", day: "numeric", month: "long", year: "numeric",
                         })}
                       </p>
-                      {b.reason && <p className="font-sans text-[10px] text-ink/35 mt-0.5">{b.reason}</p>}
+                      {b.reason && <p className="font-sans text-[11px] text-ink/50 mt-0.5">{b.reason}</p>}
                     </div>
                     <button
                       onClick={() => unblockDate(b.date)}

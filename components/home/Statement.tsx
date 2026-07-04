@@ -15,7 +15,7 @@ export default function Statement() {
             <span className="italic"> accessory</span>, it is an{" "}
             <span className="italic">identity.</span>&rdquo;
           </blockquote>
-          <p className="font-sans text-[13px] text-paper/40 font-light mt-10 max-w-sm leading-relaxed">
+          <p className="font-sans text-[14px] text-paper/60 font-light mt-10 max-w-sm leading-relaxed">
             We built Essakobea for women who know exactly who they are. Premium
             hair, professional craftsmanship, zero compromise.
           </p>

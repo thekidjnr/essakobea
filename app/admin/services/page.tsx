@@ -161,7 +161,7 @@ export default function AdminServicesPage() {
           <h1 className="font-serif text-[2.5rem] font-light text-ink leading-none">
             Services<span className="italic">.</span>
           </h1>
-          <p className="font-sans text-[13px] text-ink/40 mt-2">
+          <p className="font-sans text-[13px] text-ink/55 mt-2">
             {loading ? "Loading…" : `${services.length} services · ${services.filter((s) => s.is_active).length} live`}
           </p>
         </div>
@@ -179,7 +179,7 @@ export default function AdminServicesPage() {
       ) : (
         <div className="bg-paper border border-ink/[0.07] divide-y divide-ink/[0.05]">
           {services.length === 0 && (
-            <div className="px-6 py-12 text-center font-sans text-[13px] text-ink/30">
+            <div className="px-6 py-12 text-center font-sans text-[13px] text-ink/50">
               No services yet. Add your first one.
             </div>
           )}
@@ -193,7 +193,7 @@ export default function AdminServicesPage() {
               <span className="font-sans text-[10px] tracking-widest text-ink/30 flex-shrink-0 w-8">{svc.number}</span>
               <div className="flex-1 min-w-0">
                 <p className="font-sans text-[13px] text-ink font-medium truncate">{svc.name}</p>
-                <p className="font-sans text-[11px] text-ink/40 truncate">{svc.tagline}</p>
+                <p className="font-sans text-[12px] text-ink/55 truncate">{svc.tagline}</p>
               </div>
               <div className="flex items-center gap-3 flex-shrink-0">
                 <button
@@ -329,7 +329,7 @@ function BookingOptionsBuilder({
   return (
     <div className="flex flex-col gap-2">
       {options.length === 0 && (
-        <p className="font-sans text-[11px] text-ink/30 py-1">No options yet. Add at least one for clients to select.</p>
+        <p className="font-sans text-[12px] text-ink/50 py-1">No options yet. Add at least one for clients to select.</p>
       )}
       {/* Column headers */}
       {options.length > 0 && (
@@ -376,7 +376,7 @@ function BookingOptionsBuilder({
           </button>
         </div>
       ))}
-      <p className="font-sans text-[9px] text-ink/25 mt-1">
+      <p className="font-sans text-[10px] text-ink/45 mt-1">
         Deposit = amount charged online. Price is the display label clients see (e.g. ₵250 – ₵450). Note appears under the option on the services page.
       </p>
       <button
@@ -396,7 +396,7 @@ function FormSection({ label, hint, children }: { label: string; hint?: string; 
     <div>
       <div className="flex items-baseline gap-3 mb-3">
         <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/50 flex-shrink-0">{label}</p>
-        {hint && <p className="font-sans text-[10px] text-ink/25 leading-snug">{hint}</p>}
+        {hint && <p className="font-sans text-[11px] text-ink/45 leading-snug">{hint}</p>}
         <div className="h-px flex-1 bg-ink/8" />
       </div>
       <div className="flex flex-col gap-3">{children}</div>

@@ -16,7 +16,7 @@ export default function BagClient() {
         <h2 className="font-serif text-[clamp(2.5rem,5vw,5rem)] font-light text-ink leading-none mb-6">
           Nothing here <span className="italic">yet.</span>
         </h2>
-        <p className="font-sans text-[13px] text-ink/45 font-light mb-10 max-w-xs leading-relaxed">
+        <p className="font-sans text-[14px] text-ink/60 font-light mb-10 max-w-xs leading-relaxed">
           Browse the collection and add pieces you love.
         </p>
         <Link
@@ -85,7 +85,7 @@ export default function BagClient() {
                           {product.name}
                         </h3>
                       </Link>
-                      <p className="font-sans text-[12px] text-ink/45 font-light mt-1 leading-snug line-clamp-2">
+                      <p className="font-sans text-[13px] text-ink/60 font-light mt-1 leading-snug line-clamp-2">
                         {product.description}
                       </p>
                     </div>
@@ -166,7 +166,7 @@ export default function BagClient() {
                 </span>
               </div>
 
-              <p className="font-sans text-[11px] text-ink/30 font-light mb-8 leading-relaxed">
+              <p className="font-sans text-[12px] text-ink/50 font-light mb-8 leading-relaxed">
                 Delivery or pickup options available at checkout. Prices in GHS.
               </p>
 
@@ -190,7 +190,7 @@ export default function BagClient() {
                 <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-2">
                   Want it installed?
                 </p>
-                <p className="font-sans text-[12px] text-ink/45 font-light mb-4 leading-relaxed">
+                <p className="font-sans text-[13px] text-ink/60 font-light mb-4 leading-relaxed">
                   Book a professional installation alongside your order.
                 </p>
                 <Link

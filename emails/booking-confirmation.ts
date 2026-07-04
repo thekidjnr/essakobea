@@ -62,7 +62,7 @@ export function bookingConfirmationHtml(opts: {
   const feeRowHtml = feeRows.map(makeRow).join('')
 
   const depositNote = opts.isDeposit
-    ? `<p style="font-size:11px;color:#9A9590;font-family:'Inter',Arial,sans-serif;line-height:1.6;margin:0 0 0">
+    ? `<p style="font-size:12px;color:#6B6560;font-family:'Inter',Arial,sans-serif;line-height:1.6;margin:0 0 0">
         The remaining balance is due on the day of your appointment.
        </p>`
     : ''
@@ -91,7 +91,7 @@ export function bookingConfirmationHtml(opts: {
             <h1 style="margin:0 0 12px;font-size:36px;font-weight:300;color:#1A212B;line-height:1.15;letter-spacing:-0.5px">
               You&rsquo;re all set,<br><em>${opts.clientName}.</em>
             </h1>
-            <p style="margin:0 0 40px;font-size:13px;color:#9A9590;font-family:'Inter',Arial,sans-serif;line-height:1.6">
+            <p style="margin:0 0 40px;font-size:14px;color:#6B6560;font-family:'Inter',Arial,sans-serif;line-height:1.6">
               Your appointment is confirmed. We&rsquo;ll reach out on WhatsApp ahead of your visit.
             </p>
           </td>
@@ -133,7 +133,7 @@ export function bookingConfirmationHtml(opts: {
                 <td style="padding:10px 0;border-bottom:1px solid #f8f6f3;vertical-align:top;width:20px">
                   <span style="font-size:14px;color:#1A212B">·</span>
                 </td>
-                <td style="padding:10px 0 10px 10px;border-bottom:1px solid #f8f6f3;font-size:12px;color:#6B6560;font-family:'Inter',Arial,sans-serif;line-height:1.6">
+                <td style="padding:10px 0 10px 10px;border-bottom:1px solid #f8f6f3;font-size:13px;color:#55504a;font-family:'Inter',Arial,sans-serif;line-height:1.6">
                   <strong style="color:#1A212B;font-weight:500">Free cancellation</strong> up to 24 hours before your appointment. After that, the deposit is non-refundable.
                 </td>
               </tr>
@@ -141,7 +141,7 @@ export function bookingConfirmationHtml(opts: {
                 <td style="padding:10px 0;border-bottom:1px solid #f8f6f3;vertical-align:top;width:20px">
                   <span style="font-size:14px;color:#1A212B">·</span>
                 </td>
-                <td style="padding:10px 0 10px 10px;border-bottom:1px solid #f8f6f3;font-size:12px;color:#6B6560;font-family:'Inter',Arial,sans-serif;line-height:1.6">
+                <td style="padding:10px 0 10px 10px;border-bottom:1px solid #f8f6f3;font-size:13px;color:#55504a;font-family:'Inter',Arial,sans-serif;line-height:1.6">
                   <strong style="color:#1A212B;font-weight:500">Please arrive 5 minutes early.</strong> Late arrivals beyond 15 minutes may result in a shortened session or rescheduling.
                 </td>
               </tr>
@@ -149,7 +149,7 @@ export function bookingConfirmationHtml(opts: {
                 <td style="padding:10px 0;border-bottom:1px solid #f8f6f3;vertical-align:top;width:20px">
                   <span style="font-size:14px;color:#1A212B">·</span>
                 </td>
-                <td style="padding:10px 0 10px 10px;border-bottom:1px solid #f8f6f3;font-size:12px;color:#6B6560;font-family:'Inter',Arial,sans-serif;line-height:1.6">
+                <td style="padding:10px 0 10px 10px;border-bottom:1px solid #f8f6f3;font-size:13px;color:#55504a;font-family:'Inter',Arial,sans-serif;line-height:1.6">
                   <strong style="color:#1A212B;font-weight:500">Rescheduling</strong> is available up to 48 hours before your appointment, just reach out on WhatsApp.
                 </td>
               </tr>
@@ -157,7 +157,7 @@ export function bookingConfirmationHtml(opts: {
                 <td style="padding:10px 0;vertical-align:top;width:20px">
                   <span style="font-size:14px;color:#1A212B">·</span>
                 </td>
-                <td style="padding:10px 0 10px 10px;font-size:12px;color:#6B6560;font-family:'Inter',Arial,sans-serif;line-height:1.6">
+                <td style="padding:10px 0 10px 10px;font-size:13px;color:#55504a;font-family:'Inter',Arial,sans-serif;line-height:1.6">
                   Questions? Message us on <strong style="color:#1A212B;font-weight:500">WhatsApp at +233 55 720 5803</strong> or reply to this email.
                 </td>
               </tr>

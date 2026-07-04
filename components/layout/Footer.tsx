@@ -1,4 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
+import { logo } from "@/public/images";
 
 export default function Footer() {
   return (
@@ -7,9 +9,9 @@ export default function Footer() {
       <div className="border-b border-paper/10 px-6 md:px-16 py-16 max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-12">
         {/* Brand */}
         <div>
-          <p className="font-sans text-[10px] tracking-widest2 uppercase text-paper/30 mb-4">
-            Essakobea
-          </p>
+          <div className="relative h-4 w-[150px] mb-4">
+            <Image src={logo.light} alt="Essakobea" fill className="object-contain object-left" />
+          </div>
           <p className="font-serif text-[1.5rem] font-light text-paper/80 leading-snug italic">
             Premium Beauty,<br />Elevated.
           </p>

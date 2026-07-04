@@ -85,7 +85,7 @@ export default function AdminDashboard() {
           <div key={s.label} className="bg-paper p-6 border border-ink/[0.07]">
             <p className="font-sans text-[10px] tracking-widest uppercase text-ink/35 mb-3">{s.label}</p>
             <p className="font-serif text-[2rem] font-light text-ink leading-none mb-1">{s.value}</p>
-            <p className="font-sans text-[11px] text-ink/35">{s.sub}</p>
+            <p className="font-sans text-[11px] text-ink/50">{s.sub}</p>
           </div>
         ))}
       </div>
@@ -99,13 +99,13 @@ export default function AdminDashboard() {
             <a href="/admin/bookings" className="font-sans text-[10px] tracking-widest uppercase text-ink/40 hover:text-ink transition-colors">View all →</a>
           </div>
           <div className="divide-y divide-ink/[0.05]">
-            {bookings.length === 0 && <p className="px-6 py-8 font-sans text-[12px] text-ink/35">No bookings yet.</p>}
+            {bookings.length === 0 && <p className="px-6 py-8 font-sans text-[13px] text-ink/50">No bookings yet.</p>}
             {bookings.map((b) => (
               <div key={b.id} className="px-6 py-4 flex items-start justify-between gap-4">
                 <div>
                   <p className="font-sans text-[13px] text-ink font-medium">{b.client_name}</p>
-                  <p className="font-sans text-[11px] text-ink/45 mt-0.5">{b.treatment}</p>
-                  <p className="font-sans text-[10px] text-ink/30 mt-1">
+                  <p className="font-sans text-[12px] text-ink/55 mt-0.5">{b.treatment}</p>
+                  <p className="font-sans text-[11px] text-ink/45 mt-1">
                     {new Date(b.booking_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} · {b.time_slot}
                   </p>
                 </div>
@@ -122,15 +122,15 @@ export default function AdminDashboard() {
             <a href="/admin/orders" className="font-sans text-[10px] tracking-widest uppercase text-ink/40 hover:text-ink transition-colors">View all →</a>
           </div>
           <div className="divide-y divide-ink/[0.05]">
-            {orders.length === 0 && <p className="px-6 py-8 font-sans text-[12px] text-ink/35">No orders yet.</p>}
+            {orders.length === 0 && <p className="px-6 py-8 font-sans text-[13px] text-ink/50">No orders yet.</p>}
             {orders.map((o) => (
               <div key={o.id} className="px-6 py-4 flex items-start justify-between gap-4">
                 <div>
                   <p className="font-sans text-[13px] text-ink font-medium">{o.client_name}</p>
-                  <p className="font-sans text-[11px] text-ink/45 mt-0.5">
+                  <p className="font-sans text-[12px] text-ink/55 mt-0.5">
                     {o.items.map(i => `${i.name} ×${i.quantity}`).join(", ")}
                   </p>
-                  <p className="font-sans text-[10px] text-ink/30 mt-1">₵{(o.total / 100).toLocaleString()}</p>
+                  <p className="font-sans text-[11px] text-ink/45 mt-1">₵{(o.total / 100).toLocaleString()}</p>
                 </div>
                 <Badge label={o.status} />
               </div>

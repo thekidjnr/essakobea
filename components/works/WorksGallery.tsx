@@ -178,7 +178,7 @@ export default function WorksGallery({ photos, serviceName }: { photos: Photo[];
                   priority
                 />
                 {current.caption && (
-                  <p className="mt-5 font-sans text-[11px] tracking-wide text-paper/35 text-center max-w-[340px] leading-relaxed">
+                  <p className="mt-5 font-sans text-[12px] tracking-wide text-paper/55 text-center max-w-[340px] leading-relaxed">
                     {current.caption}
                   </p>
                 )}

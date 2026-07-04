@@ -13,7 +13,7 @@ export const servicesImages: Record<string, string> = {
   wigMaking: "/images/services/wig-making.jpg",
   coloring: "/images/services/coloring.jpg",
   installations: "/images/services/installations.jpg",
-  frontalStyling: "/images/services/frontal-styling.jpg",
+  frontalStyling: "/images/services/frontal-styling.PNG",
 };
 
 export const shopImages: Record<string, string> = {
@@ -22,5 +22,10 @@ export const shopImages: Record<string, string> = {
 
 export const aboutImages = {
   team: "/images/about/team.jpg",
-  portrait: "/images/about/portrait.jpg",
+  portrait: "/images/about/ceo.jpg",
+};
+
+export const logo = {
+  dark: "/images/esk-logo-dark.png",
+  light: "/images/esk-logo-light.png",
 };
