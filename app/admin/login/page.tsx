@@ -30,7 +30,7 @@ function LoginForm() {
 
   return (
     <div className="min-h-screen bg-mist flex items-center justify-center px-6">
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-sm fade-up">
         <p className="font-sans text-[9px] tracking-widest2 uppercase text-ink/30 mb-2">
           Admin
         </p>

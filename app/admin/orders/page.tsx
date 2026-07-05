@@ -43,7 +43,7 @@ export default function AdminOrders() {
 
   return (
     <div className="p-8 md:p-10 max-w-[1200px]">
-      <div className="mb-8">
+      <div className="mb-8 fade-up">
         <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-1">Admin</p>
         <h1 className="font-serif text-[2.5rem] font-light text-ink leading-none">
           Orders<span className="italic">.</span>
@@ -67,7 +67,8 @@ export default function AdminOrders() {
       ) : orders.length === 0 ? (
         <p className="font-sans text-[13px] text-ink/55 py-12 text-center">No orders found.</p>
       ) : (
-        <div className="bg-paper border border-ink/[0.07] overflow-x-auto">
+        <>
+        <div className="hidden md:block bg-paper border border-ink/[0.07] overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-ink/[0.07]">
@@ -125,6 +126,56 @@ export default function AdminOrders() {
             </tbody>
           </table>
         </div>
+
+        <div className="md:hidden flex flex-col gap-3">
+          {orders.map(o => (
+            <div key={o.id} className="bg-paper border border-ink/[0.07] p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-sans text-[13px] text-ink font-medium">{o.client_name}</p>
+                  <p className="font-sans text-[11px] text-ink/40 font-mono">{o.id.slice(0, 8).toUpperCase()}</p>
+                  <p className="font-sans text-[11px] text-ink/40">{o.client_phone}</p>
+                  <p className="font-sans text-[11px] text-ink/50">{o.client_email}</p>
+                </div>
+                <span className={`inline-block flex-shrink-0 px-2 py-0.5 rounded-sm font-sans text-[10px] tracking-wide uppercase font-medium ${STATUS_COLORS[o.status] ?? ""}`}>
+                  {o.status}
+                </span>
+              </div>
+
+              <div className="flex flex-col gap-1 py-3 mt-2 border-t border-ink/[0.05]">
+                {o.items.map((item, i) => (
+                  <p key={i} className="font-sans text-[11px] text-ink/70">
+                    {item.name} <span className="text-ink/35">×{item.quantity}</span>
+                  </p>
+                ))}
+              </div>
+
+              <div className="flex items-center justify-between gap-3 py-3 border-t border-ink/[0.05]">
+                <div>
+                  <p className="font-sans text-[13px] text-ink">₵{(o.total / 100).toLocaleString()}</p>
+                  <p className={`font-sans text-[10px] mt-0.5 ${o.payment_status === 'paid' ? 'text-emerald-600' : 'text-amber-600'}`}>
+                    {o.payment_status}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-sans text-[11px] text-ink capitalize">{o.delivery_method}</p>
+                  {o.delivery_address && <p className="font-sans text-[11px] text-ink/50 mt-0.5">{o.delivery_address}</p>}
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-ink/[0.05]">
+                <select
+                  value={o.status}
+                  onChange={e => updateStatus(o.id, e.target.value)}
+                  className="w-full font-sans text-[12px] text-ink border border-ink/20 px-3 py-2.5 bg-paper focus:outline-none focus:border-ink"
+                >
+                  {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+            </div>
+          ))}
+        </div>
+        </>
       )}
     </div>
   );

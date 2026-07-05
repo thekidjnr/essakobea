@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { DbService } from "@/lib/supabase/types";
 import ImageUpload from "@/components/admin/ImageUpload";
+import Toggle from "@/components/admin/Toggle";
 
 // ─── Form types ───────────────────────────────────────────────────────────────
 
@@ -155,7 +156,7 @@ export default function AdminServicesPage() {
   return (
     <div className="p-8 md:p-10 max-w-[1000px]">
       {/* Header */}
-      <div className="flex items-end justify-between mb-8">
+      <div className="flex items-end justify-between mb-8 fade-up">
         <div>
           <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-1">Admin</p>
           <h1 className="font-serif text-[2.5rem] font-light text-ink leading-none">
@@ -184,10 +185,11 @@ export default function AdminServicesPage() {
             </div>
           )}
           {services.map((svc) => (
-            <div key={svc.id} className="flex items-center gap-4 px-6 py-4">
+            <div key={svc.id}>
+            <div className="group hidden md:flex items-center gap-4 px-6 py-4 hover:bg-mist/40 transition-colors">
               {svc.image_url
                 // eslint-disable-next-line @next/next/no-img-element
-                ? <img src={svc.image_url} alt={svc.name} className="w-10 h-10 object-cover flex-shrink-0 bg-mist" />
+                ? <div className="w-10 h-10 flex-shrink-0 overflow-hidden bg-mist"><img src={svc.image_url} alt={svc.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" /></div>
                 : <div className="w-10 h-10 bg-mist flex-shrink-0" />
               }
               <span className="font-sans text-[10px] tracking-widest text-ink/30 flex-shrink-0 w-8">{svc.number}</span>
@@ -196,13 +198,7 @@ export default function AdminServicesPage() {
                 <p className="font-sans text-[12px] text-ink/55 truncate">{svc.tagline}</p>
               </div>
               <div className="flex items-center gap-3 flex-shrink-0">
-                <button
-                  onClick={() => toggleActive(svc)}
-                  className={`w-10 h-5 rounded-full relative transition-colors ${svc.is_active ? "bg-emerald-500" : "bg-ink/15"}`}
-                >
-                  <span className="absolute top-0.5 w-4 h-4 rounded-full bg-paper transition-all"
-                    style={{ left: svc.is_active ? "calc(100% - 18px)" : "2px" }} />
-                </button>
+                <Toggle checked={svc.is_active} onChange={() => toggleActive(svc)} color="emerald" />
                 <span className={`font-sans text-[10px] tracking-widest uppercase w-14 text-right ${svc.is_active ? "text-emerald-600" : "text-ink/30"}`}>
                   {svc.is_active ? "Live" : "Hidden"}
                 </span>
@@ -221,14 +217,55 @@ export default function AdminServicesPage() {
                 </button>
               </div>
             </div>
+
+            {/* Mobile row */}
+            <div className="flex md:hidden flex-col gap-3 px-4 py-4">
+              <div className="flex items-center gap-3">
+                {svc.image_url
+                  // eslint-disable-next-line @next/next/no-img-element
+                  ? <img src={svc.image_url} alt={svc.name} className="w-10 h-10 object-cover flex-shrink-0 bg-mist" />
+                  : <div className="w-10 h-10 bg-mist flex-shrink-0" />
+                }
+                <div className="flex-1 min-w-0">
+                  <p className="font-sans text-[13px] text-ink font-medium truncate">
+                    <span className="text-ink/30 mr-1">{svc.number}</span>{svc.name}
+                  </p>
+                  <p className="font-sans text-[12px] text-ink/55 truncate">{svc.tagline}</p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Toggle checked={svc.is_active} onChange={() => toggleActive(svc)} color="emerald" />
+                  <span className={`font-sans text-[10px] tracking-widest uppercase ${svc.is_active ? "text-emerald-600" : "text-ink/30"}`}>
+                    {svc.is_active ? "Live" : "Hidden"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => openEdit(svc)}
+                    className="font-sans text-[10px] tracking-widest uppercase text-ink/50 hover:text-ink border border-ink/15 px-3 py-1.5 transition-colors"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(svc)}
+                    disabled={deleting === svc.id}
+                    className="font-sans text-[10px] tracking-widest uppercase text-red-400 hover:text-red-600 border border-red-200 px-3 py-1.5 transition-colors disabled:opacity-40"
+                  >
+                    {deleting === svc.id ? "…" : "Delete"}
+                  </button>
+                </div>
+              </div>
+            </div>
+            </div>
           ))}
         </div>
       )}
 
       {/* Add / Edit Modal */}
       {modal && (
-        <div className="fixed inset-0 z-50 bg-ink/60 flex items-start justify-center p-4 overflow-y-auto">
-          <div className="bg-paper w-full max-w-[780px] my-8 p-8 relative">
+        <div className="fixed inset-0 z-50 bg-ink/60 flex items-start justify-center p-4 sm:p-6 overflow-y-auto">
+          <div className="bg-paper w-full max-w-[780px] my-8 p-5 sm:p-8 relative">
             <button
               onClick={() => setModal(null)}
               className="absolute top-5 right-5 font-sans text-[20px] text-ink/40 hover:text-ink leading-none"
@@ -243,13 +280,13 @@ export default function AdminServicesPage() {
 
               {/* ── Basic Info ── */}
               <FormSection label="Basic Info">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <SField label="Service Name *" value={form.name} onChange={(v) => {
                     patchForm({ name: v, ...(modal === "add" ? { slug: v.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") } : {}) });
                   }} />
                   <SField label="URL Slug *" value={form.slug} onChange={(v) => patchForm({ slug: v })} />
                 </div>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <SField label="Number (e.g. 01)" value={form.number} onChange={(v) => patchForm({ number: v })} />
                   <SField label="Display Order" value={String(form.display_order)} onChange={(v) => patchForm({ display_order: Number(v) })} type="number" />
                   <SToggle label="Visibility" onLabel="Live" offLabel="Hidden" value={form.is_active} onChange={(v) => patchForm({ is_active: v })} color="emerald" />
@@ -261,7 +298,7 @@ export default function AdminServicesPage() {
               {/* ── Image ── */}
               <FormSection label="Image">
                 <ImageUpload value={form.image_url} onChange={(url) => patchForm({ image_url: url })} folder="services" />
-                <div className="grid grid-cols-2 gap-3 mt-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
                   <div>
                     <label className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 block mb-2">Focus Point</label>
                     <select
@@ -331,9 +368,9 @@ function BookingOptionsBuilder({
       {options.length === 0 && (
         <p className="font-sans text-[12px] text-ink/50 py-1">No options yet. Add at least one for clients to select.</p>
       )}
-      {/* Column headers */}
+      {/* Column headers - desktop only */}
       {options.length > 0 && (
-        <div className="flex gap-2 items-center">
+        <div className="hidden sm:flex gap-2 items-center">
           <span className="w-44 flex-shrink-0 font-sans text-[9px] tracking-widest uppercase text-ink/30">Option Name</span>
           <span className="w-28 flex-shrink-0 font-sans text-[9px] tracking-widest uppercase text-ink/30">Price (display)</span>
           <span className="w-24 flex-shrink-0 font-sans text-[9px] tracking-widest uppercase text-ink/30">Deposit ₵</span>
@@ -342,35 +379,44 @@ function BookingOptionsBuilder({
         </div>
       )}
       {options.map((opt, i) => (
-        <div key={i} className="flex gap-2 items-center">
+        <div key={i} className="border border-ink/10 sm:border-0 p-3 sm:p-0 flex flex-col sm:flex-row gap-2 sm:items-center">
+          <div className="sm:hidden flex items-center justify-between mb-1">
+            <span className="font-sans text-[9px] tracking-widest uppercase text-ink/30">Option {i + 1}</span>
+            <button
+              onClick={() => onChange(options.filter((_, idx) => idx !== i))}
+              className="text-ink/25 hover:text-red-400 text-[16px] leading-none"
+            >
+              ×
+            </button>
+          </div>
           <input
             value={opt.name}
             onChange={(e) => update(i, "name", e.target.value)}
             placeholder="e.g. Full Wig Installation"
-            className="w-44 flex-shrink-0 border border-ink/15 px-3 py-2 font-sans text-[12px] text-ink focus:outline-none focus:border-ink bg-transparent"
+            className="w-full sm:w-44 flex-shrink-0 border border-ink/15 px-3 py-2 font-sans text-[12px] text-ink focus:outline-none focus:border-ink bg-transparent"
           />
           <input
             value={opt.price}
             onChange={(e) => update(i, "price", e.target.value)}
             placeholder="₵300"
-            className="w-28 flex-shrink-0 border border-ink/15 px-3 py-2 font-sans text-[12px] text-ink focus:outline-none focus:border-ink bg-transparent"
+            className="w-full sm:w-28 flex-shrink-0 border border-ink/15 px-3 py-2 font-sans text-[12px] text-ink focus:outline-none focus:border-ink bg-transparent"
           />
           <input
             type="number"
             value={opt.price_raw}
             onChange={(e) => update(i, "price_raw", e.target.value)}
             placeholder="300"
-            className="w-24 flex-shrink-0 border border-ink/15 px-3 py-2 font-sans text-[12px] text-ink focus:outline-none focus:border-ink bg-transparent"
+            className="w-full sm:w-24 flex-shrink-0 border border-ink/15 px-3 py-2 font-sans text-[12px] text-ink focus:outline-none focus:border-ink bg-transparent"
           />
           <input
             value={opt.note}
             onChange={(e) => update(i, "note", e.target.value)}
             placeholder="e.g. Includes bleaching & plucking"
-            className="flex-1 border border-ink/15 px-3 py-2 font-sans text-[12px] text-ink/60 focus:outline-none focus:border-ink bg-transparent"
+            className="w-full sm:flex-1 border border-ink/15 px-3 py-2 font-sans text-[12px] text-ink/60 focus:outline-none focus:border-ink bg-transparent"
           />
           <button
             onClick={() => onChange(options.filter((_, idx) => idx !== i))}
-            className="text-ink/25 hover:text-red-400 text-[18px] w-8 flex-shrink-0 transition-colors leading-none"
+            className="hidden sm:block text-ink/25 hover:text-red-400 text-[18px] w-8 flex-shrink-0 transition-colors leading-none"
           >
             ×
           </button>
@@ -409,21 +455,11 @@ function SToggle({
 }: {
   label: string; onLabel: string; offLabel: string; value: boolean; onChange: (v: boolean) => void; color?: "ink" | "emerald";
 }) {
-  const bg = value ? (color === "emerald" ? "bg-emerald-500" : "bg-ink") : "bg-ink/15";
   return (
     <div className="flex flex-col gap-2 justify-end">
       <label className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40">{label}</label>
       <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => onChange(!value)}
-          className={`w-10 h-5 rounded-full relative transition-colors ${bg}`}
-        >
-          <span
-            className="absolute top-0.5 w-4 h-4 rounded-full bg-paper transition-all"
-            style={{ left: value ? "calc(100% - 18px)" : "2px" }}
-          />
-        </button>
+        <Toggle checked={value} onChange={onChange} color={color === "emerald" ? "emerald" : "ink"} />
         <span className="font-sans text-[11px] text-ink/50">{value ? onLabel : offLabel}</span>
       </div>
     </div>

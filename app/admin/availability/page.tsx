@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Toggle from "@/components/admin/Toggle";
 
 interface AvailDay {
   id: string;
@@ -45,7 +46,7 @@ function TimeSelect({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="border border-ink/15 px-3 py-1.5 font-sans text-[12px] text-ink bg-paper focus:outline-none focus:border-ink appearance-none cursor-pointer pr-7 relative"
+      className="w-full border border-ink/15 px-3 py-1.5 font-sans text-[12px] text-ink bg-paper focus:outline-none focus:border-ink appearance-none cursor-pointer pr-7 relative"
       style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23000' stroke-width='1.2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 10px center" }}
     >
       {TIME_OPTIONS.map((o) => (
@@ -135,7 +136,7 @@ export default function AdminAvailability() {
 
   return (
     <div className="p-8 md:p-10 max-w-[900px]">
-      <div className="mb-8">
+      <div className="mb-8 fade-up">
         <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-1">Admin</p>
         <h1 className="font-serif text-[2.5rem] font-light text-ink leading-none">
           Availability<span className="italic">.</span>
@@ -211,14 +212,7 @@ export default function AdminAvailability() {
               <div key={day.day_of_week} className="py-3">
                 {/* Toggle + day name row */}
                 <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => toggleDay(day.day_of_week)}
-                    className={`w-10 h-5 rounded-full transition-colors flex-shrink-0 relative ${day.is_available ? "bg-ink" : "bg-ink/15"}`}
-                  >
-                    <span
-                      className={`absolute top-0.5 w-4 h-4 rounded-full bg-paper transition-all ${day.is_available ? "left-5" : "left-0.5"}`}
-                    />
-                  </button>
+                  <Toggle checked={day.is_available} onChange={() => toggleDay(day.day_of_week)} />
                   <span className={`font-sans text-[12px] flex-1 ${day.is_available ? "text-ink" : "text-ink/30"}`}>
                     {DAY_NAMES[day.day_of_week]}
                   </span>
@@ -229,16 +223,20 @@ export default function AdminAvailability() {
 
                 {/* Time selects on second line, indented under day name */}
                 {day.is_available && (
-                  <div className="flex items-center gap-2 mt-2 pl-[52px]">
-                    <TimeSelect
-                      value={day.open_time}
-                      onChange={(v) => updateTime(day.day_of_week, "open_time", v)}
-                    />
+                  <div className="flex items-center gap-2 mt-2 pl-0 md:pl-[52px]">
+                    <div className="flex-1 min-w-0">
+                      <TimeSelect
+                        value={day.open_time}
+                        onChange={(v) => updateTime(day.day_of_week, "open_time", v)}
+                      />
+                    </div>
                     <span className="font-sans text-[10px] text-ink/30">–</span>
-                    <TimeSelect
-                      value={day.close_time}
-                      onChange={(v) => updateTime(day.day_of_week, "close_time", v)}
-                    />
+                    <div className="flex-1 min-w-0">
+                      <TimeSelect
+                        value={day.close_time}
+                        onChange={(v) => updateTime(day.day_of_week, "close_time", v)}
+                      />
+                    </div>
                   </div>
                 )}
               </div>

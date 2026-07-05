@@ -28,13 +28,13 @@ export async function POST(req: Request) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
-  const { slug, name, number, tagline, description, image_url, image_position, flip, categories, booking_options, is_active, display_order } = body
+  const { slug, name, number, tagline, description, image_url, image_position, flip, booking_options, is_active, display_order } = body
 
   if (!slug || !name) return NextResponse.json({ error: 'slug and name are required' }, { status: 400 })
 
   const { data, error } = await adminDb
     .from('services')
-    .insert({ slug, name, number: number ?? '01', tagline: tagline ?? '', description: description ?? '', image_url: image_url ?? '', image_position: image_position ?? 'object-center', flip: flip ?? false, categories: categories ?? [], booking_options: booking_options ?? [], is_active: is_active ?? true, display_order: display_order ?? 0 })
+    .insert({ slug, name, number: number ?? '01', tagline: tagline ?? '', description: description ?? '', image_url: image_url ?? '', image_position: image_position ?? 'object-center', flip: flip ?? false, booking_options: booking_options ?? [], is_active: is_active ?? true, display_order: display_order ?? 0 })
     .select()
     .single()
 

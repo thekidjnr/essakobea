@@ -58,7 +58,7 @@ export default function AdminBookings() {
 
   return (
     <div className="p-8 md:p-10 max-w-[1200px]">
-      <div className="mb-8">
+      <div className="mb-8 fade-up">
         <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-1">Admin</p>
         <h1 className="font-serif text-[2.5rem] font-light text-ink leading-none">
           Bookings<span className="italic">.</span>
@@ -83,7 +83,8 @@ export default function AdminBookings() {
       ) : bookings.length === 0 ? (
         <p className="font-sans text-[13px] text-ink/55 py-12 text-center">No bookings found.</p>
       ) : (
-        <div className="bg-paper border border-ink/[0.07] overflow-x-auto">
+        <>
+        <div className="hidden md:block bg-paper border border-ink/[0.07] overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-ink/[0.07]">
@@ -108,8 +109,11 @@ export default function AdminBookings() {
                     <p className="font-sans text-[11px] text-ink/45">{b.treatment}</p>
                     <div className="flex flex-wrap gap-1 mt-1.5">
                       {b.is_emergency && (
-                        <span className="inline-block px-1.5 py-0.5 rounded-sm font-sans text-[9px] tracking-wide uppercase font-medium bg-amber-100 text-amber-800">
-                          ⚡ Emergency
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm font-sans text-[9px] tracking-wide uppercase font-medium bg-amber-100 text-amber-800">
+                          <svg width="9" height="9" viewBox="0 0 22 22" fill="none">
+                            <path d="M12 2L4 13h6l-1 7 9-12h-6l1-6z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
+                          </svg>
+                          Emergency
                         </span>
                       )}
                       {b.customization_type && (
@@ -172,6 +176,93 @@ export default function AdminBookings() {
             </tbody>
           </table>
         </div>
+
+        <div className="md:hidden flex flex-col gap-3">
+          {bookings.map(b => (
+            <div key={b.id} className="bg-paper border border-ink/[0.07] p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-sans text-[13px] text-ink font-medium">{b.client_name}</p>
+                  <p className="font-sans text-[11px] text-ink/40">{b.client_phone}</p>
+                  {b.client_email && <p className="font-sans text-[11px] text-ink/50">{b.client_email}</p>}
+                  {b.notes && <p className="font-sans text-[11px] text-ink/50 mt-1 italic">"{b.notes}"</p>}
+                </div>
+                <span className={`inline-block flex-shrink-0 px-2 py-0.5 rounded-sm font-sans text-[10px] tracking-wide uppercase font-medium ${STATUS_COLORS[b.status] ?? ""}`}>
+                  {b.status}
+                </span>
+              </div>
+
+              <div className="flex flex-wrap gap-1 mt-2">
+                {b.is_emergency && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm font-sans text-[9px] tracking-wide uppercase font-medium bg-amber-100 text-amber-800">
+                    <svg width="9" height="9" viewBox="0 0 22 22" fill="none">
+                      <path d="M12 2L4 13h6l-1 7 9-12h-6l1-6z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
+                    </svg>
+                    Emergency
+                  </span>
+                )}
+                {b.customization_type && (
+                  <span className="inline-block px-1.5 py-0.5 rounded-sm font-sans text-[9px] tracking-wide uppercase font-medium bg-ink/[0.07] text-ink/60">
+                    {b.customization_type} customization
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between gap-3 py-3 mt-2 border-t border-ink/[0.05]">
+                <div>
+                  <p className="font-sans text-[12px] text-ink">{b.service_name}</p>
+                  <p className="font-sans text-[11px] text-ink/45">{b.treatment}</p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className="font-sans text-[12px] text-ink">
+                    {new Date(b.booking_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                  </p>
+                  <p className="font-sans text-[11px] text-ink/45">{b.time_slot}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-3 py-3 border-t border-ink/[0.05]">
+                <span className={`inline-block px-2 py-0.5 rounded-sm font-sans text-[10px] tracking-wide uppercase font-medium ${PAYMENT_COLORS[b.payment_status] ?? ""}`}>
+                  {b.payment_status}
+                </span>
+                <div className="text-right">
+                  {b.amount > 0 && (
+                    <p className="font-sans text-[11px] text-ink/50">₵{(b.amount / 100).toLocaleString()}</p>
+                  )}
+                  {(b.customization_fee > 0 || b.emergency_fee > 0) && (
+                    <div className="flex flex-col gap-0.5">
+                      {b.customization_fee > 0 && <p className="font-sans text-[10px] text-ink/45">+₵{b.customization_fee / 100} customization</p>}
+                      {b.emergency_fee > 0 && <p className="font-sans text-[10px] text-ink/45">+₵{b.emergency_fee / 100} emergency</p>}
+                      {b.service_charge > 0 && <p className="font-sans text-[10px] text-ink/45">+₵{b.service_charge / 100} service charge</p>}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {(b.status === "pending" || b.status === "confirmed") && (
+                <div className="flex gap-2 pt-3 border-t border-ink/[0.05]">
+                  {b.status === "pending" && (
+                    <button onClick={() => setConfirmModal({ id: b.id, action: "confirm" })}
+                      className="flex-1 font-sans text-[10px] tracking-widest uppercase text-emerald-700 border border-emerald-200 py-2.5">
+                      Confirm
+                    </button>
+                  )}
+                  {b.status === "confirmed" && (
+                    <button onClick={() => setConfirmModal({ id: b.id, action: "complete" })}
+                      className="flex-1 font-sans text-[10px] tracking-widest uppercase text-blue-700 border border-blue-200 py-2.5">
+                      Complete
+                    </button>
+                  )}
+                  <button onClick={() => setConfirmModal({ id: b.id, action: "cancel" })}
+                    className="flex-1 font-sans text-[10px] tracking-widest uppercase text-red-500 border border-red-200 py-2.5">
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+        </>
       )}
 
       {/* Action modal */}

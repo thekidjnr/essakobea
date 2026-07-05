@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Cormorant, Inter } from "next/font/google";
 import "./globals.css";
 import { BagProvider } from "@/contexts/BagContext";
@@ -15,6 +15,10 @@ const cormorant = Cormorant({
   weight: ["300", "400", "500", "600"],
   style: ["normal", "italic"],
 });
+
+export const viewport: Viewport = {
+  viewportFit: "cover",
+};
 
 export const metadata: Metadata = {
   title: "Essakobea | Premium Beauty, Elevated",

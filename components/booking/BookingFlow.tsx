@@ -4,6 +4,61 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import type { DbService, ServiceBookingOption, Stylist } from "@/lib/supabase/types";
 
+// ─── Step icons ─────────────────────────────────────────────────────────────────
+
+function IconSparkle({ className }: { className?: string }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" className={className}>
+      <path d="M11 2L13 9L20 11L13 13L11 20L9 13L2 11L9 9L11 2Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconRefresh({ className }: { className?: string }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" className={className}>
+      <path d="M18 6.5a7 7 0 1 0 1.5 6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M19.5 2.5v4.5H15" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconScissors({ className }: { className?: string }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" className={className}>
+      <circle cx="6" cy="6" r="2.3" stroke="currentColor" strokeWidth="1.2" />
+      <circle cx="6" cy="16" r="2.3" stroke="currentColor" strokeWidth="1.2" />
+      <path d="M7.8 7.6L19 18M7.8 14.4L19 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconClock({ className }: { className?: string }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" className={className}>
+      <circle cx="11" cy="11" r="8.5" stroke="currentColor" strokeWidth="1.2" />
+      <path d="M11 6.5V11l3.2 2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconBolt({ className }: { className?: string }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" className={className}>
+      <path d="M12 2L4 13h6l-1 7 9-12h-6l1-6z" stroke="currentColor" strokeWidth="1.1" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconPerson({ className }: { className?: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className={className}>
+      <circle cx="10" cy="6.5" r="3.2" stroke="currentColor" strokeWidth="1.2" />
+      <path d="M3.5 17c1-3.8 4-5.8 6.5-5.8s5.5 2 6.5 5.8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
 interface BookingService {
@@ -305,7 +360,7 @@ function StepFooter({
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-40 bg-paper/95 backdrop-blur-sm border-t border-ink/[0.07] transition-transform duration-300 ease-out"
+      className="fixed bottom-0 left-0 right-0 z-40 bg-paper border-t border-ink/[0.07] transition-transform duration-300 ease-out"
       style={{ transform: visible ? "translateY(0)" : "translateY(100%)" }}
     >
       <div className="max-w-[900px] mx-auto px-6 py-4 flex items-center gap-6">
@@ -636,9 +691,9 @@ export default function BookingFlow() {
                       <div>
                         <div className="flex items-center gap-3 mb-1.5">
                           <span className="font-sans text-[9px] tracking-widest text-ink/25">{svc.number}</span>
-                          <span className="font-sans text-[12px] tracking-wide uppercase text-ink font-medium">{svc.name}</span>
+                          <span className="font-sans text-[13px] tracking-wide uppercase text-ink font-medium">{svc.name}</span>
                         </div>
-                        <p className="font-sans text-[12px] text-ink/45 font-light leading-relaxed">{svc.description}</p>
+                        <p className="font-sans text-[13px] text-ink/55 font-light leading-relaxed">{svc.description}</p>
                       </div>
                       <div className={`w-4 h-4 rounded-full border flex-shrink-0 mt-0.5 transition-all ${
                         booking.serviceId === svc.id ? "border-ink bg-ink" : "border-ink/25"
@@ -657,9 +712,9 @@ export default function BookingFlow() {
                               booking.optionId === opt.id ? "bg-ink" : "hover:bg-ink/[0.03]"
                             }`}
                           >
-                            <p className={`font-sans text-[12px] font-medium mb-0.5 ${booking.optionId === opt.id ? "text-paper" : "text-ink"}`}>{opt.name}</p>
-                            <p className={`font-sans text-[11px] ${booking.optionId === opt.id ? "text-paper/70" : "text-ink/45"}`}>{opt.price}</p>
-                            {opt.note && <p className={`font-sans text-[10px] mt-1 ${booking.optionId === opt.id ? "text-paper/50" : "text-ink/30"}`}>{opt.note}</p>}
+                            <p className={`font-sans text-[13px] font-medium mb-0.5 ${booking.optionId === opt.id ? "text-paper" : "text-ink"}`}>{opt.name}</p>
+                            <p className={`font-sans text-[12px] ${booking.optionId === opt.id ? "text-paper/70" : "text-ink/50"}`}>{opt.price}</p>
+                            {opt.note && <p className={`font-sans text-[11px] mt-1 ${booking.optionId === opt.id ? "text-paper/50" : "text-ink/45"}`}>{opt.note}</p>}
                           </button>
                         ))}
                       </div>
@@ -684,9 +739,9 @@ export default function BookingFlow() {
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-10">
               {([
-                { id: "own_new" as HairUnitType, label: "I have a new unit", sub: "Brand new, never installed", icon: "✦" },
-                { id: "own_existing" as HairUnitType, label: "I have an existing unit", sub: "Previously worn or installed", icon: "◈" },
-                { id: "none" as HairUnitType, label: "Just the service", sub: "No unit needed from me", icon: "◇" },
+                { id: "own_new" as HairUnitType, label: "I have a new unit", sub: "Brand new, never installed", icon: IconSparkle },
+                { id: "own_existing" as HairUnitType, label: "I have an existing unit", sub: "Previously worn or installed", icon: IconRefresh },
+                { id: "none" as HairUnitType, label: "Just the service", sub: "No unit needed from me", icon: IconScissors },
               ]).map(opt => (
                 <button
                   key={opt.id}
@@ -701,9 +756,9 @@ export default function BookingFlow() {
                     booking.hairUnitType === opt.id ? "border-ink bg-ink" : "border-ink/15 hover:border-ink/40"
                   }`}
                 >
-                  <span className={`text-[1.25rem] mb-4 block ${booking.hairUnitType === opt.id ? "text-paper/50" : "text-ink/20"}`}>{opt.icon}</span>
-                  <p className={`font-sans text-[12px] tracking-wide uppercase mb-1 ${booking.hairUnitType === opt.id ? "text-paper" : "text-ink"}`}>{opt.label}</p>
-                  <p className={`font-sans text-[11px] font-light ${booking.hairUnitType === opt.id ? "text-paper/55" : "text-ink/40"}`}>{opt.sub}</p>
+                  <opt.icon className={`mb-4 block ${booking.hairUnitType === opt.id ? "text-paper/50" : "text-ink/20"}`} />
+                  <p className={`font-sans text-[13px] tracking-wide uppercase mb-1 ${booking.hairUnitType === opt.id ? "text-paper" : "text-ink"}`}>{opt.label}</p>
+                  <p className={`font-sans text-[12px] font-light ${booking.hairUnitType === opt.id ? "text-paper/55" : "text-ink/45"}`}>{opt.sub}</p>
                 </button>
               ))}
             </div>
@@ -729,10 +784,10 @@ export default function BookingFlow() {
                   booking.customizationType === "standard" ? "border-ink bg-ink" : "border-ink/15 hover:border-ink/40"
                 }`}
               >
-                <span className={`text-[1.25rem] mb-4 block ${booking.customizationType === "standard" ? "text-paper/50" : "text-ink/20"}`}>◎</span>
-                <p className={`font-sans text-[12px] tracking-wide uppercase mb-1 ${booking.customizationType === "standard" ? "text-paper" : "text-ink"}`}>Standard</p>
-                <p className={`font-sans text-[11px] font-light mb-3 ${booking.customizationType === "standard" ? "text-paper/55" : "text-ink/40"}`}>Drop off your unit 48–72 hrs before your appointment</p>
-                <p className={`font-sans text-[11px] font-medium ${booking.customizationType === "standard" ? "text-paper/80" : "text-ink/60"}`}>+₵{CUSTOMIZATION_FEES.standard}</p>
+                <IconClock className={`mb-4 block ${booking.customizationType === "standard" ? "text-paper/50" : "text-ink/20"}`} />
+                <p className={`font-sans text-[13px] tracking-wide uppercase mb-1 ${booking.customizationType === "standard" ? "text-paper" : "text-ink"}`}>Standard</p>
+                <p className={`font-sans text-[12px] font-light mb-3 ${booking.customizationType === "standard" ? "text-paper/55" : "text-ink/45"}`}>Drop off your unit 48–72 hrs before your appointment</p>
+                <p className={`font-sans text-[12px] font-medium ${booking.customizationType === "standard" ? "text-paper/80" : "text-ink/60"}`}>+₵{CUSTOMIZATION_FEES.standard}</p>
               </button>
 
               <button
@@ -741,10 +796,10 @@ export default function BookingFlow() {
                   booking.customizationType === "express" ? "border-ink bg-ink" : "border-ink/15 hover:border-ink/40"
                 }`}
               >
-                <span className={`text-[1.25rem] mb-4 block ${booking.customizationType === "express" ? "text-paper/50" : "text-ink/20"}`}>◈</span>
-                <p className={`font-sans text-[12px] tracking-wide uppercase mb-1 ${booking.customizationType === "express" ? "text-paper" : "text-ink"}`}>Express</p>
-                <p className={`font-sans text-[11px] font-light mb-3 ${booking.customizationType === "express" ? "text-paper/55" : "text-ink/40"}`}>Bring your unit on the day, allow 45 min–2 hrs extra depending on density</p>
-                <p className={`font-sans text-[11px] font-medium ${booking.customizationType === "express" ? "text-paper/80" : "text-ink/60"}`}>+₵{CUSTOMIZATION_FEES.express}</p>
+                <IconBolt className={`mb-4 block ${booking.customizationType === "express" ? "text-paper/50" : "text-ink/20"}`} />
+                <p className={`font-sans text-[13px] tracking-wide uppercase mb-1 ${booking.customizationType === "express" ? "text-paper" : "text-ink"}`}>Express</p>
+                <p className={`font-sans text-[12px] font-light mb-3 ${booking.customizationType === "express" ? "text-paper/55" : "text-ink/45"}`}>Bring your unit on the day, allow 45 min–2 hrs extra depending on density</p>
+                <p className={`font-sans text-[12px] font-medium ${booking.customizationType === "express" ? "text-paper/80" : "text-ink/60"}`}>+₵{CUSTOMIZATION_FEES.express}</p>
               </button>
             </div>
 
@@ -793,10 +848,10 @@ export default function BookingFlow() {
                   booking.isEmergency ? "border-ink bg-ink" : "border-ink/15 hover:border-ink/40"
                 }`}
               >
-                <span className={`text-[1.1rem] flex-shrink-0 mt-0.5 ${booking.isEmergency ? "text-paper/50" : "text-ink/20"}`}>⚡</span>
+                <IconBolt className={`flex-shrink-0 mt-0.5 ${booking.isEmergency ? "text-paper/50" : "text-ink/20"}`} />
                 <div>
-                  <p className={`font-sans text-[12px] tracking-wide uppercase mb-1 ${booking.isEmergency ? "text-paper" : "text-ink"}`}>Emergency Booking</p>
-                  <p className={`font-sans text-[11px] font-light ${booking.isEmergency ? "text-paper/55" : "text-ink/40"}`}>
+                  <p className={`font-sans text-[13px] tracking-wide uppercase mb-1 ${booking.isEmergency ? "text-paper" : "text-ink"}`}>Emergency Booking</p>
+                  <p className={`font-sans text-[12px] font-light ${booking.isEmergency ? "text-paper/55" : "text-ink/45"}`}>
                     Need this urgently? Book any date & time, priority handling. <span className={`font-medium ${booking.isEmergency ? "text-paper/80" : "text-ink/60"}`}>+₵{EMERGENCY_FEE}</span>
                   </p>
                 </div>
@@ -834,7 +889,7 @@ export default function BookingFlow() {
                                 key={slot}
                                 disabled={taken}
                                 onClick={() => set("time", slot)}
-                                className={`font-sans text-[11px] px-4 py-2 border transition-all duration-150 ${
+                                className={`font-sans text-[12px] px-4 py-2 border transition-all duration-150 ${
                                   booking.time === slot ? "bg-ink text-paper border-ink" :
                                   taken ? "text-ink/15 border-ink/[0.07] cursor-not-allowed line-through" :
                                   "border-ink/15 text-ink hover:border-ink/50"
@@ -874,11 +929,11 @@ export default function BookingFlow() {
                 }`}
               >
                 <div className={`w-11 h-11 rounded-full flex items-center justify-center mb-4 ${booking.stylistId === "" ? "bg-paper/15" : "bg-ink/[0.05]"}`}>
-                  <span className={`font-serif text-[1.25rem] italic ${booking.stylistId === "" ? "text-paper/60" : "text-ink/25"}`}>~</span>
+                  <IconPerson className={booking.stylistId === "" ? "text-paper/60" : "text-ink/30"} />
                 </div>
-                <p className={`font-sans text-[12px] tracking-wide uppercase mb-0.5 ${booking.stylistId === "" ? "text-paper" : "text-ink"}`}>Any Available</p>
-                <p className={`font-sans text-[11px] font-light mb-2 ${booking.stylistId === "" ? "text-paper/55" : "text-ink/40"}`}>We'll assign the best fit</p>
-                <p className={`font-sans text-[10px] ${booking.stylistId === "" ? "text-paper/40" : "text-ink/25"}`}>No additional fee</p>
+                <p className={`font-sans text-[13px] tracking-wide uppercase mb-0.5 ${booking.stylistId === "" ? "text-paper" : "text-ink"}`}>Any Available</p>
+                <p className={`font-sans text-[12px] font-light mb-2 ${booking.stylistId === "" ? "text-paper/55" : "text-ink/45"}`}>We'll assign the best fit</p>
+                <p className={`font-sans text-[11px] ${booking.stylistId === "" ? "text-paper/40" : "text-ink/35"}`}>No additional fee</p>
               </button>
 
               {stylists.map(s => (
@@ -899,11 +954,11 @@ export default function BookingFlow() {
                       </div>
                     )}
                   </div>
-                  <p className={`font-sans text-[12px] tracking-wide uppercase mb-0.5 ${booking.stylistId === s.id ? "text-paper" : "text-ink"}`}>{s.name}</p>
-                  <p className={`font-sans text-[11px] font-light mb-2 ${booking.stylistId === s.id ? "text-paper/55" : "text-ink/40"}`}>{s.title}</p>
-                  {s.bio && <p className={`font-sans text-[10px] font-light leading-relaxed mb-2 ${booking.stylistId === s.id ? "text-paper/45" : "text-ink/30"}`}>{s.bio}</p>}
+                  <p className={`font-sans text-[13px] tracking-wide uppercase mb-0.5 ${booking.stylistId === s.id ? "text-paper" : "text-ink"}`}>{s.name}</p>
+                  <p className={`font-sans text-[12px] font-light mb-2 ${booking.stylistId === s.id ? "text-paper/55" : "text-ink/45"}`}>{s.title}</p>
+                  {s.bio && <p className={`font-sans text-[12px] font-light leading-relaxed mb-2 ${booking.stylistId === s.id ? "text-paper/45" : "text-ink/40"}`}>{s.bio}</p>}
                   {s.fee_adjustment !== 0 && (
-                    <p className={`font-sans text-[10px] ${booking.stylistId === s.id ? "text-paper/40" : "text-ink/30"}`}>
+                    <p className={`font-sans text-[11px] ${booking.stylistId === s.id ? "text-paper/40" : "text-ink/35"}`}>
                       {s.fee_adjustment > 0 ? `+₵${s.fee_adjustment}` : `−₵${Math.abs(s.fee_adjustment)}`} deposit
                     </p>
                   )}

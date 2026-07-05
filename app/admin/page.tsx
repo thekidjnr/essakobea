@@ -70,7 +70,7 @@ export default function AdminDashboard() {
   return (
     <div className="p-8 md:p-10 max-w-[1200px]">
       {/* Header */}
-      <div className="mb-10">
+      <div className="mb-10 fade-up">
         <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-1">
           {new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
         </p>

@@ -75,7 +75,7 @@ export default function AdminWorksPage() {
   return (
     <div className="p-8 md:p-10 max-w-[1100px]">
       {/* Header */}
-      <div className="flex items-end justify-between mb-8">
+      <div className="flex items-end justify-between mb-8 fade-up">
         <div>
           <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-1">Admin</p>
           <h1 className="font-serif text-[2.5rem] font-light text-ink leading-none">
@@ -186,8 +186,8 @@ export default function AdminWorksPage() {
 
       {/* Add Photo Modal */}
       {showUpload && (
-        <div className="fixed inset-0 z-50 bg-ink/60 flex items-start justify-center p-4 overflow-y-auto">
-          <div className="bg-paper w-full max-w-[520px] my-12 p-8 relative">
+        <div className="fixed inset-0 z-50 bg-ink/60 flex items-start justify-center p-4 sm:p-6 overflow-y-auto">
+          <div className="bg-paper w-full max-w-[520px] my-12 p-5 sm:p-8 relative">
             <button
               onClick={() => setShowUpload(false)}
               className="absolute top-5 right-5 font-sans text-[20px] text-ink/40 hover:text-ink leading-none"

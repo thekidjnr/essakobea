@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { DbProduct } from "@/lib/supabase/types";
 import ImageUpload from "@/components/admin/ImageUpload";
+import Toggle from "@/components/admin/Toggle";
 
 const CATEGORY_OPTIONS = [
   { value: "lace-front",  label: "Lace Front" },
@@ -126,7 +127,7 @@ export default function AdminShopPage() {
 
   return (
     <div className="p-8 md:p-10 max-w-[1100px]">
-      <div className="flex items-end justify-between mb-8">
+      <div className="flex items-end justify-between mb-8 fade-up">
         <div>
           <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-1">Admin</p>
           <h1 className="font-serif text-[2.5rem] font-light text-ink leading-none">
@@ -145,12 +146,12 @@ export default function AdminShopPage() {
       </div>
 
       {/* Category filter tabs */}
-      <div className="flex gap-1 mb-6 border-b border-ink/10">
+      <div className="flex gap-1 mb-6 border-b border-ink/10 overflow-x-auto hide-scrollbar">
         {categories.map((cat) => (
             <button
               key={cat.value}
               onClick={() => setActiveCategory(cat.value)}
-              className={`px-4 py-2.5 font-sans text-[10px] tracking-widest uppercase border-b-2 -mb-px transition-all ${
+              className={`flex-shrink-0 px-4 py-2.5 font-sans text-[10px] tracking-widest uppercase border-b-2 -mb-px transition-all ${
                 activeCategory === cat.value ? "border-ink text-ink" : "border-transparent text-ink/35 hover:text-ink/60"
               }`}
             >
@@ -169,11 +170,12 @@ export default function AdminShopPage() {
             </div>
           )}
           {filtered.map((p) => (
-            <div key={p.id} className="flex items-center gap-4 px-6 py-4">
+            <div key={p.id}>
+            <div className="group hidden md:flex items-center gap-4 px-6 py-4 hover:bg-mist/40 transition-colors">
               {/* Thumbnail */}
               {p.image_url
                 // eslint-disable-next-line @next/next/no-img-element
-                ? <img src={p.image_url} alt={p.name} className="w-10 h-10 object-cover flex-shrink-0 bg-mist" />
+                ? <div className="w-10 h-10 flex-shrink-0 overflow-hidden bg-mist"><img src={p.image_url} alt={p.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" /></div>
                 : <div className="w-10 h-10 bg-mist flex-shrink-0" />
               }
 
@@ -194,15 +196,7 @@ export default function AdminShopPage() {
 
               {/* Controls */}
               <div className="flex items-center gap-3 flex-shrink-0">
-                <button
-                  onClick={() => toggleStock(p)}
-                  className={`w-10 h-5 rounded-full relative transition-colors ${p.in_stock ? "bg-emerald-500" : "bg-ink/15"}`}
-                >
-                  <span
-                    className="absolute top-0.5 w-4 h-4 rounded-full bg-paper transition-all"
-                    style={{ left: p.in_stock ? "calc(100% - 18px)" : "2px" }}
-                  />
-                </button>
+                <Toggle checked={p.in_stock} onChange={() => toggleStock(p)} color="emerald" />
                 <span className={`font-sans text-[10px] tracking-widest uppercase w-16 ${p.in_stock ? "text-emerald-600" : "text-red-400"}`}>
                   {p.in_stock ? "In Stock" : "Out"}
                 </span>
@@ -221,14 +215,62 @@ export default function AdminShopPage() {
                 </button>
               </div>
             </div>
+
+            {/* Mobile row */}
+            <div className="flex md:hidden flex-col gap-3 px-4 py-4">
+              <div className="flex items-center gap-3">
+                {p.image_url
+                  // eslint-disable-next-line @next/next/no-img-element
+                  ? <img src={p.image_url} alt={p.name} className="w-10 h-10 object-cover flex-shrink-0 bg-mist" />
+                  : <div className="w-10 h-10 bg-mist flex-shrink-0" />
+                }
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline gap-2">
+                    <p className="font-sans text-[13px] text-ink font-medium truncate">{p.name}</p>
+                    {p.tag && (
+                      <span className="font-sans text-[9px] tracking-widest uppercase text-paper bg-ink px-1.5 py-0.5 flex-shrink-0">
+                        {p.tag}
+                      </span>
+                    )}
+                  </div>
+                  <p className="font-sans text-[11px] text-ink/40 mt-0.5 truncate">
+                    {p.category_label}{p.length ? ` · ${p.length}` : ""} · ₵{p.price_raw.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Toggle checked={p.in_stock} onChange={() => toggleStock(p)} color="emerald" />
+                  <span className={`font-sans text-[10px] tracking-widest uppercase ${p.in_stock ? "text-emerald-600" : "text-red-400"}`}>
+                    {p.in_stock ? "In Stock" : "Out"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => openEdit(p)}
+                    className="font-sans text-[10px] tracking-widest uppercase text-ink/50 hover:text-ink border border-ink/15 px-3 py-1.5 transition-colors"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(p)}
+                    disabled={deleting === p.id}
+                    className="font-sans text-[10px] tracking-widest uppercase text-red-400 hover:text-red-600 border border-red-200 px-3 py-1.5 transition-colors disabled:opacity-40"
+                  >
+                    {deleting === p.id ? "…" : "Delete"}
+                  </button>
+                </div>
+              </div>
+            </div>
+            </div>
           ))}
         </div>
       )}
 
       {/* Add / Edit Modal */}
       {modal && (
-        <div className="fixed inset-0 z-50 bg-ink/60 flex items-start justify-center p-6 overflow-y-auto">
-          <div className="bg-paper w-full max-w-[620px] my-8 p-8 relative">
+        <div className="fixed inset-0 z-50 bg-ink/60 flex items-start justify-center p-4 sm:p-6 overflow-y-auto">
+          <div className="bg-paper w-full max-w-[620px] my-8 p-5 sm:p-8 relative">
             <button
               onClick={() => setModal(null)}
               className="absolute top-5 right-5 font-sans text-[18px] text-ink/40 hover:text-ink"
@@ -240,7 +282,7 @@ export default function AdminShopPage() {
             </h2>
 
             <div className="flex flex-col gap-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <PField label="Name *" value={form.name} onChange={(v) => {
                   set("name", v);
                   if (modal === "add") set("slug", v.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""));
@@ -248,7 +290,7 @@ export default function AdminShopPage() {
                 <PField label="Slug (URL path) *" value={form.slug} onChange={(v) => set("slug", v)} />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 block mb-2">Category *</label>
                   <select
@@ -272,7 +314,7 @@ export default function AdminShopPage() {
                   </select>
                   {/* Custom category inputs */}
                   {!CATEGORY_OPTIONS.some((c) => c.value === form.category) && (
-                    <div className="grid grid-cols-2 gap-2 mt-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
                       <input
                         placeholder="slug (e.g. clip-ins)"
                         value={form.category}
@@ -291,7 +333,7 @@ export default function AdminShopPage() {
                 <PField label="Price (₵ GHS)" value={form.price_raw} onChange={(v) => set("price_raw", v)} type="number" />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <PField label="Length (e.g. 22 inch)" value={form.length} onChange={(v) => set("length", v)} />
                 <div>
                   <label className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 block mb-2">Tag</label>
@@ -323,20 +365,12 @@ export default function AdminShopPage() {
                 <ImageUpload value={form.image_url} onChange={(url) => set("image_url", url)} folder="products" />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <PField label="Display Order" value={String(form.display_order)} onChange={(v) => set("display_order", Number(v))} type="number" />
                 <div className="flex flex-col gap-2 justify-end">
                   <label className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40">Stock Status</label>
                   <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => set("in_stock", !form.in_stock)}
-                      className={`w-10 h-5 rounded-full relative transition-colors ${form.in_stock ? "bg-emerald-500" : "bg-ink/15"}`}
-                    >
-                      <span className="absolute top-0.5 w-4 h-4 rounded-full bg-paper transition-all"
-                        style={{ left: form.in_stock ? "calc(100% - 18px)" : "2px" }}
-                      />
-                    </button>
+                    <Toggle checked={form.in_stock} onChange={(v) => set("in_stock", v)} color="emerald" />
                     <span className="font-sans text-[11px] text-ink/50">{form.in_stock ? "In Stock" : "Out of Stock"}</span>
                   </div>
                 </div>

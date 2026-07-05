@@ -101,7 +101,7 @@ export default function AdminStylistsPage() {
   return (
     <div className="p-8 md:p-10 max-w-[900px]">
       {/* Header */}
-      <div className="flex items-end justify-between mb-8">
+      <div className="flex items-end justify-between mb-8 fade-up">
         <div>
           <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-1">Admin</p>
           <h1 className="font-serif text-[2.5rem] font-light text-ink leading-none">
@@ -134,12 +134,13 @@ export default function AdminStylistsPage() {
       ) : (
         <div className="flex flex-col gap-0 divide-y divide-ink/[0.07]">
           {stylists.map((s) => (
-            <div key={s.id} className="py-5 flex items-center gap-5">
+            <div key={s.id}>
+            <div className="group hidden md:flex py-5 items-center gap-5 px-3 -mx-3 hover:bg-mist/40 transition-colors">
               {/* Photo */}
               <div className="w-14 h-14 bg-mist flex-shrink-0 overflow-hidden">
                 {s.photo_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={s.photo_url} alt={s.name} className="w-full h-full object-cover" />
+                  <img src={s.photo_url} alt={s.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <span className="font-serif text-[1.25rem] text-ink/20 italic">
@@ -191,14 +192,67 @@ export default function AdminStylistsPage() {
                 </button>
               </div>
             </div>
+
+            {/* Mobile row */}
+            <div className="flex md:hidden flex-col gap-3 py-4">
+              <div className="flex items-center gap-3">
+                <div className="w-14 h-14 bg-mist flex-shrink-0 overflow-hidden">
+                  {s.photo_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={s.photo_url} alt={s.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <span className="font-serif text-[1.25rem] text-ink/20 italic">
+                        {s.name.charAt(0)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-sans text-[13px] text-ink font-medium">{s.name}</p>
+                    <span className="font-sans text-[10px] tracking-widest uppercase text-ink/35">{s.title}</span>
+                    {!s.is_available && (
+                      <span className="font-sans text-[9px] tracking-widest uppercase text-amber-500 border border-amber-200 px-2 py-0.5">
+                        Unavailable
+                      </span>
+                    )}
+                  </div>
+                  {s.bio && <p className="font-sans text-[12px] text-ink/55 mt-0.5 truncate">{s.bio}</p>}
+                  <p className="font-sans text-[11px] text-ink/50 mt-0.5">
+                    {s.fee_adjustment > 0
+                      ? `+₵${s.fee_adjustment} deposit`
+                      : s.fee_adjustment < 0
+                      ? `−₵${Math.abs(s.fee_adjustment)} deposit`
+                      : "No fee adjustment"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 justify-end">
+                <button
+                  onClick={() => openEdit(s)}
+                  className="font-sans text-[10px] tracking-widest uppercase text-ink/40 hover:text-ink border border-ink/15 px-3 py-1.5 transition-colors"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(s.id)}
+                  disabled={deletingId === s.id}
+                  className="font-sans text-[10px] tracking-widest uppercase text-ink/25 hover:text-red-500 border border-ink/10 hover:border-red-200 px-3 py-1.5 transition-colors disabled:opacity-40"
+                >
+                  {deletingId === s.id ? "…" : "Remove"}
+                </button>
+              </div>
+            </div>
+            </div>
           ))}
         </div>
       )}
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 bg-ink/60 flex items-start justify-center p-4 overflow-y-auto">
-          <div className="bg-paper w-full max-w-[560px] my-12 p-8 relative">
+        <div className="fixed inset-0 z-50 bg-ink/60 flex items-start justify-center p-4 sm:p-6 overflow-y-auto">
+          <div className="bg-paper w-full max-w-[560px] my-12 p-5 sm:p-8 relative">
             <button
               onClick={() => setShowModal(false)}
               className="absolute top-5 right-5 font-sans text-[20px] text-ink/40 hover:text-ink leading-none"
