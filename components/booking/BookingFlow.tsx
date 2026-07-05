@@ -59,6 +59,18 @@ function IconPerson({ className }: { className?: string }) {
   );
 }
 
+function SelectBadge({ selected }: { selected: boolean }) {
+  return (
+    <span className={`absolute top-4 right-4 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
+      selected ? "bg-paper" : "border border-ink/20"
+    }`}>
+      {selected && (
+        <svg width="9" height="9" viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2 3-3" stroke="var(--ink)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      )}
+    </span>
+  );
+}
+
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
 interface BookingService {
@@ -453,6 +465,7 @@ export default function BookingFlow() {
   const [lookingUp, setLookingUp]     = useState(false);
   const [foundClient, setFoundClient] = useState<{ name: string; email: string } | null>(null);
   const phoneTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timeSectionRef = useRef<HTMLDivElement>(null);
 
   // ── Submission
   const [submitting, setSubmitting] = useState(false);
@@ -844,17 +857,26 @@ export default function BookingFlow() {
                   const toggled = !booking.isEmergency;
                   setBooking(b => ({ ...b, isEmergency: toggled, date: null, time: "" }));
                 }}
-                className={`w-full sm:w-auto text-left border p-5 transition-all duration-200 flex items-start gap-4 ${
-                  booking.isEmergency ? "border-ink bg-ink" : "border-ink/15 hover:border-ink/40"
+                className={`w-full text-left border p-5 transition-all duration-200 flex items-center gap-4 cursor-pointer ${
+                  booking.isEmergency
+                    ? "border-ink bg-ink"
+                    : "border-ink/20 bg-ink/[0.04] hover:border-ink/50 hover:bg-ink/[0.07]"
                 }`}
               >
-                <IconBolt className={`flex-shrink-0 mt-0.5 ${booking.isEmergency ? "text-paper/50" : "text-ink/20"}`} />
-                <div>
+                <IconBolt className={`flex-shrink-0 ${booking.isEmergency ? "text-paper/50" : "text-ink/40"}`} />
+                <div className="flex-1 min-w-0">
                   <p className={`font-sans text-[13px] tracking-wide uppercase mb-1 ${booking.isEmergency ? "text-paper" : "text-ink"}`}>Emergency Booking</p>
-                  <p className={`font-sans text-[12px] font-light ${booking.isEmergency ? "text-paper/55" : "text-ink/45"}`}>
-                    Need this urgently? Book any date & time, priority handling. <span className={`font-medium ${booking.isEmergency ? "text-paper/80" : "text-ink/60"}`}>+₵{EMERGENCY_FEE}</span>
+                  <p className={`font-sans text-[12px] font-light ${booking.isEmergency ? "text-paper/60" : "text-ink/55"}`}>
+                    Book any date & time, priority handling. <span className={`font-medium ${booking.isEmergency ? "text-paper/80" : "text-ink/70"}`}>+₵{EMERGENCY_FEE}</span>
                   </p>
                 </div>
+                <span className={`flex-shrink-0 font-sans text-[10px] tracking-widest uppercase px-3 py-1.5 border transition-all duration-200 ${
+                  booking.isEmergency
+                    ? "border-paper/25 text-paper"
+                    : "border-ink/25 text-ink/60"
+                }`}>
+                  {booking.isEmergency ? "Added ✓" : "Add"}
+                </span>
               </button>
             </div>
 
@@ -863,7 +885,11 @@ export default function BookingFlow() {
                 <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-5">Date</p>
                 <MiniCalendar
                   selected={booking.date}
-                  onSelect={(d) => { set("date", d); set("time", ""); }}
+                  onSelect={(d) => {
+                    set("date", d);
+                    set("time", "");
+                    setTimeout(() => timeSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+                  }}
                   blocked={booking.isEmergency ? [] : blockedDates}
                   disabledDays={booking.isEmergency ? [] : disabledDays}
                 />
@@ -872,7 +898,7 @@ export default function BookingFlow() {
                 )}
               </div>
 
-              <div>
+              <div ref={timeSectionRef} className="scroll-mt-36">
                 <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-5">Time</p>
                 {!booking.date ? (
                   <p className="font-sans text-[13px] text-ink/40 italic mt-2">Select a date first</p>
@@ -924,26 +950,28 @@ export default function BookingFlow() {
               {/* Any Available */}
               <button
                 onClick={() => { set("stylistId", ""); set("stylistName", "Any Available"); set("stylistFeeAdj", 0); }}
-                className={`text-left border p-5 transition-all duration-200 ${
-                  booking.stylistId === "" ? "border-ink bg-ink" : "border-ink/15 hover:border-ink/40"
+                className={`relative text-left border p-5 transition-all duration-200 cursor-pointer flex flex-col ${
+                  booking.stylistId === "" ? "border-ink bg-ink" : "border-ink/15 hover:border-ink/40 hover:shadow-sm"
                 }`}
               >
+                <SelectBadge selected={booking.stylistId === ""} />
                 <div className={`w-11 h-11 rounded-full flex items-center justify-center mb-4 ${booking.stylistId === "" ? "bg-paper/15" : "bg-ink/[0.05]"}`}>
                   <IconPerson className={booking.stylistId === "" ? "text-paper/60" : "text-ink/30"} />
                 </div>
                 <p className={`font-sans text-[13px] tracking-wide uppercase mb-0.5 ${booking.stylistId === "" ? "text-paper" : "text-ink"}`}>Any Available</p>
-                <p className={`font-sans text-[12px] font-light mb-2 ${booking.stylistId === "" ? "text-paper/55" : "text-ink/45"}`}>We'll assign the best fit</p>
-                <p className={`font-sans text-[11px] ${booking.stylistId === "" ? "text-paper/40" : "text-ink/35"}`}>No additional fee</p>
+                <p className={`font-sans text-[12px] font-light ${booking.stylistId === "" ? "text-paper/55" : "text-ink/45"}`}>We'll assign the best fit</p>
+                <p className={`self-end mt-auto pt-4 font-sans text-[13px] font-semibold ${booking.stylistId === "" ? "text-paper/70" : "text-ink/45"}`}>No additional fee</p>
               </button>
 
               {stylists.map(s => (
                 <button
                   key={s.id}
                   onClick={() => { set("stylistId", s.id); set("stylistName", s.name); set("stylistFeeAdj", s.fee_adjustment); }}
-                  className={`text-left border p-5 transition-all duration-200 ${
-                    booking.stylistId === s.id ? "border-ink bg-ink" : "border-ink/15 hover:border-ink/40"
+                  className={`relative text-left border p-5 transition-all duration-200 cursor-pointer flex flex-col ${
+                    booking.stylistId === s.id ? "border-ink bg-ink" : "border-ink/15 hover:border-ink/40 hover:shadow-sm"
                   }`}
                 >
+                  <SelectBadge selected={booking.stylistId === s.id} />
                   <div className="w-11 h-11 rounded-full overflow-hidden mb-4">
                     {s.photo_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -956,9 +984,9 @@ export default function BookingFlow() {
                   </div>
                   <p className={`font-sans text-[13px] tracking-wide uppercase mb-0.5 ${booking.stylistId === s.id ? "text-paper" : "text-ink"}`}>{s.name}</p>
                   <p className={`font-sans text-[12px] font-light mb-2 ${booking.stylistId === s.id ? "text-paper/55" : "text-ink/45"}`}>{s.title}</p>
-                  {s.bio && <p className={`font-sans text-[12px] font-light leading-relaxed mb-2 ${booking.stylistId === s.id ? "text-paper/45" : "text-ink/40"}`}>{s.bio}</p>}
+                  {s.bio && <p className={`font-sans text-[12px] font-light leading-relaxed ${booking.stylistId === s.id ? "text-paper/45" : "text-ink/40"}`}>{s.bio}</p>}
                   {s.fee_adjustment !== 0 && (
-                    <p className={`font-sans text-[11px] ${booking.stylistId === s.id ? "text-paper/40" : "text-ink/35"}`}>
+                    <p className={`self-end mt-auto pt-4 font-sans text-[13px] font-semibold ${booking.stylistId === s.id ? "text-paper/70" : "text-ink/55"}`}>
                       {s.fee_adjustment > 0 ? `+₵${s.fee_adjustment}` : `−₵${Math.abs(s.fee_adjustment)}`} deposit
                     </p>
                   )}
@@ -971,7 +999,7 @@ export default function BookingFlow() {
               <div className="border border-ink/10 px-5 py-4 flex items-center justify-between mb-4 max-w-md">
                 <p className="font-sans text-[11px] text-ink/40">{isPriceRange ? "Deposit required" : "Price"}</p>
                 <div className="text-right">
-                  <p className="font-serif text-[1.5rem] font-light text-ink leading-none">₵{totalDeposit}</p>
+                  <p className="font-serif text-[1.5rem] font-semibold text-ink leading-none">₵{totalDeposit}</p>
                   {booking.stylistFeeAdj !== 0 && (
                     <p className="font-sans text-[11px] text-ink/45 mt-0.5">
                       ₵{baseDeposit} base {booking.stylistFeeAdj > 0 ? "+" : "−"} ₵{Math.abs(booking.stylistFeeAdj)} stylist fee

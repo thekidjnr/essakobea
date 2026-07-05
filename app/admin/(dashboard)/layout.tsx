@@ -1,9 +1,11 @@
 import Sidebar from "@/components/admin/Sidebar";
 import MobileTabBar from "@/components/admin/MobileTabBar";
+import TopLoader from "@/components/admin/TopLoader";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen bg-mist">
+      <TopLoader />
       <div className="hidden md:block">
         <Sidebar />
       </div>

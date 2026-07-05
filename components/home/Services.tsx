@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { adminDb } from "@/lib/supabase/admin";
 import type { DbService } from "@/lib/supabase/types";
+import Reveal from "@/components/common/Reveal";
 
 export default async function Services() {
   const { data } = await adminDb
@@ -16,7 +17,7 @@ export default async function Services() {
   return (
     <section id="services" className="bg-paper py-28 md:py-36">
       {/* Header */}
-      <div className="px-6 md:px-16 max-w-[1400px] mx-auto mb-16">
+      <Reveal className="px-6 md:px-16 max-w-[1400px] mx-auto mb-16">
         <div>
           <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 mb-4">
             What We Do
@@ -25,12 +26,12 @@ export default async function Services() {
             Our <span className="italic">Services</span>
           </h2>
         </div>
-      </div>
+      </Reveal>
 
       {/* Service cards */}
       <div className="px-6 md:px-16 max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        {services.map((service) => (
-          <div key={service.slug} className="group cursor-pointer">
+        {services.map((service, i) => (
+          <Reveal key={service.slug} delay={i * 80} className="group cursor-pointer">
             <Link
               href={`/book?service=${service.slug}`}
               className="block relative overflow-hidden bg-mist aspect-[3/4]"
@@ -68,7 +69,7 @@ export default async function Services() {
                 See Our Work <span>→</span>
               </Link>
             </div>
-          </div>
+          </Reveal>
         ))}
       </div>
     </section>

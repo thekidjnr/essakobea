@@ -152,7 +152,7 @@ export default function AdminWorksPage() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 fade-up">
                 {works.map((work) => (
                   <div key={work.id} className="group relative bg-mist">
                     {/* eslint-disable-next-line @next/next/no-img-element */}

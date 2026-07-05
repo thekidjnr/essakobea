@@ -1,10 +1,11 @@
 import Link from "next/link";
+import Reveal from "@/components/common/Reveal";
 
 export default function HowItWorks() {
   return (
     <section className="bg-paper py-28 md:py-36 px-6 md:px-16 border-t border-ink/10">
       <div className="max-w-[1400px] mx-auto">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
+        <Reveal className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
           <h3 className="font-serif text-[clamp(2rem,4vw,3.5rem)] font-light text-ink leading-tight max-w-xl">
             Ready to experience{" "}
             <span className="italic">Essakobea?</span>
@@ -23,7 +24,7 @@ export default function HowItWorks() {
               Shop Wigs
             </Link>
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   );

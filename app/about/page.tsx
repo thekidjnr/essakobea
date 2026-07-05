@@ -4,6 +4,7 @@ import Link from "next/link";
 import Nav from "@/components/layout/Nav";
 import Footer from "@/components/layout/Footer";
 import { aboutImages } from "@/public/images";
+import Reveal from "@/components/common/Reveal";
 
 export const metadata: Metadata = {
   title: "About | Essakobea",
@@ -46,7 +47,7 @@ export default function AboutPage() {
 
       {/* Hero */}
       <section className="pt-40 pb-0 md:pt-52 md:pb-0 overflow-hidden">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-16">
+        <Reveal className="max-w-[1400px] mx-auto px-6 md:px-16">
           <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 mb-6">
             About Essakobea
           </p>
@@ -55,10 +56,10 @@ export default function AboutPage() {
             <br />
             our <span className="italic">language.</span>
           </h1>
-        </div>
+        </Reveal>
 
         {/* Full-bleed editorial image below headline */}
-        <div className="relative w-full h-[55vw] max-h-[680px] min-h-[320px] mt-16 overflow-hidden">
+        <Reveal delay={150} className="relative w-full h-[55vw] max-h-[680px] min-h-[320px] mt-16 overflow-hidden">
           <Image
             src={aboutImages.team}
             alt="The Essakobea Team"
@@ -68,14 +69,14 @@ export default function AboutPage() {
             sizes="100vw"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-paper/60 via-transparent to-transparent" />
-        </div>
+        </Reveal>
       </section>
 
       {/* Story */}
       <section className="bg-paper py-28 md:py-36 px-6 md:px-16">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-24 items-center">
           {/* Text */}
-          <div>
+          <Reveal>
             <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 mb-8">
               From The Founder
             </p>
@@ -110,10 +111,10 @@ export default function AboutPage() {
                 Founder &amp; CEO
               </p>
             </div>
-          </div>
+          </Reveal>
 
           {/* Portrait */}
-          <div className="relative">
+          <Reveal delay={150} className="relative">
             <div className="relative aspect-[3/4] overflow-hidden">
               <Image
                 src={aboutImages.portrait}
@@ -132,13 +133,13 @@ export default function AboutPage() {
                 Vanessa Bampoe
               </p>
             </div>
-          </div>
+          </Reveal>
         </div>
       </section>
 
       {/* Stats strip */}
       <section className="border-t border-b border-ink/10 bg-mist">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-16">
+        <Reveal className="max-w-[1400px] mx-auto px-6 md:px-16">
           <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-ink/10">
             {stats.map((stat) => (
               <div
@@ -154,13 +155,13 @@ export default function AboutPage() {
               </div>
             ))}
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* Pillars */}
       <section className="bg-paper py-28 md:py-36 px-6 md:px-16">
         <div className="max-w-[1400px] mx-auto">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-16 gap-6">
+          <Reveal className="flex flex-col md:flex-row md:items-end md:justify-between mb-16 gap-6">
             <div>
               <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 mb-4">
                 What We Stand For
@@ -169,12 +170,13 @@ export default function AboutPage() {
                 Our <span className="italic">Values</span>
               </h2>
             </div>
-          </div>
+          </Reveal>
 
           <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-ink/10">
-            {pillars.map((pillar) => (
-              <div
+            {pillars.map((pillar, i) => (
+              <Reveal
                 key={pillar.number}
+                delay={i * 80}
                 className="py-10 md:py-0 md:px-12 first:md:pl-0 last:md:pr-0"
               >
                 <span className="font-sans text-[10px] tracking-widest text-ink/25 block mb-8">
@@ -186,7 +188,7 @@ export default function AboutPage() {
                 <p className="font-sans text-[14px] text-ink/70 font-light leading-relaxed">
                   {pillar.description}
                 </p>
-              </div>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -195,7 +197,7 @@ export default function AboutPage() {
       {/* The platform section */}
       <section className="bg-ink py-28 md:py-36 px-6 md:px-16 overflow-hidden">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-          <div>
+          <Reveal>
             <p className="font-sans text-[10px] tracking-widest2 uppercase text-paper/30 mb-6">
               The Platform
             </p>
@@ -228,7 +230,7 @@ export default function AboutPage() {
                 View Services
               </Link>
             </div>
-          </div>
+          </Reveal>
 
           {/* Platform feature list */}
           <div className="flex flex-col gap-0 divide-y divide-paper/10">
@@ -249,8 +251,8 @@ export default function AboutPage() {
                 "Accra-Based Studio",
                 "Walk in knowing exactly what to expect. Accra, East Legon.",
               ],
-            ].map(([title, desc]) => (
-              <div key={title} className="py-8 flex gap-6 items-start">
+            ].map(([title, desc], i) => (
+              <Reveal key={title} delay={i * 80} className="py-8 flex gap-6 items-start">
                 <div className="w-1.5 h-1.5 rounded-full bg-paper/30 flex-shrink-0 mt-2" />
                 <div>
                   <p className="font-sans text-[12px] tracking-wide uppercase text-paper/60 mb-2">
@@ -260,7 +262,7 @@ export default function AboutPage() {
                     {desc}
                   </p>
                 </div>
-              </div>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -269,7 +271,7 @@ export default function AboutPage() {
       {/* Visit us */}
       <section className="bg-paper py-28 md:py-36 px-6 md:px-16">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-end">
-          <div>
+          <Reveal>
             <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 mb-6">
               Find Us
             </p>
@@ -318,10 +320,10 @@ export default function AboutPage() {
                 </a>
               </div>
             </div>
-          </div>
+          </Reveal>
 
           {/* Big quote / closing statement */}
-          <div className="border-l border-ink/10 pl-12 md:pl-16">
+          <Reveal delay={150} className="border-l border-ink/10 pl-12 md:pl-16">
             <blockquote className="font-serif text-[clamp(1.75rem,3vw,2.75rem)] font-light text-ink leading-snug mb-8">
               &ldquo;We don&apos;t just do hair. We give women a reason to walk
               in the room first.&rdquo;
@@ -337,7 +339,7 @@ export default function AboutPage() {
                 Book an Appointment
               </Link>
             </div>
-          </div>
+          </Reveal>
         </div>
       </section>
 

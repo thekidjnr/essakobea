@@ -163,7 +163,7 @@ export default function AdminShopPage() {
       {loading ? (
         <div className="font-sans text-[12px] text-ink/40">Loading…</div>
       ) : (
-        <div className="bg-paper border border-ink/[0.07] divide-y divide-ink/[0.05]">
+        <div className="bg-paper border border-ink/[0.07] divide-y divide-ink/[0.05] fade-up">
           {filtered.length === 0 && (
             <div className="px-6 py-12 text-center font-sans text-[13px] text-ink/50">
               No products here yet. Add your first one.

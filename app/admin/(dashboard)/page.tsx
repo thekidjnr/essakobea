@@ -80,7 +80,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12 fade-up fade-up-delay-1">
         {STAT_CARDS.map((s) => (
           <div key={s.label} className="bg-paper p-6 border border-ink/[0.07]">
             <p className="font-sans text-[10px] tracking-widest uppercase text-ink/35 mb-3">{s.label}</p>
@@ -91,7 +91,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Two-column: recent bookings + recent orders */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 fade-up fade-up-delay-2">
         {/* Recent Bookings */}
         <div className="bg-paper border border-ink/[0.07]">
           <div className="px-6 py-5 border-b border-ink/[0.07] flex items-center justify-between">

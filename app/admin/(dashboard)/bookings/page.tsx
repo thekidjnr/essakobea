@@ -84,7 +84,7 @@ export default function AdminBookings() {
         <p className="font-sans text-[13px] text-ink/55 py-12 text-center">No bookings found.</p>
       ) : (
         <>
-        <div className="hidden md:block bg-paper border border-ink/[0.07] overflow-x-auto">
+        <div className="hidden md:block bg-paper border border-ink/[0.07] overflow-x-auto fade-up">
           <table className="w-full">
             <thead>
               <tr className="border-b border-ink/[0.07]">
@@ -177,7 +177,7 @@ export default function AdminBookings() {
           </table>
         </div>
 
-        <div className="md:hidden flex flex-col gap-3">
+        <div className="md:hidden flex flex-col gap-3 fade-up">
           {bookings.map(b => (
             <div key={b.id} className="bg-paper border border-ink/[0.07] p-4">
               <div className="flex items-start justify-between gap-3">

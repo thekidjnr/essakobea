@@ -143,7 +143,7 @@ export default function AdminAvailability() {
         </h1>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 fade-up">
         {/* Weekly schedule */}
         <div className="bg-paper border border-ink/[0.07] p-6">
           <div className="flex items-center justify-between mb-6">

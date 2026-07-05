@@ -5,6 +5,7 @@ import Nav from "@/components/layout/Nav";
 import Footer from "@/components/layout/Footer";
 import { adminDb } from "@/lib/supabase/admin";
 import type { DbService } from "@/lib/supabase/types";
+import Reveal from "@/components/common/Reveal";
 
 export const dynamic = "force-dynamic";
 
@@ -29,16 +30,19 @@ export default async function ServicesPage() {
 
       {/* Page hero */}
       <section className="pt-28 pb-16 md:pt-48 md:pb-20 px-6 md:px-16 max-w-[1400px] mx-auto">
-        <h1 className="font-serif text-[clamp(3.5rem,8vw,8rem)] leading-[0.88] font-light text-ink">
-          Our <span className="italic">Services.</span>
-        </h1>
+        <Reveal>
+          <h1 className="font-serif text-[clamp(3.5rem,8vw,8rem)] leading-[0.88] font-light text-ink">
+            Our <span className="italic">Services.</span>
+          </h1>
+        </Reveal>
       </section>
 
       {/* Service cards */}
       <section className="px-6 md:px-16 max-w-[1400px] mx-auto pb-24 md:pb-32">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-16 md:gap-y-20">
-          {services.map((service) => (
+          {services.map((service, i) => (
             <div key={service.slug} id={service.slug} className="scroll-mt-24">
+            <Reveal delay={(i % 2) * 80}>
               {/* Image */}
               <div className="group relative overflow-hidden bg-mist aspect-[4/3]">
                 <Image
@@ -99,6 +103,7 @@ export default async function ServicesPage() {
                   Book {service.name} →
                 </Link>
               </div>
+            </Reveal>
             </div>
           ))}
         </div>

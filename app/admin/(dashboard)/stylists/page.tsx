@@ -132,7 +132,7 @@ export default function AdminStylistsPage() {
           </button>
         </div>
       ) : (
-        <div className="flex flex-col gap-0 divide-y divide-ink/[0.07]">
+        <div className="flex flex-col gap-0 divide-y divide-ink/[0.07] fade-up">
           {stylists.map((s) => (
             <div key={s.id}>
             <div className="group hidden md:flex py-5 items-center gap-5 px-3 -mx-3 hover:bg-mist/40 transition-colors">

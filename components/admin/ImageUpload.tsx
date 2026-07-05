@@ -73,18 +73,6 @@ export default function ImageUpload({
 
       <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
 
-      {/* URL fallback */}
-      <div className="flex items-center gap-2 mt-1">
-        <div className="h-px flex-1 bg-ink/8" />
-        <span className="font-sans text-[9px] tracking-widest uppercase text-ink/25">or paste URL</span>
-        <div className="h-px flex-1 bg-ink/8" />
-      </div>
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="https://..."
-        className="w-full border border-ink/15 px-3 py-2 font-sans text-[11px] text-ink/60 focus:outline-none focus:border-ink bg-transparent"
-      />
     </div>
   );
 }
