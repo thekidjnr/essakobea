@@ -21,8 +21,9 @@ export default function TopLoader() {
       const anchor = (e.target as HTMLElement)?.closest("a");
       if (!anchor) return;
       const href = anchor.getAttribute("href");
-      if (!href || !href.startsWith("/admin")) return;
-      if (href === window.location.pathname) return;
+      if (!href || !href.startsWith("/")) return;
+      const targetPath = href.split("?")[0].split("#")[0];
+      if (targetPath === window.location.pathname) return;
       if (runningRef.current) return;
 
       runningRef.current = true;

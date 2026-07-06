@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Cormorant, Inter } from "next/font/google";
 import "./globals.css";
 import { BagProvider } from "@/contexts/BagContext";
+import TopLoader from "@/components/admin/TopLoader";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -39,6 +40,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${cormorant.variable}`}>
       <body className="antialiased">
+        <TopLoader />
         <BagProvider>{children}</BagProvider>
       </body>
     </html>

@@ -17,7 +17,7 @@ export default async function Services() {
   return (
     <section id="services" className="bg-paper py-28 md:py-36">
       {/* Header */}
-      <Reveal className="px-6 md:px-16 max-w-[1400px] mx-auto mb-16">
+      <Reveal className="px-6 md:px-16 max-w-[1400px] mx-auto mb-8">
         <div>
           <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 mb-4">
             What We Do
@@ -29,7 +29,7 @@ export default async function Services() {
       </Reveal>
 
       {/* Service cards */}
-      <div className="px-6 md:px-16 max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+      <div className="px-6 md:px-16 max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-10 md:gap-x-4 md:gap-y-12">
         {services.map((service, i) => (
           <Reveal key={service.slug} delay={i * 80} className="group cursor-pointer">
             <Link
