@@ -9,7 +9,9 @@ export function cancellationHtml(opts: {
 }): string {
   const refundNote = opts.hoursNotice >= 24
     ? 'If you paid a deposit, we&rsquo;ll process your refund within 3–5 business days.'
-    : 'As this cancellation is within 24 hours of your appointment, the booking deposit is non-refundable.'
+    : opts.hoursNotice >= 0
+    ? 'As this cancellation is within a few hours of your appointment, 50% of your payment is forfeited. We&rsquo;ll refund the remaining 50% within 3–5 business days.'
+    : 'As this cancellation was made without prior notice, the full payment is non-refundable.'
 
   return `<!DOCTYPE html>
 <html>

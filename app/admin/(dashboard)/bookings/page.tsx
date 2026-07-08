@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { whatsAppLink } from "@/lib/phone";
 
 interface Booking {
   id: string; client_name: string; client_email: string; client_phone: string;
@@ -8,6 +9,13 @@ interface Booking {
   notes: string | null; status: string; payment_status: string; amount: number; created_at: string;
   customization_type: string | null; is_emergency: boolean;
   customization_fee: number; emergency_fee: number; service_charge: number;
+}
+
+function whatsAppUrlFor(b: Booking): string {
+  const firstName = b.client_name.split(" ")[0];
+  const date = new Date(b.booking_date).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+  const message = `Hi ${firstName}, this is Essakobea confirming your appointment for ${b.service_name} (${b.treatment}) on ${date} at ${b.time_slot}. See you then!`;
+  return whatsAppLink(b.client_phone, message);
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -151,6 +159,12 @@ export default function AdminBookings() {
                   </td>
                   <td className="px-5 py-4">
                     <div className="flex flex-col gap-1.5">
+                      {b.payment_status === "paid" && (
+                        <a href={whatsAppUrlFor(b)} target="_blank" rel="noopener noreferrer"
+                          className="font-sans text-[10px] tracking-widest uppercase text-green-700 hover:text-green-900 transition-colors">
+                          Message WhatsApp
+                        </a>
+                      )}
                       {b.status === "pending" && (
                         <button onClick={() => setConfirmModal({ id: b.id, action: "confirm" })}
                           className="font-sans text-[10px] tracking-widest uppercase text-emerald-700 hover:text-emerald-900 transition-colors">
@@ -238,6 +252,13 @@ export default function AdminBookings() {
                   )}
                 </div>
               </div>
+
+              {b.payment_status === "paid" && (
+                <a href={whatsAppUrlFor(b)} target="_blank" rel="noopener noreferrer"
+                  className="block text-center font-sans text-[10px] tracking-widest uppercase text-green-700 border border-green-200 py-2.5 mt-3">
+                  Message WhatsApp
+                </a>
+              )}
 
               {(b.status === "pending" || b.status === "confirmed") && (
                 <div className="flex gap-2 pt-3 border-t border-ink/[0.05]">

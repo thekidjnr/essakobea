@@ -37,6 +37,26 @@ export default async function ServicesPage() {
         </Reveal>
       </section>
 
+      {/* Deposit vs Full Price legend */}
+      <section className="px-6 md:px-16 max-w-[1400px] mx-auto pb-12 md:pb-16">
+        <Reveal>
+          <div className="border border-ink/10 bg-mist/60 px-6 py-5 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8">
+            <div className="flex items-center gap-2">
+              <span className="inline-block px-2 py-0.5 rounded-sm font-sans text-[9px] tracking-widest uppercase font-semibold bg-amber-100 text-amber-800">
+                Deposit
+              </span>
+              <p className="font-sans text-[12px] text-ink/60 font-light">Pay this now, the rest when your service is done.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-block px-2 py-0.5 rounded-sm font-sans text-[9px] tracking-widest uppercase font-semibold bg-emerald-100 text-emerald-800">
+                Full Price
+              </span>
+              <p className="font-sans text-[12px] text-ink/60 font-light">Pay this in full upfront to confirm your booking.</p>
+            </div>
+          </div>
+        </Reveal>
+      </section>
+
       {/* Service cards */}
       <section className="px-6 md:px-16 max-w-[1400px] mx-auto pb-24 md:pb-32">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-16 md:gap-y-20">
@@ -72,26 +92,34 @@ export default async function ServicesPage() {
                     <div className="h-px flex-1 bg-ink/8" />
                   </div>
                   <div className="flex flex-col">
-                    {service.booking_options.map((opt) => (
-                      <div
-                        key={opt.id}
-                        className="flex items-start justify-between py-3 border-b border-ink/[0.05] last:border-0 gap-4"
-                      >
-                        <div>
-                          <span className="font-sans text-[13px] text-ink/75 font-light block">
-                            {opt.name}
-                          </span>
-                          {opt.note && (
-                            <span className="font-sans text-[11px] text-ink/50 italic">
-                              {opt.note}
+                    {service.booking_options.map((opt) => {
+                      const isRange = /[-–]/.test(opt.price);
+                      return (
+                        <div
+                          key={opt.id}
+                          className="flex items-start justify-between py-3 border-b border-ink/[0.05] last:border-0 gap-4"
+                        >
+                          <div>
+                            <span className="font-sans text-[13px] text-ink/75 font-light block">
+                              {opt.name}
                             </span>
-                          )}
+                            {opt.note && (
+                              <span className="font-sans text-[11px] text-ink/50 italic">
+                                {opt.note}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                            <span className="font-sans text-[13px] text-ink/90 font-medium">
+                              {opt.price}
+                            </span>
+                            <span className={`inline-block px-1.5 py-0.5 rounded-sm font-sans text-[8.5px] tracking-widest uppercase font-semibold ${isRange ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}`}>
+                              {isRange ? "Deposit" : "Full Price"}
+                            </span>
+                          </div>
                         </div>
-                        <span className="font-sans text-[13px] text-ink/90 font-medium flex-shrink-0">
-                          {opt.price}
-                        </span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 

@@ -122,7 +122,7 @@ export default function CancelPage({ params }: { params: Promise<{ token: string
         </div>
 
         <p className="font-sans text-[11px] text-ink/40 leading-relaxed mb-6">
-          Free cancellation up to 24 hours before your appointment. After that, the booking deposit is non-refundable.
+          Cancel more than 24 hours before your appointment for a full refund. Cancelling within a few hours forfeits 50% of your payment. No-shows or unreachable clients are not entitled to any refund.
         </p>
 
         <div className="flex gap-3">

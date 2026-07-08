@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/supabase/admin'
 import { initializePayment, generateReference } from '@/lib/paystack'
-import type { ServiceBookingOption } from '@/lib/supabase/types'
+import type { ServiceBookingOption, Stylist } from '@/lib/supabase/types'
 
 // How long a pending+unpaid booking holds a slot before it's freed (30 min)
 const SLOT_HOLD_MS = 30 * 60 * 1000
@@ -55,6 +55,55 @@ export async function POST(req: Request) {
       .eq('payment_status', 'unpaid')
       .lt('created_at', staleThreshold)
 
+    // ── 2b. Resolve stylist assignment (each stylist holds their own slot) ─────
+    const { data: activeSameDay } = await adminDb
+      .from('bookings')
+      .select('stylist_id, time_slot, status, payment_status, created_at')
+      .eq('booking_date', bookingDate)
+      .in('status', ['pending', 'confirmed'])
+
+    const staleThresholdMs = Date.now() - SLOT_HOLD_MS
+    const activeBookingsToday = (activeSameDay ?? []).filter((b) => {
+      if (b.status === 'confirmed') return true
+      if (b.status === 'pending' && b.payment_status === 'unpaid') {
+        return new Date(b.created_at).getTime() > staleThresholdMs
+      }
+      return true
+    })
+
+    let resolvedStylistId = stylistId || null
+    let resolvedStylistName = stylistName || null
+
+    if (stylistId) {
+      const { data: stylist } = await adminDb.from('stylists').select('*').eq('id', stylistId).single()
+      if (!stylist || !stylist.is_available) {
+        return NextResponse.json({ error: 'This stylist is no longer available. Please choose another.' }, { status: 409 })
+      }
+      const stylistCountToday = activeBookingsToday.filter((b) => b.stylist_id === stylistId).length
+      if (stylist.daily_capacity && stylistCountToday >= stylist.daily_capacity) {
+        return NextResponse.json({ error: 'This stylist is fully booked for that day. Please choose a different date or stylist.' }, { status: 409 })
+      }
+      if (activeBookingsToday.some((b) => b.stylist_id === stylistId && b.time_slot === timeSlot)) {
+        return NextResponse.json({ error: 'This time slot was just taken. Please go back and choose a different time.' }, { status: 409 })
+      }
+    } else {
+      const { data: stylists } = await adminDb.from('stylists').select('*').eq('is_available', true)
+      const eligible = (stylists as Stylist[] | null ?? [])
+        .map((s) => ({
+          stylist: s,
+          countToday: activeBookingsToday.filter((b) => b.stylist_id === s.id).length,
+          takenThisSlot: activeBookingsToday.some((b) => b.stylist_id === s.id && b.time_slot === timeSlot),
+        }))
+        .filter((e) => !e.takenThisSlot && (!e.stylist.daily_capacity || e.countToday < e.stylist.daily_capacity))
+        .sort((a, b) => a.countToday - b.countToday)
+
+      if (eligible.length === 0) {
+        return NextResponse.json({ error: 'No stylists are available for that time. Please choose a different time.' }, { status: 409 })
+      }
+      resolvedStylistId = eligible[0].stylist.id
+      resolvedStylistName = eligible[0].stylist.name
+    }
+
     // ── 3. Insert booking ─────────────────────────────────────────────────────
     const { data: booking, error } = await adminDb
       .from('bookings')
@@ -71,8 +120,8 @@ export async function POST(req: Request) {
         status: 'pending',
         payment_status: 'unpaid',
         amount: depositGHS * 100, // stored in pesewas
-        stylist_id: stylistId || null,
-        stylist_name: stylistName || null,
+        stylist_id: resolvedStylistId,
+        stylist_name: resolvedStylistName,
         hair_unit_type: hairUnitType || null,
         unit_photos: unitPhotos || [],
         customization_type: customizationType || null,
@@ -106,7 +155,7 @@ export async function POST(req: Request) {
     }
 
     const reference = generateReference('book')
-    const { url } = await initializePayment({
+    const { accessCode } = await initializePayment({
       email: clientEmail,
       amountGHS: depositGHS,
       reference,
@@ -116,7 +165,7 @@ export async function POST(req: Request) {
 
     await adminDb.from('bookings').update({ payment_reference: reference }).eq('id', booking.id)
 
-    return NextResponse.json({ bookingId: booking.id, paystackUrl: url })
+    return NextResponse.json({ bookingId: booking.id, accessCode })
   } catch (err) {
     console.error(err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

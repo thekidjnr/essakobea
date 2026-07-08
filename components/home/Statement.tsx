@@ -23,7 +23,7 @@ export default function Statement() {
           <div className="flex items-center gap-6 mt-16">
             <div className="h-px flex-1 bg-paper/10" />
             <p className="font-sans text-[10px] tracking-widest2 uppercase text-paper/20">
-              Est. 2018
+              Est. 2023
             </p>
           </div>
         </Reveal>

@@ -34,8 +34,8 @@ const pillars = [
 ];
 
 const stats = [
-  { value: "2018", label: "Est." },
-  { value: "400+", label: "Appointments" },
+  { value: "2023", label: "Est." },
+  { value: "1000+", label: "Bookings" },
   { value: "4", label: "Core Services" },
   { value: "Accra", label: "East Legon" },
 ];
@@ -82,20 +82,23 @@ export default function AboutPage() {
             </p>
             <div className="flex flex-col gap-6">
               <p className="font-serif text-[1.5rem] md:text-[1.75rem] font-light text-ink leading-snug">
-                I started Essakobea because I believed premium hair care
-                shouldn&apos;t feel out of reach.
+                I began in my hostel room at the University of Ghana, long
+                before Essakobea had a name.
               </p>
               <p className="font-sans text-[14px] text-ink/70 font-light leading-relaxed">
-                It began in Accra, East Legon, with one studio and a simple
-                obsession: doing things properly. No shortcuts, no mediocrity,
-                just well-crafted hair and an experience that actually feels
-                good.
+                Back then it was just me, doing hair for friends and
+                coursemates because I loved it, with no brand name attached,
+                just skill and word of mouth. After school, I kept going from
+                home, working with what I had before I ever had a studio to
+                call my own.
               </p>
               <p className="font-sans text-[14px] text-ink/70 font-light leading-relaxed">
-                Today, Essakobea sits at the intersection of in-studio service
-                and ecommerce, so whether you&apos;re booking a full
-                installation or picking up a ready-made unit, everything
-                lives in one place.
+                My first shop opened in East Legon, and we&apos;ve since moved
+                into a new space, also in East Legon, built for the studio
+                I&apos;d always pictured. Essakobea as a brand was founded in
+                2023, but the craft behind it started years earlier, in a
+                university hostel with nothing but a comb, a client, and the
+                belief that hair could be someone&apos;s whole confidence.
               </p>
               <p className="font-sans text-[14px] text-ink/70 font-light leading-relaxed">
                 I built this platform so booking your next appointment feels
@@ -105,7 +108,7 @@ export default function AboutPage() {
             </div>
             <div className="mt-10 pt-6 border-t border-ink/10">
               <p className="font-serif text-[1.1rem] font-light text-ink leading-none">
-                Vanessa Bampoe
+                Vanessa Akosua Menkobea Bampoe
               </p>
               <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 mt-2">
                 Founder &amp; CEO
@@ -118,7 +121,7 @@ export default function AboutPage() {
             <div className="relative aspect-[3/4] overflow-hidden">
               <Image
                 src={aboutImages.portrait}
-                alt="Vanessa Bampoe, Founder & CEO of Essakobea"
+                alt="Vanessa Akosua Menkobea Bampoe, Founder & CEO of Essakobea"
                 fill
                 className="object-cover object-center"
                 sizes="(max-width: 768px) 100vw, 50vw"
@@ -130,7 +133,7 @@ export default function AboutPage() {
                 Founder &amp; CEO
               </p>
               <p className="font-serif text-[1.1rem] font-light text-ink leading-snug">
-                Vanessa Bampoe
+                Vanessa Akosua Menkobea Bampoe
               </p>
             </div>
           </Reveal>
@@ -297,9 +300,9 @@ export default function AboutPage() {
                   Hours
                 </p>
                 <p className="font-sans text-[14px] text-ink/70 font-light">
-                  Monday – Saturday
+                  Tuesday – Sunday
                   <br />
-                  8:00 AM – 6:00 PM
+                  Closed Mondays
                 </p>
               </div>
               <div>

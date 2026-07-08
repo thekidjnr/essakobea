@@ -1,8 +1,21 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
+
+declare global {
+  interface Window {
+    PaystackPop: {
+      newTransaction(opts: {
+        accessCode: string;
+        onSuccess(tx: { reference: string }): void;
+        onCancel(): void;
+      }): void;
+    };
+  }
+}
 import { useSearchParams } from "next/navigation";
 import type { DbService, ServiceBookingOption, Stylist } from "@/lib/supabase/types";
+import PhoneInput from "@/components/common/PhoneInput";
 
 // ─── Step icons ─────────────────────────────────────────────────────────────────
 
@@ -126,6 +139,7 @@ function formatDate(d: Date) {
 const CUSTOMIZATION_FEES = { standard: 100, express: 150 } as const;
 const EMERGENCY_FEE = 200;
 const SERVICE_CHARGE_PCT = 0.05;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // ─── State ────────────────────────────────────────────────────────────────────
 
@@ -308,8 +322,8 @@ function PhotoUpload({ photos, onChange, onUploadingChange }: {
 
 function TermsModal({ depositAmount, isRange, onAgree, onClose }: { depositAmount: number; isRange: boolean; onAgree: () => void; onClose: () => void }) {
   const paymentLabel = isRange
-    ? `A non-refundable deposit of ₵${depositAmount} is required to secure your slot. This is deducted from your total on the day.`
-    : `The full payment of ₵${depositAmount} is collected upfront to confirm your booking.`;
+    ? `A non-refundable deposit of ₵${depositAmount} confirms your slot. This is deducted from your total, you pay the rest when the service is done.`
+    : `The Full Price of ₵${depositAmount} is collected upfront to confirm your booking.`;
 
   return (
     <div className="fixed inset-0 z-50 bg-ink/70 flex items-center justify-center p-4">
@@ -321,8 +335,8 @@ function TermsModal({ depositAmount, isRange, onAgree, onClose }: { depositAmoun
           </h2>
           <div className="flex flex-col gap-5 mb-8">
             {[
-              [isRange ? "Deposit" : "Payment", paymentLabel],
-              ["Cancellations", `We require at least 24 hours notice to cancel or reschedule. Cancellations with less than 24 hours notice forfeit the ${isRange ? "deposit" : "payment"}.`],
+              [isRange ? "Deposit" : "Full Price", paymentLabel],
+              ["Cancellations", `Cancel more than 24 hours before your appointment for a full refund. Cancelling within a few hours of your appointment forfeits 50% of your ${isRange ? "deposit" : "payment"}. No-shows or unreachable clients are not entitled to any refund.`],
               ["Arriving late", "Please arrive on time. If you arrive more than 15 minutes late, your slot may be given to the next client."],
               ["Hair prep", "Come with clean, detangled hair unless a wash service is booked. This helps us give you the best result."],
               ["Changes on the day", "Any changes to your service on arrival may affect pricing. Our team will advise you before proceeding."],
@@ -341,7 +355,7 @@ function TermsModal({ depositAmount, isRange, onAgree, onClose }: { depositAmoun
               onClick={onAgree}
               className="w-full bg-ink text-paper font-sans text-[11px] tracking-widest uppercase py-4 hover:bg-ink/80 transition-colors"
             >
-              {isRange ? `I Agree, Pay ₵${depositAmount} Deposit` : `I Agree, Pay ₵${depositAmount} Now`}
+              {isRange ? `I Agree, Pay ₵${depositAmount} Deposit` : `I Agree, Pay ₵${depositAmount} Full Price`}
             </button>
             <button
               onClick={onClose}
@@ -478,6 +492,7 @@ export default function BookingFlow() {
   const baseDeposit      = selectedOption?.price_raw ?? 0;
   // A price is a "range" when the display string contains a dash/en-dash (e.g. "₵250 – ₵450")
   const isPriceRange     = !!(selectedOption?.price && /[-–]/.test(selectedOption.price));
+  const emailInvalid     = booking.email.length > 0 && !EMAIL_REGEX.test(booking.email.trim());
   const needsCustomization = booking.hairUnitType === "own_new" || booking.hairUnitType === "own_existing";
   const customizationFee = booking.customizationType === "standard" ? CUSTOMIZATION_FEES.standard
                          : booking.customizationType === "express"  ? CUSTOMIZATION_FEES.express : 0;
@@ -492,9 +507,12 @@ export default function BookingFlow() {
       : DEFAULT_SLOTS;
 
   // ── Step layout (Customization step only shown when new/existing unit)
+  // Actual step indices stay fixed (0 Service, 1 Hair, 2 Customization,
+  // 3 Stylist, 4 Schedule, 5 Details, 6 Review) — stylist is chosen before
+  // schedule so slot availability can be filtered to that stylist.
   const stepLabels = needsCustomization
-    ? ["Service", "Hair", "Customization", "Schedule", "Stylist", "Details", "Review"]
-    : ["Service", "Hair", "Schedule", "Stylist", "Details", "Review"];
+    ? ["Service", "Hair", "Customization", "Stylist", "Schedule", "Details", "Review"]
+    : ["Service", "Hair", "Stylist", "Schedule", "Details", "Review"];
   const totalSteps  = stepLabels.length;
   // Map actual step index → bar index (customization step = index 2 only exists when needsCustomization)
   const barIndex    = step <= 1 ? step : (needsCustomization ? step : step - 1);
@@ -525,20 +543,21 @@ export default function BookingFlow() {
     }).catch(() => {});
   }, []);
 
-  // ── Fetch slots when date changes
+  // ── Fetch slots when date or stylist changes (each stylist has their own slots)
   useEffect(() => {
     if (!booking.date) return;
     const dateStr = booking.date.toISOString().slice(0, 10);
-    fetch(`/api/availability?date=${dateStr}`).then(r => r.json()).then(data => {
+    const stylistParam = booking.stylistId ? `&stylistId=${booking.stylistId}` : "";
+    fetch(`/api/availability?date=${dateStr}${stylistParam}`).then(r => r.json()).then(data => {
       if (data.bookedSlots) setBooked(data.bookedSlots);
       if (data.openTime) setDayAvail({ openTime: data.openTime, closeTime: data.closeTime, slotInterval: data.slotInterval ?? 60 });
     }).catch(() => {});
-  }, [booking.date]);
+  }, [booking.date, booking.stylistId]);
 
   // ── Phone lookup with debounce
   useEffect(() => {
     const phone = booking.phone.trim();
-    if (phone.length < 9) { setFoundClient(null); return; }
+    if (phone.length < 11) { setFoundClient(null); return; }
     if (phoneTimer.current) clearTimeout(phoneTimer.current);
     phoneTimer.current = setTimeout(async () => {
       setLookingUp(true);
@@ -588,9 +607,9 @@ export default function BookingFlow() {
     if (step === 0) return !!booking.serviceId && !!booking.optionId;
     if (step === 1) return !!booking.hairUnitType;
     if (step === 2) return !!booking.customizationType && booking.unitPhotos.length > 0 && !photoUploading;
-    if (step === 3) return !!booking.date && !!booking.time;
-    if (step === 4) return true;
-    if (step === 5) return !!booking.firstName && !!booking.phone && !!booking.email;
+    if (step === 3) return true;
+    if (step === 4) return !!booking.date && !!booking.time;
+    if (step === 5) return !!booking.firstName && !!booking.phone && EMAIL_REGEX.test(booking.email.trim());
     return false;
   };
 
@@ -627,8 +646,17 @@ export default function BookingFlow() {
         }),
       });
       const data = await res.json();
-      if (data.paystackUrl) {
-        window.location.href = data.paystackUrl;
+      if (data.accessCode) {
+        window.PaystackPop.newTransaction({
+          accessCode: data.accessCode,
+          onSuccess: (tx) => {
+            window.location.href = `/book/success?reference=${tx.reference}`;
+          },
+          onCancel: () => {
+            setSubmitting(false);
+            setSubmitError("Payment was cancelled. Your slot is held for 30 minutes — tap Pay to try again.");
+          },
+        });
       } else {
         setSubmitError(data.error ?? "Something went wrong. Please try again.");
         setSubmitting(false);
@@ -842,8 +870,8 @@ export default function BookingFlow() {
           </div>
         )}
 
-        {/* ─ STEP 3: Schedule ────────────────────────────────────────────────── */}
-        {step === 3 && (
+        {/* ─ STEP 4: Schedule ────────────────────────────────────────────────── */}
+        {step === 4 && (
           <div>
             <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-3">Step {stepNum} of {totalSteps}</p>
             <h2 className="font-serif text-[clamp(2rem,5vw,3.5rem)] font-light text-ink leading-none mb-10">
@@ -935,21 +963,21 @@ export default function BookingFlow() {
           </div>
         )}
 
-        {/* ─ STEP 4: Stylist ─────────────────────────────────────────────────── */}
-        {step === 4 && (
+        {/* ─ STEP 3: Stylist ─────────────────────────────────────────────────── */}
+        {step === 3 && (
           <div>
             <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-3">Step {stepNum} of {totalSteps}</p>
             <h2 className="font-serif text-[clamp(2rem,5vw,3.5rem)] font-light text-ink leading-none mb-3">
               Choose your <span className="italic">stylist.</span>
             </h2>
             <p className="font-sans text-[14px] text-ink/60 font-light mb-10 max-w-sm leading-relaxed">
-              All our stylists are trained professionals. Pick whoever you're most comfortable with, or let us decide.
+              All our stylists are trained professionals. Pick whoever you're most comfortable with, or let us decide. Your stylist's own schedule determines the dates and times available next.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
               {/* Any Available */}
               <button
-                onClick={() => { set("stylistId", ""); set("stylistName", "Any Available"); set("stylistFeeAdj", 0); }}
+                onClick={() => setBooking(b => ({ ...b, stylistId: "", stylistName: "Any Available", stylistFeeAdj: 0, date: null, time: "" }))}
                 className={`relative text-left border p-5 transition-all duration-200 cursor-pointer flex flex-col ${
                   booking.stylistId === "" ? "border-ink bg-ink" : "border-ink/15 hover:border-ink/40 hover:shadow-sm"
                 }`}
@@ -966,7 +994,7 @@ export default function BookingFlow() {
               {stylists.map(s => (
                 <button
                   key={s.id}
-                  onClick={() => { set("stylistId", s.id); set("stylistName", s.name); set("stylistFeeAdj", s.fee_adjustment); }}
+                  onClick={() => setBooking(b => ({ ...b, stylistId: s.id, stylistName: s.name, stylistFeeAdj: s.fee_adjustment, date: null, time: "" }))}
                   className={`relative text-left border p-5 transition-all duration-200 cursor-pointer flex flex-col ${
                     booking.stylistId === s.id ? "border-ink bg-ink" : "border-ink/15 hover:border-ink/40 hover:shadow-sm"
                   }`}
@@ -997,7 +1025,12 @@ export default function BookingFlow() {
             {/* Live deposit display */}
             {selectedOption && (
               <div className="border border-ink/10 px-5 py-4 flex items-center justify-between mb-4 max-w-md">
-                <p className="font-sans text-[11px] text-ink/40">{isPriceRange ? "Deposit required" : "Price"}</p>
+                <div className="flex items-center gap-2">
+                  <span className={`inline-block px-2 py-0.5 rounded-sm font-sans text-[9px] tracking-widest uppercase font-semibold ${isPriceRange ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}`}>
+                    {isPriceRange ? "Deposit" : "Full Price"}
+                  </span>
+                  {isPriceRange && <p className="font-sans text-[11px] text-ink/40">pay rest later</p>}
+                </div>
                 <div className="text-right">
                   <p className="font-serif text-[1.5rem] font-semibold text-ink leading-none">₵{totalDeposit}</p>
                   {booking.stylistFeeAdj !== 0 && (
@@ -1023,14 +1056,10 @@ export default function BookingFlow() {
             <div className="max-w-[560px] flex flex-col gap-5">
               {/* Phone first — enables lookup */}
               <div className="relative">
-                <label className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 block mb-2">Phone *</label>
-                <input
-                  type="tel"
-                  value={booking.phone}
-                  onChange={e => set("phone", e.target.value)}
-                  placeholder="0557205803"
-                  className="w-full border border-ink/15 focus:border-ink px-4 py-4 font-sans text-[14px] text-ink bg-transparent focus:outline-none transition-colors"
-                />
+                <label className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 block mb-2">
+                  Phone * <span className="normal-case tracking-normal text-ink/35">(WhatsApp number recommended)</span>
+                </label>
+                <PhoneInput value={booking.phone} onChange={(v) => set("phone", v)} />
                 {lookingUp && (
                   <span className="absolute right-4 bottom-4 font-sans text-[10px] text-ink/30 tracking-widest uppercase">Checking…</span>
                 )}
@@ -1076,9 +1105,15 @@ export default function BookingFlow() {
                   value={booking.email}
                   onChange={e => set("email", e.target.value)}
                   placeholder="akua@example.com"
-                  className="w-full border border-ink/15 focus:border-ink px-4 py-4 font-sans text-[14px] text-ink bg-transparent focus:outline-none transition-colors"
+                  className={`w-full border px-4 py-4 font-sans text-[14px] text-ink bg-transparent focus:outline-none transition-colors ${
+                    emailInvalid ? "border-red-400 focus:border-red-500" : "border-ink/15 focus:border-ink"
+                  }`}
                 />
-                <p className="font-sans text-[11px] text-ink/45 mt-1.5">Confirmation and receipt sent here.</p>
+                {emailInvalid ? (
+                  <p className="font-sans text-[11px] text-red-500 mt-1.5">Please enter a valid email address.</p>
+                ) : (
+                  <p className="font-sans text-[11px] text-ink/45 mt-1.5">Confirmation and receipt sent here.</p>
+                )}
               </div>
 
               {/* Notes */}
@@ -1087,11 +1122,11 @@ export default function BookingFlow() {
                 <textarea
                   value={booking.notes}
                   onChange={e => set("notes", e.target.value)}
-                  placeholder="Allergies, preferences, or anything your stylist should know…"
+                  placeholder="Allergies, preferences, or anything you'd like us to have ready for you…"
                   rows={4}
                   className="w-full border border-ink/15 focus:border-ink px-4 py-4 font-sans text-[13px] text-ink bg-transparent focus:outline-none transition-colors resize-none leading-relaxed"
                 />
-                <p className="font-sans text-[11px] text-ink/45 mt-1.5">The more we know, the better we can prepare.</p>
+                <p className="font-sans text-[11px] text-ink/45 mt-1.5">We offer complimentary drinks and light refreshments, just ask. Let us know about allergies or preferences too.</p>
               </div>
             </div>
 
@@ -1134,7 +1169,11 @@ export default function BookingFlow() {
                 </ReviewRow>
               )}
 
-              <ReviewRow label="Schedule" onEdit={() => goTo(3)}>
+              <ReviewRow label="Stylist" onEdit={() => goTo(3)}>
+                <p className="font-sans text-[14px] text-ink">{booking.stylistId ? booking.stylistName : "Any Available"}</p>
+              </ReviewRow>
+
+              <ReviewRow label="Schedule" onEdit={() => goTo(4)}>
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="font-sans text-[14px] text-ink">{booking.date ? formatDate(booking.date) : "–"}</p>
                   {booking.isEmergency && (
@@ -1142,10 +1181,6 @@ export default function BookingFlow() {
                   )}
                 </div>
                 <p className="font-sans text-[12px] text-ink/50">{booking.time}</p>
-              </ReviewRow>
-
-              <ReviewRow label="Stylist" onEdit={() => goTo(4)}>
-                <p className="font-sans text-[14px] text-ink">{booking.stylistId ? booking.stylistName : "Any Available"}</p>
               </ReviewRow>
 
               <ReviewRow label="Details" onEdit={() => goTo(5)}>
@@ -1159,8 +1194,16 @@ export default function BookingFlow() {
 
               {/* Price breakdown */}
               <div className="py-6 flex flex-col gap-2.5">
+                {isPriceRange && (
+                  <div className="border border-amber-200 bg-amber-50/60 px-4 py-3 mb-1 flex gap-3">
+                    <span className="text-[0.85rem] flex-shrink-0 mt-0.5 text-amber-600">◉</span>
+                    <p className="font-sans text-[12px] text-amber-900 leading-relaxed">
+                      This service has a price range. You pay the <span className="font-semibold">deposit</span> now to confirm your booking, and the remaining balance is settled once your service is complete.
+                    </p>
+                  </div>
+                )}
                 <div className="flex items-center justify-between">
-                  <p className="font-sans text-[12px] text-ink/50">{isPriceRange ? "Deposit" : "Service"}</p>
+                  <p className="font-sans text-[12px] text-ink/50">{isPriceRange ? "Deposit" : "Full Price"}</p>
                   <p className="font-sans text-[12px] text-ink">₵{baseDeposit + booking.stylistFeeAdj}</p>
                 </div>
                 {customizationFee > 0 && (
@@ -1181,8 +1224,8 @@ export default function BookingFlow() {
                 </div>
                 <div className="flex items-end justify-between pt-3 border-t border-ink/[0.07]">
                   <div>
-                    <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-1">{isPriceRange ? "Deposit due now" : "Total"}</p>
-                    <p className="font-sans text-[11px] text-ink/45 font-light">{isPriceRange ? "Balance confirmed and paid on the day" : "Full payment collected upfront"}</p>
+                    <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-1">{isPriceRange ? "Deposit Due Now" : "Full Price"}</p>
+                    <p className="font-sans text-[11px] text-ink/45 font-light">{isPriceRange ? "Balance settled once your service is complete" : "Full payment collected upfront"}</p>
                   </div>
                   <p className="font-serif text-[2rem] font-light text-ink">₵{totalDeposit}</p>
                 </div>
@@ -1199,7 +1242,7 @@ export default function BookingFlow() {
                 disabled={submitting}
                 className="w-full bg-ink text-paper font-sans text-[11px] tracking-widest uppercase py-5 hover:bg-ink/80 transition-colors disabled:opacity-50"
               >
-                {submitting ? "Processing…" : isPriceRange ? `Pay ₵${totalDeposit} Deposit →` : `Pay ₵${totalDeposit} Now →`}
+                {submitting ? "Processing…" : isPriceRange ? `Pay ₵${totalDeposit} Deposit →` : `Pay ₵${totalDeposit} Full Price →`}
               </button>
               <p className="font-sans text-[11px] text-ink/45 text-center">
                 Secured by Paystack · You'll review our booking policy before confirming

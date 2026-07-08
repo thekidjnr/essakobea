@@ -13,11 +13,17 @@ export async function GET(req: Request) {
 
   // Normalise: strip leading + and spaces
   const normalised = phone.replace(/\s+/g, '').replace(/^\+/, '')
+  // Legacy bookings were stored as a raw Ghana local number (e.g. "0557205803")
+  // before the country-code picker existed — also match against that format.
+  const legacyLocal = normalised.startsWith('233') ? `0${normalised.slice(3)}` : null
+
+  const variants = [phone, normalised, `+${normalised}`, ...(legacyLocal ? [legacyLocal] : [])]
+  const orFilter = variants.map((v) => `client_phone.eq.${v}`).join(',')
 
   const { data } = await adminDb
     .from('bookings')
     .select('client_name, client_email, client_phone')
-    .or(`client_phone.eq.${phone},client_phone.eq.${normalised},client_phone.eq.+${normalised}`)
+    .or(orFilter)
     .order('created_at', { ascending: false })
     .limit(1)
     .single()

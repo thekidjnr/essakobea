@@ -114,6 +114,7 @@ export interface Stylist {
   fee_adjustment: number   // GHS cedis added to base deposit
   is_available:   boolean
   display_order:  number
+  daily_capacity: number | null   // max appointments per day, null = unlimited
   created_at:     string
 }
 

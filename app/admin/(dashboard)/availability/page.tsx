@@ -170,8 +170,8 @@ export default function AdminAvailability() {
           <div className="flex flex-col gap-4 mb-6 pb-6 border-b border-ink/[0.05]">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="font-sans text-[11px] text-ink">Bookings per slot</p>
-                <p className="font-sans text-[11px] text-ink/50 mt-0.5">How many clients can book the same time slot (= no. of active stylists)</p>
+                <p className="font-sans text-[11px] text-ink">Stations per slot</p>
+                <p className="font-sans text-[11px] text-ink/50 mt-0.5">Physical seats available at once, separate from each stylist's own daily capacity (set per stylist)</p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <button

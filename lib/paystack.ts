@@ -23,7 +23,7 @@ export interface InitPayload {
   metadata?:   Record<string, unknown>
 }
 
-export async function initializePayment(payload: InitPayload): Promise<{ url: string; reference: string }> {
+export async function initializePayment(payload: InitPayload): Promise<{ url: string; accessCode: string; reference: string }> {
   const res = await fetch(`${PAYSTACK_API}/transaction/initialize`, {
     method: 'POST',
     headers: authHeaders(),
@@ -39,7 +39,7 @@ export async function initializePayment(payload: InitPayload): Promise<{ url: st
 
   const data = await res.json()
   if (!data.status) throw new Error(data.message ?? 'Paystack init failed')
-  return { url: data.data.authorization_url, reference: data.data.reference }
+  return { url: data.data.authorization_url, accessCode: data.data.access_code, reference: data.data.reference }
 }
 
 export async function verifyPayment(reference: string): Promise<{

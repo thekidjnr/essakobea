@@ -14,11 +14,11 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
   const { id } = await params
   const body = await req.json()
-  const { name, title, bio, photo_url, fee_adjustment, is_available, display_order } = body
+  const { name, title, bio, photo_url, fee_adjustment, is_available, display_order, daily_capacity } = body
 
   const { data, error } = await adminDb
     .from('stylists')
-    .update({ name, title, bio, photo_url, fee_adjustment, is_available, display_order })
+    .update({ name, title, bio, photo_url, fee_adjustment, is_available, display_order, daily_capacity: daily_capacity ?? null })
     .eq('id', id)
     .select()
     .single()

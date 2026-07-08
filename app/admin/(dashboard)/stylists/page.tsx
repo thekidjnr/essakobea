@@ -12,6 +12,7 @@ const EMPTY: Omit<Stylist, "id" | "created_at"> = {
   fee_adjustment: 0,
   is_available: true,
   display_order: 0,
+  daily_capacity: null,
 };
 
 export default function AdminStylistsPage() {
@@ -48,6 +49,7 @@ export default function AdminStylistsPage() {
       fee_adjustment: s.fee_adjustment,
       is_available: s.is_available,
       display_order: s.display_order,
+      daily_capacity: s.daily_capacity,
     });
     setShowModal(true);
   };
@@ -62,6 +64,9 @@ export default function AdminStylistsPage() {
       photo_url: form.photo_url || null,
       fee_adjustment: Number(form.fee_adjustment),
       display_order: Number(form.display_order),
+      daily_capacity: form.daily_capacity === null || form.daily_capacity === undefined || Number.isNaN(form.daily_capacity)
+        ? null
+        : Number(form.daily_capacity),
     };
 
     if (editing) {
@@ -172,6 +177,8 @@ export default function AdminStylistsPage() {
                     : s.fee_adjustment < 0
                     ? `−₵${Math.abs(s.fee_adjustment)} deposit`
                     : "No fee adjustment"}
+                  {" · "}
+                  {s.daily_capacity ? `${s.daily_capacity}/day` : "Unlimited/day"}
                 </p>
               </div>
 
@@ -225,6 +232,8 @@ export default function AdminStylistsPage() {
                       : s.fee_adjustment < 0
                       ? `−₵${Math.abs(s.fee_adjustment)} deposit`
                       : "No fee adjustment"}
+                    {" · "}
+                    {s.daily_capacity ? `${s.daily_capacity}/day` : "Unlimited/day"}
                   </p>
                 </div>
               </div>
@@ -330,6 +339,24 @@ export default function AdminStylistsPage() {
                 />
                 <p className="font-sans text-[11px] text-ink/45 mt-1">
                   Added to base deposit. Use negative to discount. 0 = no change.
+                </p>
+              </div>
+
+              {/* Daily capacity */}
+              <div>
+                <label className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 block mb-2">
+                  Daily capacity
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  value={form.daily_capacity ?? ""}
+                  onChange={(e) => setForm((f) => ({ ...f, daily_capacity: e.target.value === "" ? null : Number(e.target.value) }))}
+                  placeholder="Unlimited"
+                  className="w-full border border-ink/15 px-3 py-2.5 font-sans text-[13px] text-ink focus:outline-none focus:border-ink bg-transparent"
+                />
+                <p className="font-sans text-[11px] text-ink/45 mt-1">
+                  Max appointments this stylist can take per day. Leave blank for unlimited.
                 </p>
               </div>
 
