@@ -22,13 +22,24 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://essakobea.com"),
   title: "Essakobea | Premium Beauty, Elevated",
   description:
     "Book professional beauty services or shop a curated wig collection. Wig making, braids, and installations, all in one place.",
   openGraph: {
-    title: "Essakobea",
-    description: "Premium beauty services & wig ecommerce.",
+    title: "Essakobea, Premium Beauty, Elevated",
+    description:
+      "Book professional beauty services or shop a curated wig collection in Accra, East Legon.",
     siteName: "Essakobea",
+    url: "https://essakobea.com",
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Essakobea, Premium Beauty, Elevated",
+    description:
+      "Book professional beauty services or shop a curated wig collection in Accra, East Legon.",
   },
 };
 
