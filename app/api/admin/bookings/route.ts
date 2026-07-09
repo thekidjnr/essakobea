@@ -13,6 +13,7 @@ export async function GET(req: Request) {
 
   let query = adminDb.from('bookings').select('*').order('booking_date', { ascending: false }).order('created_at', { ascending: false })
   if (status && status !== 'all') query = query.eq('status', status)
+  else query = query.neq('status', 'pending')
   if (date) query = query.eq('booking_date', date)
 
   const { data } = await query

@@ -43,7 +43,7 @@ export default function ImageUpload({
       {/* Preview */}
       {value && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={value} alt="preview" className="w-full h-40 object-cover object-top bg-mist" />
+        <img src={value} alt="preview" className="w-full h-64 object-cover object-top bg-mist" />
       )}
 
       {/* Upload button */}

@@ -3,20 +3,15 @@
 import { useEffect, useState } from "react";
 
 interface Stats {
-  todayBookings:   number;
-  pendingBookings: number;
-  pendingOrders:   number;
-  monthRevenueGHS: number;
+  todayBookings:     number;
+  completedBookings: number;
+  cancelledBookings: number;
+  monthRevenueGHS:   number;
 }
 
 interface Booking {
   id: string; client_name: string; service_name: string; treatment: string;
   booking_date: string; time_slot: string; status: string; payment_status: string;
-}
-
-interface Order {
-  id: string; client_name: string; items: { name: string; quantity: number }[];
-  total: number; status: string; payment_status: string; created_at: string;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -40,18 +35,15 @@ function Badge({ label }: { label: string }) {
 export default function AdminDashboard() {
   const [stats, setStats]       = useState<Stats | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [orders, setOrders]     = useState<Order[]>([]);
   const [loading, setLoading]   = useState(true);
 
   useEffect(() => {
     Promise.all([
       fetch("/api/admin/stats").then(r => r.json()),
       fetch("/api/admin/bookings?status=all").then(r => r.json()),
-      fetch("/api/admin/orders?status=all").then(r => r.json()),
-    ]).then(([s, b, o]) => {
+    ]).then(([s, b]) => {
       setStats(s);
-      setBookings(Array.isArray(b) ? b.slice(0, 5) : []);
-      setOrders(Array.isArray(o) ? o.slice(0, 5) : []);
+      setBookings(Array.isArray(b) ? b.slice(0, 8) : []);
       setLoading(false);
     });
   }, []);
@@ -61,10 +53,10 @@ export default function AdminDashboard() {
   );
 
   const STAT_CARDS = [
-    { label: "Today's Bookings",  value: stats?.todayBookings ?? 0,                 sub: "appointments today" },
-    { label: "Revenue (Month)",   value: `₵${(stats?.monthRevenueGHS ?? 0).toLocaleString()}`, sub: "paid this month" },
-    { label: "Pending Bookings",  value: stats?.pendingBookings ?? 0,                sub: "awaiting confirmation" },
-    { label: "Pending Orders",    value: stats?.pendingOrders ?? 0,                  sub: "awaiting processing" },
+    { label: "Today's Bookings",   value: stats?.todayBookings ?? 0,                              sub: "appointments today" },
+    { label: "Revenue (Month)",    value: `₵${(stats?.monthRevenueGHS ?? 0).toLocaleString()}`,   sub: "paid this month" },
+    { label: "Completed Bookings", value: stats?.completedBookings ?? 0,                          sub: "done this month" },
+    { label: "Cancelled Bookings", value: stats?.cancelledBookings ?? 0,                          sub: "cancelled this month" },
   ];
 
   return (
@@ -90,52 +82,26 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* Two-column: recent bookings + recent orders */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 fade-up fade-up-delay-2">
-        {/* Recent Bookings */}
-        <div className="bg-paper border border-ink/[0.07]">
-          <div className="px-6 py-5 border-b border-ink/[0.07] flex items-center justify-between">
-            <p className="font-sans text-[11px] tracking-widest uppercase text-ink font-medium">Recent Bookings</p>
-            <a href="/admin/bookings" className="font-sans text-[10px] tracking-widest uppercase text-ink/40 hover:text-ink transition-colors">View all →</a>
-          </div>
-          <div className="divide-y divide-ink/[0.05]">
-            {bookings.length === 0 && <p className="px-6 py-8 font-sans text-[13px] text-ink/50">No bookings yet.</p>}
-            {bookings.map((b) => (
-              <div key={b.id} className="px-6 py-4 flex items-start justify-between gap-4">
-                <div>
-                  <p className="font-sans text-[13px] text-ink font-medium">{b.client_name}</p>
-                  <p className="font-sans text-[12px] text-ink/55 mt-0.5">{b.treatment}</p>
-                  <p className="font-sans text-[11px] text-ink/45 mt-1">
-                    {new Date(b.booking_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} · {b.time_slot}
-                  </p>
-                </div>
-                <Badge label={b.status} />
-              </div>
-            ))}
-          </div>
+      {/* Recent Bookings */}
+      <div className="bg-paper border border-ink/[0.07] fade-up fade-up-delay-2">
+        <div className="px-6 py-5 border-b border-ink/[0.07] flex items-center justify-between">
+          <p className="font-sans text-[11px] tracking-widest uppercase text-ink font-medium">Recent Bookings</p>
+          <a href="/admin/bookings" className="font-sans text-[10px] tracking-widest uppercase text-ink/40 hover:text-ink transition-colors">View all →</a>
         </div>
-
-        {/* Recent Orders */}
-        <div className="bg-paper border border-ink/[0.07]">
-          <div className="px-6 py-5 border-b border-ink/[0.07] flex items-center justify-between">
-            <p className="font-sans text-[11px] tracking-widest uppercase text-ink font-medium">Recent Orders</p>
-            <a href="/admin/orders" className="font-sans text-[10px] tracking-widest uppercase text-ink/40 hover:text-ink transition-colors">View all →</a>
-          </div>
-          <div className="divide-y divide-ink/[0.05]">
-            {orders.length === 0 && <p className="px-6 py-8 font-sans text-[13px] text-ink/50">No orders yet.</p>}
-            {orders.map((o) => (
-              <div key={o.id} className="px-6 py-4 flex items-start justify-between gap-4">
-                <div>
-                  <p className="font-sans text-[13px] text-ink font-medium">{o.client_name}</p>
-                  <p className="font-sans text-[12px] text-ink/55 mt-0.5">
-                    {o.items.map(i => `${i.name} ×${i.quantity}`).join(", ")}
-                  </p>
-                  <p className="font-sans text-[11px] text-ink/45 mt-1">₵{(o.total / 100).toLocaleString()}</p>
-                </div>
-                <Badge label={o.status} />
+        <div className="divide-y divide-ink/[0.05]">
+          {bookings.length === 0 && <p className="px-6 py-8 font-sans text-[13px] text-ink/50">No bookings yet.</p>}
+          {bookings.map((b) => (
+            <div key={b.id} className="px-6 py-4 flex items-start justify-between gap-4">
+              <div>
+                <p className="font-sans text-[13px] text-ink font-medium">{b.client_name}</p>
+                <p className="font-sans text-[12px] text-ink/55 mt-0.5">{b.treatment}</p>
+                <p className="font-sans text-[11px] text-ink/45 mt-1">
+                  {new Date(b.booking_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} · {b.time_slot}
+                </p>
               </div>
-            ))}
-          </div>
+              <Badge label={b.status} />
+            </div>
+          ))}
         </div>
       </div>
     </div>

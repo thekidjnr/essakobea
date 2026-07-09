@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import Script from "next/script";
 import Nav from "@/components/layout/Nav";
 import BookingFlow from "@/components/booking/BookingFlow";
 
@@ -12,7 +11,6 @@ export const metadata: Metadata = {
 export default function BookPage() {
   return (
     <>
-      <Script src="https://js.paystack.co/v1/inline.js" strategy="afterInteractive" />
       <Nav />
       <Suspense fallback={<div className="min-h-screen bg-paper" />}>
         <BookingFlow />

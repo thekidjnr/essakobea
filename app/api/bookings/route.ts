@@ -155,7 +155,7 @@ export async function POST(req: Request) {
     }
 
     const reference = generateReference('book')
-    const { accessCode } = await initializePayment({
+    const { url } = await initializePayment({
       email: clientEmail,
       amountGHS: depositGHS,
       reference,
@@ -165,7 +165,7 @@ export async function POST(req: Request) {
 
     await adminDb.from('bookings').update({ payment_reference: reference }).eq('id', booking.id)
 
-    return NextResponse.json({ bookingId: booking.id, accessCode })
+    return NextResponse.json({ bookingId: booking.id, paystackUrl: url })
   } catch (err) {
     console.error(err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

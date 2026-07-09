@@ -10,9 +10,10 @@ import { AdminIcons } from "@/components/admin/adminIcons";
 const NAV = [
   { href: "/admin", label: "Overview", icon: AdminIcons.Overview },
   { href: "/admin/bookings", label: "Bookings", icon: AdminIcons.Bookings },
-  { href: "/admin/orders", label: "Orders", icon: AdminIcons.Orders },
+  // Shop/Orders on hold for now — not in use yet.
+  // { href: "/admin/orders", label: "Orders", icon: AdminIcons.Orders },
   { href: "/admin/services", label: "Services", icon: AdminIcons.Services },
-  { href: "/admin/shop", label: "Shop", icon: AdminIcons.Shop },
+  // { href: "/admin/shop", label: "Shop", icon: AdminIcons.Shop },
   { href: "/admin/availability", label: "Availability", icon: AdminIcons.Availability },
   { href: "/admin/works", label: "Works", icon: AdminIcons.Works },
   { href: "/admin/stylists", label: "Stylists", icon: AdminIcons.Stylists },

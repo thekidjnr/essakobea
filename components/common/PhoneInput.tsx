@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { COUNTRIES, flagEmoji, composePhone, splitPhone } from "@/lib/phone";
+import { COUNTRIES, flagEmoji, composePhone, splitPhone, formatLocalDigits, expectedDigitCount } from "@/lib/phone";
 
 export default function PhoneInput({
   value, onChange, className = "",
@@ -25,6 +25,8 @@ export default function PhoneInput({
   }, [value]);
 
   const country = COUNTRIES.find((c) => c.dial === dial) ?? COUNTRIES[0];
+  const expected = expectedDigitCount(country.example);
+  const isComplete = expected > 0 && localDigits.length >= expected;
 
   const handleDialChange = (newDial: string) => {
     setDial(newDial);
@@ -32,7 +34,7 @@ export default function PhoneInput({
   };
 
   const handleDigitsChange = (raw: string) => {
-    const digits = raw.replace(/[^\d\s]/g, "");
+    const digits = raw.replace(/\D/g, "").slice(0, expected || undefined);
     setLocalDigits(digits);
     onChange(composePhone(dial, digits));
   };
@@ -50,14 +52,27 @@ export default function PhoneInput({
           </option>
         ))}
       </select>
-      <input
-        type="tel"
-        inputMode="tel"
-        value={localDigits}
-        onChange={(e) => handleDigitsChange(e.target.value)}
-        placeholder={country.example}
-        className="w-full border border-ink/15 focus:border-ink px-4 py-4 font-sans text-[14px] text-ink bg-transparent focus:outline-none transition-colors"
-      />
+      <div className="relative flex-1">
+        <input
+          type="tel"
+          inputMode="tel"
+          value={formatLocalDigits(localDigits, country.example)}
+          onChange={(e) => handleDigitsChange(e.target.value)}
+          placeholder={country.example}
+          className={`w-full border px-4 py-4 pr-14 font-sans text-[14px] text-ink bg-transparent focus:outline-none transition-colors ${
+            isComplete ? "border-emerald-400 focus:border-emerald-500" : "border-ink/15 focus:border-ink"
+          }`}
+        />
+        {localDigits.length > 0 && expected > 0 && (
+          <span
+            className={`absolute right-4 top-1/2 -translate-y-1/2 font-sans text-[11px] tracking-wide pointer-events-none ${
+              isComplete ? "text-emerald-600" : "text-ink/30"
+            }`}
+          >
+            {isComplete ? "✓" : `${localDigits.length}/${expected}`}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

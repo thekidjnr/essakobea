@@ -9,12 +9,12 @@ import { AdminIcons } from "@/components/admin/adminIcons";
 const PRIMARY = [
   { href: "/admin", label: "Overview" },
   { href: "/admin/bookings", label: "Bookings" },
-  { href: "/admin/orders", label: "Orders" },
+  // { href: "/admin/orders", label: "Orders" }, — Shop/Orders on hold for now
   { href: "/admin/services", label: "Services" },
 ];
 
 const SECONDARY = [
-  { href: "/admin/shop", label: "Shop" },
+  // { href: "/admin/shop", label: "Shop" }, — Shop/Orders on hold for now
   { href: "/admin/availability", label: "Availability" },
   { href: "/admin/works", label: "Works" },
   { href: "/admin/stylists", label: "Stylists" },
@@ -40,7 +40,7 @@ export default function MobileTabBar() {
   return (
     <>
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-paper/80 backdrop-blur-xl border-t border-ink/[0.08] pb-[env(safe-area-inset-bottom)]">
-        <div className="grid grid-cols-5 h-16">
+        <div className="grid grid-cols-4 h-16">
           {PRIMARY.map((item) => {
             const active = isPrimaryActive(item.href);
             return (

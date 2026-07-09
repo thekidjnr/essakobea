@@ -10,38 +10,32 @@ import Toggle from "@/components/admin/Toggle";
 type BookOpt = { name: string; price: string; price_raw: string; note: string };
 
 type ServiceForm = {
-  slug: string;
   name: string;
-  number: string;
   tagline: string;
   description: string;
   image_url: string;
   image_position: string;
   flip: boolean;
   is_active: boolean;
-  display_order: number;
   booking_options: BookOpt[];
 };
 
 const EMPTY_OPT: BookOpt = { name: "", price: "", price_raw: "", note: "" };
 const EMPTY_FORM: ServiceForm = {
-  slug: "", name: "", number: "", tagline: "", description: "",
-  image_url: "", image_position: "object-center", flip: false, is_active: true, display_order: 0,
+  name: "", tagline: "", description: "",
+  image_url: "", image_position: "object-center", flip: false, is_active: true,
   booking_options: [],
 };
 
 function dbToForm(svc: DbService): ServiceForm {
   return {
-    slug: svc.slug,
     name: svc.name,
-    number: svc.number,
     tagline: svc.tagline,
     description: svc.description,
     image_url: svc.image_url,
     image_position: svc.image_position,
     flip: svc.flip,
     is_active: svc.is_active,
-    display_order: svc.display_order,
     booking_options: svc.booking_options.map((o) => ({
       name: o.name,
       price: o.price,
@@ -53,16 +47,13 @@ function dbToForm(svc: DbService): ServiceForm {
 
 function formToPayload(form: ServiceForm) {
   return {
-    slug: form.slug,
     name: form.name,
-    number: form.number || "01",
     tagline: form.tagline,
     description: form.description,
     image_url: form.image_url,
     image_position: form.image_position,
     flip: form.flip,
     is_active: form.is_active,
-    display_order: Number(form.display_order),
     booking_options: form.booking_options
       .filter((o) => o.name.trim())
       .map((o) => ({
@@ -98,7 +89,7 @@ export default function AdminServicesPage() {
 
   const openAdd = () => {
     setEditing(null);
-    setForm({ ...EMPTY_FORM, display_order: services.length });
+    setForm(EMPTY_FORM);
     setError("");
     setModal("add");
   };
@@ -113,8 +104,8 @@ export default function AdminServicesPage() {
   const patchForm = (patch: Partial<ServiceForm>) => setForm((f) => ({ ...f, ...patch }));
 
   const handleSave = async () => {
-    if (!form.name.trim() || !form.slug.trim()) {
-      setError("Name and slug are required.");
+    if (!form.name.trim()) {
+      setError("Name is required.");
       return;
     }
     setSaving(true);
@@ -281,14 +272,7 @@ export default function AdminServicesPage() {
               {/* ── Basic Info ── */}
               <FormSection label="Basic Info">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <SField label="Service Name *" value={form.name} onChange={(v) => {
-                    patchForm({ name: v, ...(modal === "add" ? { slug: v.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") } : {}) });
-                  }} />
-                  <SField label="URL Slug *" value={form.slug} onChange={(v) => patchForm({ slug: v })} />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <SField label="Number (e.g. 01)" value={form.number} onChange={(v) => patchForm({ number: v })} />
-                  <SField label="Display Order" value={String(form.display_order)} onChange={(v) => patchForm({ display_order: Number(v) })} type="number" />
+                  <SField label="Service Name *" value={form.name} onChange={(v) => patchForm({ name: v })} />
                   <SToggle label="Visibility" onLabel="Live" offLabel="Hidden" value={form.is_active} onChange={(v) => patchForm({ is_active: v })} color="emerald" />
                 </div>
                 <SField label="Tagline" value={form.tagline} onChange={(v) => patchForm({ tagline: v })} />
@@ -423,7 +407,7 @@ function BookingOptionsBuilder({
         </div>
       ))}
       <p className="font-sans text-[10px] text-ink/45 mt-1">
-        Deposit = amount charged online. Price is the display label clients see (e.g. ₵250 – ₵450). Note appears under the option on the services page.
+        Deposit is charged online now; Price is what clients see (e.g. ₵250 – ₵450).
       </p>
       <button
         onClick={() => onChange([...options, { ...EMPTY_OPT }])}

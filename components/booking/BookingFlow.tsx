@@ -1,18 +1,6 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-
-declare global {
-  interface Window {
-    PaystackPop: {
-      newTransaction(opts: {
-        accessCode: string;
-        onSuccess(tx: { reference: string }): void;
-        onCancel(): void;
-      }): void;
-    };
-  }
-}
 import { useSearchParams } from "next/navigation";
 import type {
   DbService,
@@ -133,8 +121,8 @@ function IconBolt({ className }: { className?: string }) {
 function IconPerson({ className }: { className?: string }) {
   return (
     <svg
-      width="20"
-      height="20"
+      width="28"
+      height="28"
       viewBox="0 0 20 20"
       fill="none"
       className={className}
@@ -927,7 +915,7 @@ export default function BookingFlow() {
     setSubmitting(true);
     setSubmitError("");
 
-    let data: { bookingId?: string; accessCode?: string; error?: string };
+    let data: { bookingId?: string; paystackUrl?: string; error?: string };
     try {
       const res = await fetch("/api/bookings", {
         method: "POST",
@@ -964,32 +952,13 @@ export default function BookingFlow() {
       return;
     }
 
-    if (!data.accessCode) {
+    if (!data.paystackUrl) {
       setSubmitError(data.error ?? "Something went wrong. Please try again.");
       setSubmitting(false);
       return;
     }
 
-    if (!window.PaystackPop) {
-      setSubmitError(
-        "Payment is still loading. Please wait a moment and try again.",
-      );
-      setSubmitting(false);
-      return;
-    }
-
-    window.PaystackPop.newTransaction({
-      accessCode: data.accessCode,
-      onSuccess: (tx) => {
-        window.location.href = `/book/success?reference=${tx.reference}`;
-      },
-      onCancel: () => {
-        setSubmitting(false);
-        setSubmitError(
-          "Payment was cancelled. Your slot is held for 30 minutes — tap Pay to try again.",
-        );
-      },
-    });
+    window.location.href = data.paystackUrl;
   };
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -1495,7 +1464,7 @@ export default function BookingFlow() {
               >
                 <SelectBadge selected={booking.stylistId === ""} />
                 <div
-                  className={`w-11 h-11 rounded-full flex items-center justify-center mb-4 ${booking.stylistId === "" ? "bg-paper/15" : "bg-ink/[0.05]"}`}
+                  className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${booking.stylistId === "" ? "bg-paper/15" : "bg-ink/[0.05]"}`}
                 >
                   <IconPerson
                     className={
@@ -1540,7 +1509,7 @@ export default function BookingFlow() {
                   }`}
                 >
                   <SelectBadge selected={booking.stylistId === s.id} />
-                  <div className="w-11 h-11 rounded-full overflow-hidden mb-4">
+                  <div className="w-16 h-16 rounded-full overflow-hidden mb-4">
                     {s.photo_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -1553,7 +1522,7 @@ export default function BookingFlow() {
                         className={`w-full h-full flex items-center justify-center ${booking.stylistId === s.id ? "bg-paper/15" : "bg-ink/[0.05]"}`}
                       >
                         <span
-                          className={`font-serif text-[1.1rem] italic ${booking.stylistId === s.id ? "text-paper/60" : "text-ink/25"}`}
+                          className={`font-serif text-[1.5rem] italic ${booking.stylistId === s.id ? "text-paper/60" : "text-ink/25"}`}
                         >
                           {s.name.charAt(0)}
                         </span>
@@ -1648,7 +1617,7 @@ export default function BookingFlow() {
                   onChange={(v) => set("phone", v)}
                 />
                 {lookingUp && (
-                  <span className="absolute right-4 bottom-4 font-sans text-[10px] text-ink/30 tracking-widest uppercase">
+                  <span className="absolute right-0 -bottom-5 font-sans text-[10px] text-ink/30 tracking-widest uppercase">
                     Checking…
                   </span>
                 )}

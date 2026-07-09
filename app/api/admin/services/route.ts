@@ -23,18 +23,32 @@ export async function GET() {
   return NextResponse.json(data ?? [])
 }
 
+function slugify(name: string): string {
+  return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+}
+
 export async function POST(req: Request) {
   const user = await requireAdmin()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
-  const { slug, name, number, tagline, description, image_url, image_position, flip, booking_options, is_active, display_order } = body
+  const { name, tagline, description, image_url, image_position, flip, booking_options, is_active } = body
 
-  if (!slug || !name) return NextResponse.json({ error: 'slug and name are required' }, { status: 400 })
+  if (!name) return NextResponse.json({ error: 'name is required' }, { status: 400 })
+
+  const { data: existing } = await adminDb.from('services').select('slug')
+  const existingSlugs = new Set((existing ?? []).map((s: { slug: string }) => s.slug))
+  const baseSlug = slugify(name) || 'service'
+  let slug = baseSlug
+  let n = 2
+  while (existingSlugs.has(slug)) { slug = `${baseSlug}-${n}`; n += 1 }
+
+  const count = existingSlugs.size
+  const number = String(count + 1).padStart(2, '0')
 
   const { data, error } = await adminDb
     .from('services')
-    .insert({ slug, name, number: number ?? '01', tagline: tagline ?? '', description: description ?? '', image_url: image_url ?? '', image_position: image_position ?? 'object-center', flip: flip ?? false, booking_options: booking_options ?? [], is_active: is_active ?? true, display_order: display_order ?? 0 })
+    .insert({ slug, name, number, tagline: tagline ?? '', description: description ?? '', image_url: image_url ?? '', image_position: image_position ?? 'object-center', flip: flip ?? false, booking_options: booking_options ?? [], is_active: is_active ?? true, display_order: count })
     .select()
     .single()
 

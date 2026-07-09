@@ -39,6 +39,32 @@ export function flagEmoji(iso2: string): string {
     .join("")
 }
 
+// Space-separated digit groupings, derived from each country's example
+// (e.g. "24 123 4567" -> [2, 3, 4]), used to live-format input as typed.
+function groupLengths(example: string): number[] {
+  return example.split(" ").map((g) => g.length)
+}
+
+// Inserts spaces into a raw digit string to match the example's grouping.
+export function formatLocalDigits(digits: string, example: string): string {
+  const groups = groupLengths(example)
+  let out = ""
+  let idx = 0
+  for (const len of groups) {
+    if (idx >= digits.length) break
+    out += (out ? " " : "") + digits.slice(idx, idx + len)
+    idx += len
+  }
+  if (idx < digits.length) out += (out ? " " : "") + digits.slice(idx)
+  return out
+}
+
+// Total digit count expected for a country's local number, used to cap
+// input length and show a "how many digits left" indicator.
+export function expectedDigitCount(example: string): number {
+  return example.replace(/\D/g, "").length
+}
+
 // Composes a country dial code + locally-typed digits into an E.164-ish string.
 // Strips a single leading 0 from the local part (common when people type
 // their number as if dialing domestically, e.g. "0557205803" -> "557205803").

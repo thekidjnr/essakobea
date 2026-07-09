@@ -2,20 +2,93 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { whatsAppLink } from "@/lib/phone";
+import type { DbService } from "@/lib/supabase/types";
 
 interface Booking {
   id: string; client_name: string; client_email: string; client_phone: string;
-  service_name: string; treatment: string; booking_date: string; time_slot: string;
+  service_id: string; service_name: string; treatment: string; booking_date: string; time_slot: string;
   notes: string | null; status: string; payment_status: string; amount: number; created_at: string;
   customization_type: string | null; is_emergency: boolean;
   customization_fee: number; emergency_fee: number; service_charge: number;
+  stylist_name: string | null;
 }
 
-function whatsAppUrlFor(b: Booking): string {
+const ADDRESS   = "East Legon, Accra";
+const MAPS_LINK = "https://maps.app.goo.gl/KumRn6Wt6VA3cx8w8?g_st=ic";
+
+// A price is a "range" (e.g. "₵250 – ₵450") when it's a deposit — the rest
+// is settled once the stylist can see how the style actually turns out.
+function isDepositFor(b: Booking, services: DbService[]): boolean {
+  const svc = services.find((s) => s.slug === b.service_id);
+  const opt = svc?.booking_options.find((o) => o.name === b.treatment);
+  return !!(opt?.price && /[-–]/.test(opt.price));
+}
+
+function whatsAppUrlFor(b: Booking, services: DbService[]): string {
   const firstName = b.client_name.split(" ")[0];
   const date = new Date(b.booking_date).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
-  const message = `Hi ${firstName}, this is Essakobea confirming your appointment for ${b.service_name} (${b.treatment}) on ${date} at ${b.time_slot}. See you then!`;
+  const amountGHS = (b.amount / 100).toLocaleString();
+  const isDeposit = isDepositFor(b, services);
+  const stylistLine = b.stylist_name ? `\nStylist: ${b.stylist_name}` : "";
+  const paymentLine = isDeposit
+    ? `*Payment:* ₵${amountGHS} deposit paid. The remaining balance depends on your styling and is settled on the day.`
+    : `*Payment:* ₵${amountGHS} paid in full.`;
+
+  const policyLine = `*Good to know:* Free cancellation up to 24h before. Cancelling a few hours before forfeits 50% of your ${isDeposit ? "deposit" : "payment"}; no-shows aren't refunded.`;
+
+  const message = `Hi ${firstName}, this is Essakobea confirming your appointment:\n\n*${b.service_name}* (${b.treatment})${stylistLine}\n${date} at ${b.time_slot}\n\n${paymentLine}\n\n*Location:* ${ADDRESS}\n${MAPS_LINK}\n\n${policyLine}\n\nSee you then!`;
+
   return whatsAppLink(b.client_phone, message);
+}
+
+// ─── Action icons (desktop) ─────────────────────────────────────────────────
+
+function IconWhatsApp({ className }: { className?: string }) {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38c1.45.79 3.08 1.21 4.79 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0012.04 2zm5.72 14.13c-.24.68-1.19 1.25-1.95 1.4-.53.11-1.22.2-3.55-.76-2.98-1.23-4.9-4.24-5.05-4.44-.15-.2-1.21-1.61-1.21-3.07 0-1.46.76-2.18 1.03-2.48.27-.29.58-.36.78-.36.19 0 .39.002.56.01.18.008.42-.07.66.5.24.58.83 2 .9 2.15.07.15.11.32.02.51-.09.19-.14.31-.28.48-.14.17-.29.37-.42.5-.14.14-.28.29-.12.57.16.28.71 1.17 1.53 1.9 1.05.94 1.94 1.23 2.22 1.37.28.14.44.12.6-.07.16-.19.68-.79.87-1.06.19-.27.37-.22.63-.13.26.09 1.63.77 1.91.91.28.14.47.21.54.33.07.12.07.7-.17 1.38z" />
+    </svg>
+  );
+}
+
+function IconCheck({ className }: { className?: string }) {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={className}>
+      <path d="M2 6l2.5 2.5L10 3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconX({ className }: { className?: string }) {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={className}>
+      <path d="M2.5 2.5l7 7M9.5 2.5l-7 7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ActionIcon({
+  href, onClick, title, colorClass, children,
+}: {
+  href?: string;
+  onClick?: () => void;
+  title: string;
+  colorClass: string;
+  children: React.ReactNode;
+}) {
+  const className = `w-8 h-8 flex-shrink-0 flex items-center justify-center border rounded-sm transition-colors ${colorClass}`;
+  if (href) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" title={title} className={className}>
+        {children}
+      </a>
+    );
+  }
+  return (
+    <button onClick={onClick} title={title} className={className}>
+      {children}
+    </button>
+  );
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -33,6 +106,7 @@ const PAYMENT_COLORS: Record<string, string> = {
 
 export default function AdminBookings() {
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [services, setServices] = useState<DbService[]>([]);
   const [filter, setFilter]     = useState("all");
   const [loading, setLoading]   = useState(true);
   const [actionId, setActionId] = useState<string | null>(null);
@@ -48,6 +122,10 @@ export default function AdminBookings() {
 
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => {
+    fetch("/api/admin/services").then(r => r.json()).then(d => { if (Array.isArray(d)) setServices(d); });
+  }, []);
+
   const handleAction = async (id: string, action: "cancel" | "confirm" | "complete") => {
     setActionId(id);
     const url = `/api/bookings/${id}/${action}`;
@@ -62,7 +140,7 @@ export default function AdminBookings() {
     load();
   };
 
-  const FILTERS = ["all", "pending", "confirmed", "completed", "cancelled"];
+  const FILTERS = ["all", "confirmed", "completed", "cancelled"];
 
   return (
     <div className="p-8 md:p-10 max-w-[1200px]">
@@ -158,30 +236,26 @@ export default function AdminBookings() {
                     )}
                   </td>
                   <td className="px-5 py-4">
-                    <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center gap-1.5">
                       {b.payment_status === "paid" && (
-                        <a href={whatsAppUrlFor(b)} target="_blank" rel="noopener noreferrer"
-                          className="font-sans text-[10px] tracking-widest uppercase text-green-700 hover:text-green-900 transition-colors">
-                          Message WhatsApp
-                        </a>
+                        <ActionIcon href={whatsAppUrlFor(b, services)} title="Message WhatsApp" colorClass="border-green-200 text-green-700 hover:bg-green-50">
+                          <IconWhatsApp />
+                        </ActionIcon>
                       )}
                       {b.status === "pending" && (
-                        <button onClick={() => setConfirmModal({ id: b.id, action: "confirm" })}
-                          className="font-sans text-[10px] tracking-widest uppercase text-emerald-700 hover:text-emerald-900 transition-colors">
-                          Confirm
-                        </button>
+                        <ActionIcon onClick={() => setConfirmModal({ id: b.id, action: "confirm" })} title="Confirm" colorClass="border-emerald-200 text-emerald-700 hover:bg-emerald-50">
+                          <IconCheck />
+                        </ActionIcon>
                       )}
                       {b.status === "confirmed" && (
-                        <button onClick={() => setConfirmModal({ id: b.id, action: "complete" })}
-                          className="font-sans text-[10px] tracking-widest uppercase text-blue-700 hover:text-blue-900 transition-colors">
-                          Complete
-                        </button>
+                        <ActionIcon onClick={() => setConfirmModal({ id: b.id, action: "complete" })} title="Complete" colorClass="border-blue-200 text-blue-700 hover:bg-blue-50">
+                          <IconCheck />
+                        </ActionIcon>
                       )}
                       {(b.status === "pending" || b.status === "confirmed") && (
-                        <button onClick={() => setConfirmModal({ id: b.id, action: "cancel" })}
-                          className="font-sans text-[10px] tracking-widest uppercase text-red-500 hover:text-red-700 transition-colors">
-                          Cancel
-                        </button>
+                        <ActionIcon onClick={() => setConfirmModal({ id: b.id, action: "cancel" })} title="Cancel" colorClass="border-red-200 text-red-500 hover:bg-red-50">
+                          <IconX />
+                        </ActionIcon>
                       )}
                     </div>
                   </td>
@@ -254,7 +328,7 @@ export default function AdminBookings() {
               </div>
 
               {b.payment_status === "paid" && (
-                <a href={whatsAppUrlFor(b)} target="_blank" rel="noopener noreferrer"
+                <a href={whatsAppUrlFor(b, services)} target="_blank" rel="noopener noreferrer"
                   className="block text-center font-sans text-[10px] tracking-widest uppercase text-green-700 border border-green-200 py-2.5 mt-3">
                   Message WhatsApp
                 </a>
