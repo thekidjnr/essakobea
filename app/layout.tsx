@@ -23,13 +23,12 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://essakobea.com"),
-  title: "Essakobea | Premium Beauty, Elevated",
+  title: "Essakobea",
   description:
-    "Book professional beauty services or shop a curated wig collection. Wig making, braids, and installations, all in one place.",
+    "Book professional beauty services. Wig making, braids, and installations, all in one place.",
   openGraph: {
-    title: "Essakobea, Premium Beauty, Elevated",
-    description:
-      "Book professional beauty services or shop a curated wig collection in Accra, East Legon.",
+    title: "Essakobea",
+    description: "Book professional beauty services in Accra, East Legon.",
     siteName: "Essakobea",
     url: "https://essakobea.com",
     locale: "en_US",
@@ -37,9 +36,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Essakobea, Premium Beauty, Elevated",
-    description:
-      "Book professional beauty services or shop a curated wig collection in Accra, East Legon.",
+    title: "Essakobea",
+    description: "Book professional beauty services in Accra, East Legon.",
   },
 };
 
