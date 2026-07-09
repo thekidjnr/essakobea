@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { whatsAppLink } from "@/lib/phone";
 import type { DbService } from "@/lib/supabase/types";
 
@@ -11,6 +11,34 @@ interface Booking {
   customization_type: string | null; is_emergency: boolean;
   customization_fee: number; emergency_fee: number; service_charge: number;
   stylist_name: string | null;
+  hair_unit_type: "own_new" | "own_existing" | "none" | null;
+  unit_photos: string[];
+}
+
+const HAIR_UNIT_LABELS: Record<string, string> = {
+  own_new: "New unit",
+  own_existing: "Existing unit",
+};
+
+function UnitPhotos({ b, onOpen }: { b: Booking; onOpen: (url: string) => void }) {
+  if (!b.hair_unit_type || b.hair_unit_type === "none") return null;
+  return (
+    <div className="mt-1.5">
+      <p className="font-sans text-[9px] tracking-wide uppercase text-ink/40">
+        {HAIR_UNIT_LABELS[b.hair_unit_type] ?? b.hair_unit_type}
+      </p>
+      {b.unit_photos.length > 0 && (
+        <div className="flex gap-1.5 mt-1">
+          {b.unit_photos.map((url, i) => (
+            <button key={url} type="button" onClick={() => onOpen(url)} title="View photo">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={url} alt={`Unit photo ${i + 1}`} className="w-9 h-9 object-cover rounded-sm border border-ink/10 hover:border-ink/40 transition-colors" />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 const ADDRESS   = "East Legon, Accra";
@@ -67,6 +95,14 @@ function IconX({ className }: { className?: string }) {
   );
 }
 
+function IconFilter({ className }: { className?: string }) {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" className={className}>
+      <path d="M2 3h12M4.5 8h7M7 13h2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function ActionIcon({
   href, onClick, title, colorClass, children,
 }: {
@@ -108,19 +144,31 @@ export default function AdminBookings() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [services, setServices] = useState<DbService[]>([]);
   const [filter, setFilter]     = useState("all");
+  const [dateFilter, setDateFilter] = useState<"upcoming" | "past" | "all">("upcoming");
+  const [filterOpen, setFilterOpen] = useState(false);
   const [loading, setLoading]   = useState(true);
   const [actionId, setActionId] = useState<string | null>(null);
   const [cancelReason, setCancelReason] = useState("");
   const [confirmModal, setConfirmModal] = useState<{ id: string; action: "cancel" | "confirm" | "complete" } | null>(null);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const filterRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(() => {
     setLoading(true);
-    fetch(`/api/admin/bookings?status=${filter}`)
+    fetch(`/api/admin/bookings?status=${filter}&when=${dateFilter}`)
       .then(r => r.json())
       .then(data => { setBookings(Array.isArray(data) ? data : []); setLoading(false); });
-  }, [filter]);
+  }, [filter, dateFilter]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) setFilterOpen(false);
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
 
   useEffect(() => {
     fetch("/api/admin/services").then(r => r.json()).then(d => { if (Array.isArray(d)) setServices(d); });
@@ -141,6 +189,11 @@ export default function AdminBookings() {
   };
 
   const FILTERS = ["all", "confirmed", "completed", "cancelled"];
+  const DATE_FILTERS: { value: "upcoming" | "past" | "all"; label: string }[] = [
+    { value: "upcoming", label: "Upcoming" },
+    { value: "past", label: "Past" },
+    { value: "all", label: "All Dates" },
+  ];
 
   return (
     <div className="p-8 md:p-10 max-w-[1200px]">
@@ -152,15 +205,46 @@ export default function AdminBookings() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-2 mb-8">
-        {FILTERS.map(f => (
-          <button key={f} onClick={() => setFilter(f)}
-            className={`font-sans text-[10px] tracking-widest uppercase px-4 py-2 border transition-all ${
-              filter === f ? "bg-ink text-paper border-ink" : "border-ink/20 text-ink/50 hover:border-ink/50 hover:text-ink"
+      <div className="flex items-start justify-between gap-3 mb-8">
+        <div className="flex flex-wrap gap-2">
+          {FILTERS.map(f => (
+            <button key={f} onClick={() => setFilter(f)}
+              className={`font-sans text-[10px] tracking-widest uppercase px-4 py-2 border transition-all ${
+                filter === f ? "bg-ink text-paper border-ink" : "border-ink/20 text-ink/50 hover:border-ink/50 hover:text-ink"
+              }`}>
+              {f}
+            </button>
+          ))}
+        </div>
+
+        <div className="relative flex-shrink-0" ref={filterRef}>
+          <button
+            onClick={() => setFilterOpen(o => !o)}
+            title="Filter by date"
+            className={`relative w-8 h-8 flex items-center justify-center border rounded-sm transition-colors ${
+              filterOpen ? "bg-ink text-paper border-ink" : "border-ink/20 text-ink/50 hover:border-ink/50 hover:text-ink"
             }`}>
-            {f}
+            <IconFilter />
+            {dateFilter !== "upcoming" && (
+              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-ink" />
+            )}
           </button>
-        ))}
+
+          {filterOpen && (
+            <div className="absolute right-0 top-10 z-10 bg-paper border border-ink/[0.08] shadow-sm min-w-[140px] py-1.5">
+              {DATE_FILTERS.map(d => (
+                <button
+                  key={d.value}
+                  onClick={() => { setDateFilter(d.value); setFilterOpen(false); }}
+                  className={`w-full text-left px-4 py-2 font-sans text-[11px] tracking-wide uppercase transition-colors ${
+                    dateFilter === d.value ? "text-ink font-medium" : "text-ink/50 hover:text-ink"
+                  }`}>
+                  {d.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Table */}
@@ -208,6 +292,7 @@ export default function AdminBookings() {
                         </span>
                       )}
                     </div>
+                    <UnitPhotos b={b} onOpen={setLightboxUrl} />
                   </td>
                   <td className="px-5 py-4">
                     <p className="font-sans text-[12px] text-ink">
@@ -300,6 +385,7 @@ export default function AdminBookings() {
                 <div>
                   <p className="font-sans text-[12px] text-ink">{b.service_name}</p>
                   <p className="font-sans text-[11px] text-ink/45">{b.treatment}</p>
+                  <UnitPhotos b={b} onOpen={setLightboxUrl} />
                 </div>
                 <div className="text-right flex-shrink-0">
                   <p className="font-sans text-[12px] text-ink">
@@ -394,6 +480,29 @@ export default function AdminBookings() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Photo lightbox */}
+      {lightboxUrl && (
+        <div
+          onClick={() => setLightboxUrl(null)}
+          className="fixed inset-0 bg-ink/80 flex items-center justify-center z-50 px-6 cursor-zoom-out"
+        >
+          <button
+            onClick={() => setLightboxUrl(null)}
+            title="Close"
+            className="absolute top-6 right-6 w-9 h-9 flex items-center justify-center border border-paper/30 text-paper rounded-sm hover:border-paper transition-colors"
+          >
+            <IconX className="text-paper" />
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={lightboxUrl}
+            alt="Unit photo"
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-full max-h-[85vh] object-contain cursor-default"
+          />
         </div>
       )}
     </div>

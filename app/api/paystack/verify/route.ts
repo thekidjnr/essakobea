@@ -3,7 +3,10 @@ import { adminDb } from '@/lib/supabase/admin'
 import { verifyPayment } from '@/lib/paystack'
 import { getResend, FROM } from '@/lib/resend'
 import { bookingConfirmationHtml } from '@/emails/booking-confirmation'
+import { bookingAdminAlertHtml } from '@/emails/booking-admin-alert'
 import { orderConfirmationHtml } from '@/emails/order-confirmation'
+
+const ADMIN_NOTIFY_EMAIL = process.env.ADMIN_EMAIL ?? 'essakobea@gmail.com'
 
 export async function POST(req: Request) {
   try {
@@ -26,42 +29,66 @@ export async function POST(req: Request) {
         status: 'confirmed',
       }).eq('id', bookingId)
 
+      const formattedDate = new Date(booking.booking_date).toLocaleDateString('en-GB', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+      })
+      const depositGHS = Math.round((booking.amount ?? 0) / 100)
+      // Determine if this was a deposit (range-priced service) by checking the option's display price
+      let isDeposit = false
+      if (booking.service_id && booking.treatment) {
+        const { data: svc } = await adminDb.from('services').select('booking_options').eq('slug', booking.service_id).single()
+        const options = svc?.booking_options as { name?: string; price?: string }[] | null
+        const opt = options?.find((o) => o.name === booking.treatment)
+        if (opt?.price && /[-–]/.test(opt.price)) isDeposit = true
+      }
+
+      const sharedFields = {
+        serviceName:       booking.service_name,
+        treatment:         booking.treatment,
+        bookingDate:       formattedDate,
+        timeSlot:          booking.time_slot,
+        depositGHS,
+        isDeposit,
+        stylistName:       booking.stylist_name ?? null,
+        bookingId:         booking.id,
+        appUrl:            process.env.NEXT_PUBLIC_APP_URL ?? '',
+        customizationType: booking.customization_type ?? null,
+        isEmergency:       booking.is_emergency ?? false,
+        customizationFee:  Math.round((booking.customization_fee ?? 0) / 100),
+        emergencyFee:      Math.round((booking.emergency_fee ?? 0) / 100),
+        serviceCharge:     Math.round((booking.service_charge ?? 0) / 100),
+      }
+
       if (booking.client_email) {
-        const formattedDate = new Date(booking.booking_date).toLocaleDateString('en-GB', {
-          weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-        })
-        const depositGHS = Math.round((booking.amount ?? 0) / 100)
-        // Determine if this was a deposit (range-priced service) by checking the option's display price
-        let isDeposit = false
-        if (booking.service_id && booking.treatment) {
-          const { data: svc } = await adminDb.from('services').select('booking_options').eq('slug', booking.service_id).single()
-          const options = svc?.booking_options as { name?: string; price?: string }[] | null
-          const opt = options?.find((o) => o.name === booking.treatment)
-          if (opt?.price && /[-–]/.test(opt.price)) isDeposit = true
-        }
         await getResend().emails.send({
           from: FROM,
           to: booking.client_email,
           subject: `Booking confirmed: ${booking.service_name} on ${formattedDate}`,
           html: bookingConfirmationHtml({
-            clientName:        booking.client_name,
-            serviceName:       booking.service_name,
-            treatment:         booking.treatment,
-            bookingDate:       formattedDate,
-            timeSlot:          booking.time_slot,
-            depositGHS,
-            isDeposit,
-            stylistName:       booking.stylist_name ?? null,
-            bookingId:         booking.id,
-            cancelToken:       booking.cancel_token,
-            appUrl:            process.env.NEXT_PUBLIC_APP_URL ?? '',
-            customizationType: booking.customization_type ?? null,
-            isEmergency:       booking.is_emergency ?? false,
-            customizationFee:  Math.round((booking.customization_fee ?? 0) / 100),
-            emergencyFee:      Math.round((booking.emergency_fee ?? 0) / 100),
-            serviceCharge:     Math.round((booking.service_charge ?? 0) / 100),
+            clientName:  booking.client_name,
+            cancelToken: booking.cancel_token,
+            ...sharedFields,
           }),
         })
+      }
+
+      // Admin alert — never let a delivery failure here break the customer's
+      // already-confirmed booking response.
+      try {
+        await getResend().emails.send({
+          from: FROM,
+          to: ADMIN_NOTIFY_EMAIL,
+          subject: `New booking: ${booking.client_name} · ${booking.service_name} on ${formattedDate}`,
+          html: bookingAdminAlertHtml({
+            clientName:  booking.client_name,
+            clientPhone: booking.client_phone,
+            clientEmail: booking.client_email,
+            notes:       booking.notes ?? null,
+            ...sharedFields,
+          }),
+        })
+      } catch (err) {
+        console.error('Failed to send admin booking alert email', err)
       }
 
       return NextResponse.json({ type: 'booking', id: bookingId, booking })
