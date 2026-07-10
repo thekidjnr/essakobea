@@ -18,6 +18,7 @@ const SECONDARY = [
   { href: "/admin/availability", label: "Availability" },
   { href: "/admin/works", label: "Works" },
   { href: "/admin/stylists", label: "Stylists" },
+  { href: "/admin/payouts", label: "Payouts" },
 ];
 
 export default function MobileTabBar() {

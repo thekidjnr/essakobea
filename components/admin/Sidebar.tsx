@@ -17,6 +17,7 @@ const NAV = [
   { href: "/admin/availability", label: "Availability", icon: AdminIcons.Availability },
   { href: "/admin/works", label: "Works", icon: AdminIcons.Works },
   { href: "/admin/stylists", label: "Stylists", icon: AdminIcons.Stylists },
+  { href: "/admin/payouts", label: "Payouts", icon: AdminIcons.Payouts },
 ];
 
 export default function Sidebar() {

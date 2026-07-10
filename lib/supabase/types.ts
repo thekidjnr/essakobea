@@ -129,6 +129,53 @@ export interface ServiceWork {
   created_at:    string
 }
 
+// ─── Payouts ───────────────────────────────────────────────────────────────────
+
+export type PayoutStatus   = 'pending' | 'approved' | 'paid' | 'rejected'
+export type PayoutMethod   = 'momo'    | 'bank'
+
+export interface PayoutDestination {
+  method:          PayoutMethod
+  account_name:    string
+  momo_number?:    string | null
+  momo_network?:   string | null
+  bank_name?:      string | null
+  account_number?: string | null
+}
+
+export interface PayoutAccount {
+  id:             string
+  updated_at:     string
+  method:         PayoutMethod
+  account_name:   string
+  momo_number:    string | null
+  momo_network:   string | null
+  bank_name:      string | null
+  account_number: string | null
+}
+
+export interface Payout {
+  id:               string
+  created_at:       string
+  requested_amount: number   // GHS pesewas
+  status:           PayoutStatus
+  destination:      PayoutDestination
+  requested_by:     string | null
+  notes:            string | null
+  admin_notes:      string | null
+  payout_reference: string | null
+  approved_at:      string | null
+  paid_at:          string | null
+  rejected_reason:  string | null
+}
+
+export interface PayoutBalance {
+  earnedGHS:    number
+  paidOutGHS:   number
+  pendingGHS:   number
+  availableGHS: number
+}
+
 // ─── Products ─────────────────────────────────────────────────────────────────
 
 export interface DbProduct {

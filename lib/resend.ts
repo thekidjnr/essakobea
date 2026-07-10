@@ -9,4 +9,10 @@ export function getResend(): Resend {
   return _resend
 }
 
-export const FROM = process.env.RESEND_FROM_EMAIL ?? 'Essakobea <bookings@essakobea.com>'
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL ?? 'bookings@essakobea.com'
+
+// Customer-facing sends: booking/order confirmations, cancellations.
+export const FROM = `Essakobea <${FROM_EMAIL}>`
+
+// Internal notifications: new booking alerts, payout requests/updates.
+export const FROM_ADMIN = `Essakobea Admin <${FROM_EMAIL}>`

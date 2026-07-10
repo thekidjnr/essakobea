@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/supabase/admin'
 import { verifyPayment } from '@/lib/paystack'
-import { getResend, FROM } from '@/lib/resend'
+import { getResend, FROM, FROM_ADMIN } from '@/lib/resend'
 import { bookingConfirmationHtml } from '@/emails/booking-confirmation'
 import { bookingAdminAlertHtml } from '@/emails/booking-admin-alert'
 import { orderConfirmationHtml } from '@/emails/order-confirmation'
@@ -76,7 +76,7 @@ export async function POST(req: Request) {
       // already-confirmed booking response.
       try {
         await getResend().emails.send({
-          from: FROM,
+          from: FROM_ADMIN,
           to: ADMIN_NOTIFY_EMAIL,
           subject: `New booking: ${booking.client_name} · ${booking.service_name} on ${formattedDate}`,
           html: bookingAdminAlertHtml({
