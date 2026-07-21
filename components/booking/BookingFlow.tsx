@@ -665,6 +665,7 @@ export default function BookingFlow() {
 
   // ── Data
   const [services, setServices] = useState<BookingService[]>([]);
+  const [loadingServices, setLoadingServices] = useState(true);
   const [stylists, setStylists] = useState<Stylist[]>([]);
 
   // ── Service preview (work photos)
@@ -810,7 +811,8 @@ export default function BookingFlow() {
       .then((d: DbService[]) => {
         if (Array.isArray(d)) setServices(d.map(dbToBookingService));
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoadingServices(false));
 
     fetch("/api/stylists")
       .then((r) => r.json())
@@ -1071,7 +1073,26 @@ export default function BookingFlow() {
               Step 1 of {totalSteps}
             </p>
 
-            {hasValidPreselect && preselectedService ? (
+            {loadingServices ? (
+              <>
+                <h2 className="font-serif text-[clamp(2rem,5vw,3.5rem)] font-light text-ink leading-none mb-10">
+                  Choose your <span className="italic">service.</span>
+                </h2>
+                <div className="flex flex-col gap-2.5 animate-pulse">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="border border-ink/15 p-5">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="h-2.5 w-20 bg-ink/[0.08] rounded-sm mb-3" />
+                          <div className="h-3 w-2/3 max-w-xs bg-ink/[0.06] rounded-sm" />
+                        </div>
+                        <div className="w-4 h-4 rounded-full border border-ink/15 flex-shrink-0 mt-0.5" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : hasValidPreselect && preselectedService ? (
               <>
                 <h2 className="font-serif text-[clamp(2rem,5vw,3.5rem)] font-light text-ink leading-none mb-10">
                   {preselectedService.name}
