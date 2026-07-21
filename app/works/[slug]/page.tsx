@@ -9,14 +9,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const { data: service } = await adminDb
     .from("services")
-    .select("name, tagline")
+    .select("name, description")
     .eq("slug", slug)
     .eq("is_active", true)
     .single();
   if (!service) return {};
   return {
     title: `${service.name} · Our Work | Essakobea`,
-    description: service.tagline,
+    description: service.description,
   };
 }
 
@@ -25,7 +25,7 @@ export default async function WorksPage({ params }: { params: Promise<{ slug: st
 
   const { data: service } = await adminDb
     .from("services")
-    .select("id, name, slug, tagline, number")
+    .select("id, name, slug, description, number")
     .eq("slug", slug)
     .eq("is_active", true)
     .single();
@@ -73,9 +73,9 @@ export default async function WorksPage({ params }: { params: Promise<{ slug: st
           <h1 className="font-serif text-[clamp(3rem,7vw,7rem)] font-light text-ink leading-none">
             {service.name}<span className="italic">.</span>
           </h1>
-          {service.tagline && (
+          {service.description && (
             <p className="font-sans text-[14px] text-ink/60 font-light mt-4 max-w-sm leading-relaxed">
-              {service.tagline}
+              {service.description}
             </p>
           )}
         </div>

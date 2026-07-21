@@ -11,7 +11,6 @@ type BookOpt = { name: string; price: string; price_raw: string; note: string };
 
 type ServiceForm = {
   name: string;
-  tagline: string;
   description: string;
   image_url: string;
   image_position: string;
@@ -22,7 +21,7 @@ type ServiceForm = {
 
 const EMPTY_OPT: BookOpt = { name: "", price: "", price_raw: "", note: "" };
 const EMPTY_FORM: ServiceForm = {
-  name: "", tagline: "", description: "",
+  name: "", description: "",
   image_url: "", image_position: "object-center", flip: false, is_active: true,
   booking_options: [],
 };
@@ -30,7 +29,6 @@ const EMPTY_FORM: ServiceForm = {
 function dbToForm(svc: DbService): ServiceForm {
   return {
     name: svc.name,
-    tagline: svc.tagline,
     description: svc.description,
     image_url: svc.image_url,
     image_position: svc.image_position,
@@ -48,7 +46,6 @@ function dbToForm(svc: DbService): ServiceForm {
 function formToPayload(form: ServiceForm) {
   return {
     name: form.name,
-    tagline: form.tagline,
     description: form.description,
     image_url: form.image_url,
     image_position: form.image_position,
@@ -186,7 +183,7 @@ export default function AdminServicesPage() {
               <span className="font-sans text-[10px] tracking-widest text-ink/30 flex-shrink-0 w-8">{svc.number}</span>
               <div className="flex-1 min-w-0">
                 <p className="font-sans text-[13px] text-ink font-medium truncate">{svc.name}</p>
-                <p className="font-sans text-[12px] text-ink/55 truncate">{svc.tagline}</p>
+                <p className="font-sans text-[12px] text-ink/55 truncate">{svc.description}</p>
               </div>
               <div className="flex items-center gap-3 flex-shrink-0">
                 <Toggle checked={svc.is_active} onChange={() => toggleActive(svc)} color="emerald" />
@@ -221,7 +218,7 @@ export default function AdminServicesPage() {
                   <p className="font-sans text-[13px] text-ink font-medium truncate">
                     <span className="text-ink/30 mr-1">{svc.number}</span>{svc.name}
                   </p>
-                  <p className="font-sans text-[12px] text-ink/55 truncate">{svc.tagline}</p>
+                  <p className="font-sans text-[12px] text-ink/55 truncate">{svc.description}</p>
                 </div>
               </div>
               <div className="flex items-center justify-between gap-2">
@@ -275,7 +272,6 @@ export default function AdminServicesPage() {
                   <SField label="Service Name *" value={form.name} onChange={(v) => patchForm({ name: v })} />
                   <SToggle label="Visibility" onLabel="Live" offLabel="Hidden" value={form.is_active} onChange={(v) => patchForm({ is_active: v })} color="emerald" />
                 </div>
-                <SField label="Tagline" value={form.tagline} onChange={(v) => patchForm({ tagline: v })} />
                 <STextArea label="Description" value={form.description} onChange={(v) => patchForm({ description: v })} rows={3} />
               </FormSection>
 

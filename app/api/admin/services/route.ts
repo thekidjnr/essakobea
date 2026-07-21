@@ -32,7 +32,7 @@ export async function POST(req: Request) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
-  const { name, tagline, description, image_url, image_position, flip, booking_options, is_active } = body
+  const { name, description, image_url, image_position, flip, booking_options, is_active } = body
 
   if (!name) return NextResponse.json({ error: 'name is required' }, { status: 400 })
 
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
 
   const { data, error } = await adminDb
     .from('services')
-    .insert({ slug, name, number, tagline: tagline ?? '', description: description ?? '', image_url: image_url ?? '', image_position: image_position ?? 'object-center', flip: flip ?? false, booking_options: booking_options ?? [], is_active: is_active ?? true, display_order: count })
+    .insert({ slug, name, number, description: description ?? '', image_url: image_url ?? '', image_position: image_position ?? 'object-center', flip: flip ?? false, booking_options: booking_options ?? [], is_active: is_active ?? true, display_order: count })
     .select()
     .single()
 

@@ -92,7 +92,6 @@ export interface DbService {
   slug:            string
   name:            string
   number:          string
-  tagline:         string
   description:     string
   image_url:       string
   image_position:  string

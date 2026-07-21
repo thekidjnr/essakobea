@@ -11,7 +11,7 @@ export async function GET(req: Request) {
   // Resolve service id from slug
   const { data: service, error: svcErr } = await adminDb
     .from('services')
-    .select('id, name, slug, tagline')
+    .select('id, name, slug, description')
     .eq('slug', slug)
     .eq('is_active', true)
     .single()

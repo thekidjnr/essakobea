@@ -1,18 +1,32 @@
-import Image from "next/image";
-import Link from "next/link";
 import { adminDb } from "@/lib/supabase/admin";
 import type { DbService } from "@/lib/supabase/types";
 import Reveal from "@/components/common/Reveal";
+import ServiceCard from "@/components/home/ServiceCard";
+
+const MAX_CAROUSEL_IMAGES = 4;
 
 export default async function Services() {
   const { data } = await adminDb
     .from("services")
-    .select("slug,number,name,description,image_url,image_position")
+    .select("id,slug,number,name,description,image_url,image_position")
     .eq("is_active", true)
     .order("display_order", { ascending: true })
     .limit(4);
 
-  const services = (data as Pick<DbService, "slug" | "number" | "name" | "description" | "image_url" | "image_position">[] | null) ?? [];
+  const services = (data as Pick<DbService, "id" | "slug" | "number" | "name" | "description" | "image_url" | "image_position">[] | null) ?? [];
+
+  const { data: works } = await adminDb
+    .from("service_works")
+    .select("service_id,image_url")
+    .in("service_id", services.map((s) => s.id))
+    .order("display_order", { ascending: true });
+
+  const worksByService = new Map<string, string[]>();
+  for (const w of works ?? []) {
+    const list = worksByService.get(w.service_id) ?? [];
+    list.push(w.image_url);
+    worksByService.set(w.service_id, list);
+  }
 
   return (
     <section id="services" className="bg-paper py-28 md:py-36">
@@ -30,47 +44,23 @@ export default async function Services() {
 
       {/* Service cards */}
       <div className="px-6 md:px-16 max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-10 md:gap-x-4 md:gap-y-12">
-        {services.map((service, i) => (
-          <Reveal key={service.slug} delay={i * 80} className="group cursor-pointer">
-            <Link
-              href={`/book?service=${service.slug}`}
-              className="block relative overflow-hidden bg-mist aspect-[3/4]"
-            >
-              <Image
-                src={service.image_url}
-                alt={`${service.name} | Essakobea`}
-                fill
-                className={`object-cover ${service.image_position} transition-transform duration-700 group-hover:scale-105`}
-                sizes="(max-width: 768px) 100vw, 33vw"
+        {services.map((service, i) => {
+          const extraWorks = (worksByService.get(service.id) ?? []).filter((url) => url !== service.image_url);
+          const images = [service.image_url, ...extraWorks].slice(0, MAX_CAROUSEL_IMAGES);
+
+          return (
+            <Reveal key={service.slug} delay={i * 80}>
+              <ServiceCard
+                slug={service.slug}
+                number={service.number}
+                name={service.name}
+                description={service.description}
+                images={images}
+                position={service.image_position}
               />
-              <div className="absolute inset-0 bg-ink/0 group-hover:bg-ink/15 transition-colors duration-500" />
-              <span className="absolute top-5 left-5 font-sans text-[10px] tracking-widest text-paper/70 bg-ink/40 backdrop-blur-sm px-2.5 py-1">
-                {service.number}
-              </span>
-              <div className="absolute bottom-5 left-5 right-5 md:translate-y-2 md:opacity-0 md:group-hover:opacity-100 md:group-hover:translate-y-0 transition-all duration-300">
-                <span className="inline-flex items-center gap-2 font-sans text-[10px] tracking-widest uppercase text-paper bg-ink px-4 py-2.5">
-                  Book This <span>→</span>
-                </span>
-              </div>
-            </Link>
-            <div className="pt-5 pb-2">
-              <Link href={`/services#${service.slug}`}>
-                <h3 className="font-serif text-[clamp(1.15rem,1.6vw,1.5rem)] font-light text-ink leading-none group-hover:italic transition-all duration-300">
-                  {service.name}
-                </h3>
-              </Link>
-              <p className="hidden md:block font-sans text-[13px] text-ink/60 font-light leading-relaxed mt-2 line-clamp-2">
-                {service.description}
-              </p>
-              <Link
-                href={`/works/${service.slug}`}
-                className="mt-3 inline-flex items-center gap-1.5 font-sans text-[10px] tracking-widest uppercase text-ink/40 hover:text-ink transition-colors"
-              >
-                See Our Work <span>→</span>
-              </Link>
-            </div>
-          </Reveal>
-        ))}
+            </Reveal>
+          );
+        })}
       </div>
     </section>
   );

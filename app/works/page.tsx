@@ -48,27 +48,13 @@ export default async function WorksPage() {
       <main className="min-h-screen bg-paper">
         {/* Hero */}
         <section className="pt-40 pb-12 md:pt-48 md:pb-16 px-6 md:px-16 max-w-[1400px] mx-auto">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8">
-            <div>
-              <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 mb-5">
-                Portfolio
-              </p>
-              <h1 className="font-serif text-[clamp(3.5rem,8vw,8rem)] leading-[0.88] font-light text-ink">
-                Our<br />
-                <span className="italic">Work.</span>
-              </h1>
-            </div>
-            <div className="max-w-xs md:pb-3">
-              <p className="font-sans text-[14px] text-ink/65 font-light leading-relaxed mb-6">
-                {photos.length} photos across {services.length} services. Every look, a story.
-              </p>
-              <Link
-                href="/book"
-                className="inline-flex items-center gap-2 font-sans text-[11px] tracking-widest uppercase bg-ink text-paper px-6 py-3 hover:bg-ink/80 transition-colors"
-              >
-                Book Now <span>→</span>
-              </Link>
-            </div>
+          <div>
+            <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 mb-5">
+              Portfolio
+            </p>
+            <h1 className="font-serif text-[clamp(3.5rem,8vw,8rem)] leading-[0.88] font-light text-ink whitespace-nowrap">
+              Our <span className="italic">Work.</span>
+            </h1>
           </div>
         </section>
 
