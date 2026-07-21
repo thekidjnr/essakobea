@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
+import { useLightboxSwipe } from "./useLightboxSwipe";
 
 type WorkPhoto = {
   id: string;
@@ -26,65 +27,13 @@ export default function WorksIndexClient({
   services: Service[];
 }) {
   const [activeFilter, setActiveFilter] = useState("all");
-  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const [visible, setVisible] = useState(false);
-  const [imgVisible, setImgVisible] = useState(false);
-  const touchStartX = useRef<number | null>(null);
-
   const filtered = activeFilter === "all" ? photos : photos.filter((p) => p.service_id === activeFilter);
 
-  const open = useCallback((i: number) => {
-    setLightboxIndex(i);
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      setVisible(true);
-      setTimeout(() => setImgVisible(true), 60);
-    }));
-  }, []);
-
-  const close = useCallback(() => {
-    setImgVisible(false);
-    setVisible(false);
-    setTimeout(() => setLightboxIndex(null), 350);
-  }, []);
-
-  const navigate = useCallback((dir: "prev" | "next") => {
-    setImgVisible(false);
-    setTimeout(() => {
-      setLightboxIndex((i) =>
-        i === null ? null : dir === "prev"
-          ? (i - 1 + filtered.length) % filtered.length
-          : (i + 1) % filtered.length
-      );
-      setTimeout(() => setImgVisible(true), 30);
-    }, 180);
-  }, [filtered.length]);
-
-  const prev = useCallback(() => navigate("prev"), [navigate]);
-  const next = useCallback(() => navigate("next"), [navigate]);
-
-  useEffect(() => {
-    if (lightboxIndex === null) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft") prev();
-      else if (e.key === "ArrowRight") next();
-      else if (e.key === "Escape") close();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [lightboxIndex, prev, next, close]);
-
-  useEffect(() => {
-    document.body.style.overflow = lightboxIndex !== null ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
-  }, [lightboxIndex]);
-
-  const onTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
-  const onTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX.current === null) return;
-    const dx = e.changedTouches[0].clientX - touchStartX.current;
-    if (Math.abs(dx) > 40) dx < 0 ? next() : prev();
-    touchStartX.current = null;
-  };
+  const {
+    lightboxIndex, visible, imgVisible, dragX, dragTransition,
+    open, close, prev, next, jumpTo,
+    onTouchStart, onTouchMove, onTouchEnd, isTouch,
+  } = useLightboxSwipe(filtered.length);
 
   const current = lightboxIndex !== null ? filtered[lightboxIndex] : null;
 
@@ -155,16 +104,17 @@ export default function WorksIndexClient({
           className="fixed inset-0 z-[100] flex items-center justify-center"
           style={{
             backgroundColor: `rgba(10,10,10,${visible ? 0.96 : 0})`,
-            transition: "background-color 350ms cubic-bezier(0.4,0,0.2,1)",
+            transition: isTouch.current ? "none" : "background-color 350ms cubic-bezier(0.4,0,0.2,1)",
           }}
           onClick={close}
           onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
         >
           {/* Top bar */}
           <div
             className="absolute top-0 left-0 right-0 flex items-center justify-between px-6 md:px-8 py-5 z-10"
-            style={{ opacity: visible ? 1 : 0, transition: "opacity 400ms ease 100ms" }}
+            style={{ opacity: visible ? 1 : 0, transition: isTouch.current ? "none" : "opacity 400ms ease 100ms" }}
           >
             <div className="flex items-center gap-4">
               <p className="font-sans text-[10px] tracking-widest2 uppercase text-paper/25">
@@ -202,9 +152,11 @@ export default function WorksIndexClient({
             className="relative flex flex-col items-center"
             onClick={(e) => e.stopPropagation()}
             style={{
-              opacity: imgVisible ? 1 : 0,
-              transform: imgVisible ? "scale(1)" : "scale(0.97)",
-              transition: "opacity 280ms ease, transform 280ms cubic-bezier(0.4,0,0.2,1)",
+              opacity: isTouch.current ? 1 : (imgVisible ? 1 : 0),
+              transform: `translateX(${dragX}px) scale(${isTouch.current ? 1 : (imgVisible ? 1 : 0.97)})`,
+              transition: isTouch.current
+                ? (dragTransition ? "transform 220ms cubic-bezier(0.4,0,0.2,1)" : "none")
+                : "opacity 280ms ease, transform 280ms cubic-bezier(0.4,0,0.2,1)",
             }}
           >
             {current && (
@@ -245,16 +197,12 @@ export default function WorksIndexClient({
           {filtered.length <= 20 && (
             <div
               className="absolute bottom-6 left-0 right-0 flex justify-center gap-1.5"
-              style={{ opacity: visible ? 1 : 0, transition: "opacity 400ms ease 200ms" }}
+              style={{ opacity: visible ? 1 : 0, transition: isTouch.current ? "none" : "opacity 400ms ease 200ms" }}
             >
               {filtered.map((_, i) => (
                 <button
                   key={i}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setImgVisible(false);
-                    setTimeout(() => { setLightboxIndex(i); setTimeout(() => setImgVisible(true), 30); }, 180);
-                  }}
+                  onClick={(e) => { e.stopPropagation(); jumpTo(i); }}
                   className="rounded-full transition-all duration-300"
                   style={{
                     width: i === lightboxIndex ? 16 : 4,

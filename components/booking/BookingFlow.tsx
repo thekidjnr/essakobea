@@ -8,6 +8,7 @@ import type {
   Stylist,
 } from "@/lib/supabase/types";
 import PhoneInput from "@/components/common/PhoneInput";
+import { useLightboxSwipe } from "@/components/works/useLightboxSwipe";
 
 // ─── Step icons ─────────────────────────────────────────────────────────────────
 
@@ -173,6 +174,7 @@ interface BookingService {
   number: string;
   name: string;
   description: string;
+  image_url: string;
   options: ServiceBookingOption[];
 }
 
@@ -182,6 +184,7 @@ function dbToBookingService(s: DbService): BookingService {
     number: s.number,
     name: s.name,
     description: s.description,
+    image_url: s.image_url,
     options: s.booking_options,
   };
 }
@@ -663,6 +666,13 @@ export default function BookingFlow() {
   // ── Data
   const [services, setServices] = useState<BookingService[]>([]);
   const [stylists, setStylists] = useState<Stylist[]>([]);
+
+  // ── Service preview (work photos)
+  const [previewPhotos, setPreviewPhotos] = useState<
+    { id: string; image_url: string; caption: string | null }[]
+  >([]);
+  const [previewName, setPreviewName] = useState("");
+  const [previewLoadingSlug, setPreviewLoadingSlug] = useState("");
   const [blockedDates, setBlocked] = useState<string[]>([]);
   const [bookedSlots, setBooked] = useState<string[]>([]);
   const [dayAvail, setDayAvail] = useState<{
@@ -713,6 +723,29 @@ export default function BookingFlow() {
 
   // ── Derived
   const selectedService = services.find((s) => s.id === booking.serviceId);
+  const hasValidPreselect = !!preselected && services.some((s) => s.id === preselected);
+  const visibleServices = hasValidPreselect
+    ? services.filter((s) => s.id === preselected)
+    : services;
+  const preselectedService = hasValidPreselect ? visibleServices[0] : undefined;
+
+  const preview = useLightboxSwipe(previewPhotos.length);
+  const previewCurrent =
+    preview.lightboxIndex !== null ? previewPhotos[preview.lightboxIndex] : null;
+
+  const openPreview = useCallback(async (svc: BookingService) => {
+    setPreviewName(svc.name);
+    setPreviewPhotos([]);
+    setPreviewLoadingSlug(svc.id);
+    const res = await fetch(`/api/works?service=${svc.id}`);
+    const data = await res.json();
+    setPreviewLoadingSlug("");
+    if (Array.isArray(data.works)) {
+      setPreviewPhotos(data.works);
+      if (data.works.length > 0) preview.open(0);
+    }
+  }, [preview]);
+
   const selectedOption = selectedService?.options.find(
     (o) => o.id === booking.optionId,
   );
@@ -1037,51 +1070,49 @@ export default function BookingFlow() {
             <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-3">
               Step 1 of {totalSteps}
             </p>
-            <h2 className="font-serif text-[clamp(2rem,5vw,3.5rem)] font-light text-ink leading-none mb-10">
-              Choose your <span className="italic">service.</span>
-            </h2>
-            <div className="flex flex-col gap-2.5">
-              {services.map((svc) => (
-                <div key={svc.id}>
-                  <button
-                    onClick={() => {
-                      set("serviceId", svc.id);
-                      set("optionId", "");
-                    }}
-                    className={`w-full text-left border transition-all duration-200 p-5 ${
-                      booking.serviceId === svc.id
-                        ? "border-ink"
-                        : "border-ink/15 hover:border-ink/35"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <div className="flex items-center gap-3 mb-1.5">
-                          <span className="font-sans text-[9px] tracking-widest text-ink/25">
-                            {svc.number}
-                          </span>
-                          <span className="font-sans text-[13px] tracking-wide uppercase text-ink font-medium">
-                            {svc.name}
-                          </span>
-                        </div>
-                        <p className="font-sans text-[13px] text-ink/55 font-light leading-relaxed">
-                          {svc.description}
-                        </p>
-                      </div>
-                      <div
-                        className={`w-4 h-4 rounded-full border flex-shrink-0 mt-0.5 transition-all ${
-                          booking.serviceId === svc.id
-                            ? "border-ink bg-ink"
-                            : "border-ink/25"
-                        }`}
-                      />
-                    </div>
-                  </button>
 
-                  {booking.serviceId === svc.id && svc.options.length > 0 && (
-                    <div className="border-l border-r border-b border-ink/15">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-ink/[0.07]">
-                        {svc.options.map((opt) => (
+            {hasValidPreselect && preselectedService ? (
+              <>
+                <h2 className="font-serif text-[clamp(2rem,5vw,3.5rem)] font-light text-ink leading-none mb-10">
+                  {preselectedService.name}
+                  <span className="italic">.</span>
+                </h2>
+
+                <div className="flex flex-col md:flex-row gap-4 md:gap-6">
+                  {preselectedService.image_url && (
+                    <button
+                      onClick={() => openPreview(preselectedService)}
+                      disabled={previewLoadingSlug === preselectedService.id}
+                      className="relative w-full md:w-2/5 aspect-square md:aspect-auto flex-shrink-0 overflow-hidden bg-mist group border border-ink/15"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={preselectedService.image_url}
+                        alt={preselectedService.name}
+                        className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-ink/0 group-hover:bg-ink/25 transition-all duration-300 ease-out flex items-center justify-center">
+                        {previewLoadingSlug === preselectedService.id ? (
+                          <span className="w-5 h-5 rounded-full border border-paper/40 border-t-paper animate-spin" />
+                        ) : (
+                          <div className="opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 transition-all duration-300 ease-out">
+                            <svg width="20" height="20" viewBox="0 0 22 22" fill="none">
+                              <circle cx="11" cy="11" r="10" stroke="white" strokeOpacity="0.6" strokeWidth="0.8"/>
+                              <path d="M11 7v8M7 11h8" stroke="white" strokeOpacity="0.9" strokeWidth="1" strokeLinecap="round"/>
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                      <span className="absolute bottom-2 right-2 font-sans text-[9px] tracking-widest uppercase text-paper/85 bg-ink/45 px-2 py-1">
+                        View photos
+                      </span>
+                    </button>
+                  )}
+
+                  {preselectedService.options.length > 0 && (
+                    <div className="border border-ink/15 flex-1">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 divide-y sm:divide-y-0 sm:divide-x md:divide-x-0 md:divide-y divide-ink/[0.07]">
+                        {preselectedService.options.map((opt) => (
                           <button
                             key={opt.id}
                             onClick={() => set("optionId", opt.id)}
@@ -1114,8 +1145,121 @@ export default function BookingFlow() {
                     </div>
                   )}
                 </div>
-              ))}
-            </div>
+              </>
+            ) : (
+              <>
+                <h2 className="font-serif text-[clamp(2rem,5vw,3.5rem)] font-light text-ink leading-none mb-10">
+                  Choose your <span className="italic">service.</span>
+                </h2>
+                <div className="flex flex-col gap-2.5">
+                  {visibleServices.map((svc) => (
+                    <div key={svc.id}>
+                      {svc.image_url && (
+                        <button
+                          onClick={() => openPreview(svc)}
+                          disabled={previewLoadingSlug === svc.id}
+                          className="relative w-full aspect-square block overflow-hidden bg-mist group border border-b-0 border-ink/15"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={svc.image_url}
+                            alt={svc.name}
+                            className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-ink/0 group-hover:bg-ink/25 transition-all duration-300 ease-out flex items-center justify-center">
+                            {previewLoadingSlug === svc.id ? (
+                              <span className="w-5 h-5 rounded-full border border-paper/40 border-t-paper animate-spin" />
+                            ) : (
+                              <div className="opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 transition-all duration-300 ease-out">
+                                <svg width="20" height="20" viewBox="0 0 22 22" fill="none">
+                                  <circle cx="11" cy="11" r="10" stroke="white" strokeOpacity="0.6" strokeWidth="0.8"/>
+                                  <path d="M11 7v8M7 11h8" stroke="white" strokeOpacity="0.9" strokeWidth="1" strokeLinecap="round"/>
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                          <span className="absolute bottom-2 right-2 font-sans text-[9px] tracking-widest uppercase text-paper/85 bg-ink/45 px-2 py-1">
+                            View photos
+                          </span>
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          set("serviceId", svc.id);
+                          set("optionId", "");
+                        }}
+                        className={`w-full text-left border transition-all duration-200 p-5 ${
+                          svc.image_url ? "border-t-0" : ""
+                        } ${
+                          booking.serviceId === svc.id
+                            ? "border-ink"
+                            : "border-ink/15 hover:border-ink/35"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <div className="flex items-center gap-3 mb-1.5">
+                              <span className="font-sans text-[9px] tracking-widest text-ink/25">
+                                {svc.number}
+                              </span>
+                              <span className="font-sans text-[13px] tracking-wide uppercase text-ink font-medium">
+                                {svc.name}
+                              </span>
+                            </div>
+                            <p className="font-sans text-[13px] text-ink/55 font-light leading-relaxed">
+                              {svc.description}
+                            </p>
+                          </div>
+                          <div
+                            className={`w-4 h-4 rounded-full border flex-shrink-0 mt-0.5 transition-all ${
+                              booking.serviceId === svc.id
+                                ? "border-ink bg-ink"
+                                : "border-ink/25"
+                            }`}
+                          />
+                        </div>
+                      </button>
+
+                      {booking.serviceId === svc.id && svc.options.length > 0 && (
+                        <div className="border-l border-r border-b border-ink/15">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-ink/[0.07]">
+                            {svc.options.map((opt) => (
+                              <button
+                                key={opt.id}
+                                onClick={() => set("optionId", opt.id)}
+                                className={`text-left p-4 transition-colors duration-200 ${
+                                  booking.optionId === opt.id
+                                    ? "bg-ink"
+                                    : "hover:bg-ink/[0.03]"
+                                }`}
+                              >
+                                <p
+                                  className={`font-sans text-[13px] font-medium mb-0.5 ${booking.optionId === opt.id ? "text-paper" : "text-ink"}`}
+                                >
+                                  {opt.name}
+                                </p>
+                                <p
+                                  className={`font-sans text-[12px] ${booking.optionId === opt.id ? "text-paper/70" : "text-ink/50"}`}
+                                >
+                                  {opt.price}
+                                </p>
+                                {opt.note && (
+                                  <p
+                                    className={`font-sans text-[11px] mt-1 ${booking.optionId === opt.id ? "text-paper/50" : "text-ink/45"}`}
+                                  >
+                                    {opt.note}
+                                  </p>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         )}
 
@@ -1925,6 +2069,114 @@ export default function BookingFlow() {
           onAgree={handlePayNow}
           onClose={() => setShowTerms(false)}
         />
+      )}
+
+      {/* Service photo preview */}
+      {preview.lightboxIndex !== null && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center"
+          style={{
+            backgroundColor: `rgba(10,10,10,${preview.visible ? 0.96 : 0})`,
+            transition: preview.isTouch.current ? "none" : "background-color 350ms cubic-bezier(0.4,0,0.2,1)",
+          }}
+          onClick={preview.close}
+          onTouchStart={preview.onTouchStart}
+          onTouchMove={preview.onTouchMove}
+          onTouchEnd={preview.onTouchEnd}
+        >
+          <div
+            className="absolute top-0 left-0 right-0 flex items-center justify-between px-6 md:px-8 py-5 z-10"
+            style={{ opacity: preview.visible ? 1 : 0, transition: preview.isTouch.current ? "none" : "opacity 400ms ease 100ms" }}
+          >
+            <div className="flex items-center gap-4">
+              <p className="font-sans text-[10px] tracking-widest2 uppercase text-paper/25">
+                {(preview.lightboxIndex + 1).toString().padStart(2, "0")} / {previewPhotos.length.toString().padStart(2, "0")}
+              </p>
+              <p className="font-sans text-[10px] tracking-widest uppercase text-paper/20">
+                {previewName}
+              </p>
+            </div>
+            <button onClick={preview.close} className="text-paper/30 hover:text-paper transition-colors duration-300" aria-label="Close">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path d="M2 2l14 14M16 2L2 16" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+              </svg>
+            </button>
+          </div>
+
+          <button
+            onClick={(e) => { e.stopPropagation(); preview.prev(); }}
+            aria-label="Previous"
+            className="absolute left-4 md:left-7 top-1/2 -translate-y-1/2 z-10 group"
+            style={{ opacity: preview.visible ? 1 : 0, transition: "opacity 400ms ease 150ms" }}
+          >
+            <div className="w-9 h-9 md:w-11 md:h-11 rounded-full border border-paper/10 group-hover:border-paper/30 bg-paper/5 group-hover:bg-paper/12 flex items-center justify-center transition-all duration-300 ease-out">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M10 13L5 8l5-5" stroke="white" strokeOpacity="0.6" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+          </button>
+
+          <div
+            className="relative flex flex-col items-center"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              opacity: preview.isTouch.current ? 1 : (preview.imgVisible ? 1 : 0),
+              transform: `translateX(${preview.dragX}px) scale(${preview.isTouch.current ? 1 : (preview.imgVisible ? 1 : 0.97)})`,
+              transition: preview.isTouch.current
+                ? (preview.dragTransition ? "transform 220ms cubic-bezier(0.4,0,0.2,1)" : "none")
+                : "opacity 280ms ease, transform 280ms cubic-bezier(0.4,0,0.2,1)",
+            }}
+          >
+            {previewCurrent && (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={previewCurrent.image_url}
+                  alt={previewCurrent.caption ?? `${previewName} | Essakobea`}
+                  className="max-w-[82vw] max-h-[78vh] w-auto h-auto object-contain"
+                />
+                {previewCurrent.caption && (
+                  <p className="mt-5 font-sans text-[12px] tracking-wide text-paper/55 text-center max-w-[340px] leading-relaxed">
+                    {previewCurrent.caption}
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+
+          <button
+            onClick={(e) => { e.stopPropagation(); preview.next(); }}
+            aria-label="Next"
+            className="absolute right-4 md:right-7 top-1/2 -translate-y-1/2 z-10 group"
+            style={{ opacity: preview.visible ? 1 : 0, transition: "opacity 400ms ease 150ms" }}
+          >
+            <div className="w-9 h-9 md:w-11 md:h-11 rounded-full border border-paper/10 group-hover:border-paper/30 bg-paper/5 group-hover:bg-paper/12 flex items-center justify-center transition-all duration-300 ease-out">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M6 3l5 5-5 5" stroke="white" strokeOpacity="0.6" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+          </button>
+
+          {previewPhotos.length <= 20 && (
+            <div
+              className="absolute bottom-6 left-0 right-0 flex justify-center gap-1.5"
+              style={{ opacity: preview.visible ? 1 : 0, transition: preview.isTouch.current ? "none" : "opacity 400ms ease 200ms" }}
+            >
+              {previewPhotos.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={(e) => { e.stopPropagation(); preview.jumpTo(i); }}
+                  className="transition-all duration-300 rounded-full"
+                  style={{
+                    width: i === preview.lightboxIndex ? 16 : 4,
+                    height: 4,
+                    backgroundColor: i === preview.lightboxIndex ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.2)",
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import Nav from "@/components/layout/Nav";
 import Footer from "@/components/layout/Footer";
 import { adminDb } from "@/lib/supabase/admin";
 import type { DbService } from "@/lib/supabase/types";
 import Reveal from "@/components/common/Reveal";
+import ImageCarousel from "@/components/common/ImageCarousel";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +24,18 @@ export default async function ServicesPage() {
 
   const services = (data as DbService[] | null) ?? [];
 
+  const { data: works } = await adminDb
+    .from("service_works")
+    .select("service_id,image_url")
+    .order("display_order", { ascending: true });
+
+  const worksByService = new Map<string, string[]>();
+  for (const w of works ?? []) {
+    const list = worksByService.get(w.service_id) ?? [];
+    list.push(w.image_url);
+    worksByService.set(w.service_id, list);
+  }
+
   return (
     <>
       <Nav />
@@ -40,22 +52,21 @@ export default async function ServicesPage() {
       {/* Service cards */}
       <section className="px-6 md:px-16 max-w-[1400px] mx-auto pb-24 md:pb-32">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-16 md:gap-y-20">
-          {services.map((service, i) => (
+          {services.map((service, i) => {
+            const extraWorks = (worksByService.get(service.id) ?? []).filter((url) => url !== service.image_url);
+            const images = [service.image_url, ...extraWorks];
+
+            return (
             <div key={service.slug} id={service.slug} className="scroll-mt-24">
             <Reveal delay={(i % 2) * 80}>
               {/* Image */}
-              <div className="group relative overflow-hidden bg-mist aspect-[4/3]">
-                <Image
-                  src={service.image_url}
-                  alt={`${service.name} | Essakobea`}
-                  fill
-                  className={`object-cover ${service.image_position}`}
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                />
-                <span className="absolute top-5 left-5 font-sans text-[10px] tracking-widest text-paper/70 bg-ink/40 backdrop-blur-sm px-2.5 py-1">
-                  {service.number}
-                </span>
-              </div>
+              <ImageCarousel
+                images={images}
+                alt={`${service.name} | Essakobea`}
+                position={service.image_position}
+                aspectClassName="aspect-[4/3]"
+                number={service.number}
+              />
 
               {/* Content */}
               <div className="pt-6">
@@ -105,7 +116,8 @@ export default async function ServicesPage() {
               </div>
             </Reveal>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         <p className="font-sans text-[11px] text-ink/40 font-light mt-16 md:mt-20">
