@@ -7,7 +7,6 @@ import ImageUpload from "@/components/admin/ImageUpload";
 const EMPTY: Omit<Stylist, "id" | "created_at"> = {
   name: "",
   title: "Stylist",
-  bio: "",
   photo_url: null,
   fee_adjustment: 0,
   is_available: true,
@@ -44,7 +43,6 @@ export default function AdminStylistsPage() {
     setForm({
       name: s.name,
       title: s.title,
-      bio: s.bio ?? "",
       photo_url: s.photo_url,
       fee_adjustment: s.fee_adjustment,
       is_available: s.is_available,
@@ -60,7 +58,6 @@ export default function AdminStylistsPage() {
 
     const payload = {
       ...form,
-      bio: form.bio?.trim() || null,
       photo_url: form.photo_url || null,
       fee_adjustment: Number(form.fee_adjustment),
       display_order: Number(form.display_order),
@@ -168,9 +165,6 @@ export default function AdminStylistsPage() {
                     </span>
                   )}
                 </div>
-                {s.bio && (
-                  <p className="font-sans text-[13px] text-ink/55 mt-0.5 truncate">{s.bio}</p>
-                )}
                 <p className="font-sans text-[12px] text-ink/50 mt-0.5">
                   {s.fee_adjustment > 0
                     ? `+₵${s.fee_adjustment} deposit`
@@ -225,7 +219,6 @@ export default function AdminStylistsPage() {
                       </span>
                     )}
                   </div>
-                  {s.bio && <p className="font-sans text-[12px] text-ink/55 mt-0.5 truncate">{s.bio}</p>}
                   <p className="font-sans text-[11px] text-ink/50 mt-0.5">
                     {s.fee_adjustment > 0
                       ? `+₵${s.fee_adjustment} deposit`
@@ -308,20 +301,6 @@ export default function AdminStylistsPage() {
                   onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
                   placeholder="e.g. Senior Stylist"
                   className="w-full border border-ink/15 px-3 py-2.5 font-sans text-[13px] text-ink focus:outline-none focus:border-ink bg-transparent"
-                />
-              </div>
-
-              {/* Bio */}
-              <div>
-                <label className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 block mb-2">
-                  Short bio (optional)
-                </label>
-                <textarea
-                  value={form.bio ?? ""}
-                  onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
-                  placeholder="A sentence or two about this stylist…"
-                  rows={2}
-                  className="w-full border border-ink/15 px-3 py-2.5 font-sans text-[13px] text-ink focus:outline-none focus:border-ink bg-transparent resize-none"
                 />
               </div>
 

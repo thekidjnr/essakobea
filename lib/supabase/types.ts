@@ -108,7 +108,6 @@ export interface Stylist {
   id:             string
   name:           string
   title:          string
-  bio:            string | null
   photo_url:      string | null
   fee_adjustment: number   // GHS cedis added to base deposit
   is_available:   boolean

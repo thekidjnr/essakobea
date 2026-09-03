@@ -1599,14 +1599,9 @@ export default function BookingFlow() {
             <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-3">
               Step {stepNum} of {totalSteps}
             </p>
-            <h2 className="font-serif text-[clamp(2rem,5vw,3.5rem)] font-light text-ink leading-none mb-3">
+            <h2 className="font-serif text-[clamp(2rem,5vw,3.5rem)] font-light text-ink leading-none mb-10">
               Choose your <span className="italic">stylist.</span>
             </h2>
-            <p className="font-sans text-[14px] text-ink/60 font-light mb-10 max-w-sm leading-relaxed">
-              All our stylists are trained professionals. Pick whoever you're
-              most comfortable with, or let us decide. Your stylist's own
-              schedule determines the dates and times available next.
-            </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
               {/* Any Available */}
@@ -1704,13 +1699,6 @@ export default function BookingFlow() {
                   >
                     {s.title}
                   </p>
-                  {s.bio && (
-                    <p
-                      className={`font-sans text-[12px] font-light leading-relaxed ${booking.stylistId === s.id ? "text-paper/45" : "text-ink/40"}`}
-                    >
-                      {s.bio}
-                    </p>
-                  )}
                   {s.fee_adjustment !== 0 && (
                     <p
                       className={`self-end mt-auto pt-4 font-sans text-[13px] font-semibold ${booking.stylistId === s.id ? "text-paper/70" : "text-ink/55"}`}

@@ -27,7 +27,7 @@ export async function POST(req: Request) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
-  const { name, title, bio, photo_url, fee_adjustment, is_available, display_order, daily_capacity } = body
+  const { name, title, photo_url, fee_adjustment, is_available, display_order, daily_capacity } = body
 
   if (!name) return NextResponse.json({ error: 'Name is required' }, { status: 400 })
 
@@ -36,7 +36,6 @@ export async function POST(req: Request) {
     .insert({
       name,
       title: title || 'Stylist',
-      bio: bio || null,
       photo_url: photo_url || null,
       fee_adjustment: fee_adjustment ?? 0,
       is_available: is_available ?? true,
