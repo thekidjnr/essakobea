@@ -1,3 +1,5 @@
+import { cancellationPolicyText } from '@/lib/refunds'
+
 export function bookingConfirmationHtml(opts: {
   clientName:         string
   serviceName:        string
@@ -136,7 +138,7 @@ export function bookingConfirmationHtml(opts: {
                   <span style="font-size:14px;color:#1A212B">·</span>
                 </td>
                 <td style="padding:10px 0 10px 10px;border-bottom:1px solid #f8f6f3;font-size:13px;color:#55504a;font-family:'Inter',Arial,sans-serif;line-height:1.6">
-                  <strong style="color:#1A212B;font-weight:500">Free cancellation</strong> up to 24 hours before your appointment. Within 24 hours, 50% is refunded. No-shows are not refunded.
+                  <strong style="color:#1A212B;font-weight:500">Cancellations.</strong> ${cancellationPolicyText(opts.isDeposit ? 'deposit' : 'payment')}
                 </td>
               </tr>
               <tr>

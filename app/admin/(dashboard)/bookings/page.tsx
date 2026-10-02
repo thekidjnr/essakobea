@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import Image from "next/image";
 import { whatsAppLink } from "@/lib/phone";
 import { isPriceRange } from "@/lib/booking-fees";
+import { cancellationPolicyText } from "@/lib/refunds";
 import type { DbService } from "@/lib/supabase/types";
 import {
   Page, PageHeader, Segmented, SearchInput, Pill, Button, buttonClass, IconButton, CloseIcon,
@@ -45,7 +46,7 @@ function whatsAppUrlFor(b: Booking, services: DbService[]): string {
     ? `*Payment:* ₵${amountGHS} deposit paid. The remaining balance depends on your styling and is settled on the day.`
     : `*Payment:* ₵${amountGHS} paid in full.`;
 
-  const policyLine = `*Good to know:* Full refund if you cancel 24h+ before. Within 24h, 50% of your ${isDeposit ? "deposit" : "payment"} is refunded; no-shows aren't refunded.`;
+  const policyLine = `*Good to know:* ${cancellationPolicyText(isDeposit ? "deposit" : "payment")}`;
 
   const message = `Hi ${firstName}, this is Essakobea confirming your appointment:\n\n*${b.service_name}* (${b.treatment})${stylistLine}\n${date} at ${b.time_slot}\n\n${paymentLine}\n\n*Location:* ${ADDRESS}\n${MAPS_LINK}\n\n${policyLine}\n\nSee you then!`;
 

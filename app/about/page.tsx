@@ -9,7 +9,7 @@ import Reveal from "@/components/common/Reveal";
 export const metadata: Metadata = {
   title: "About | Essakobea",
   description:
-    "Essakobea is a premium beauty studio in Accra, East Legon, combining professional hair services with a curated wig collection.",
+    "Essakobea is a premium beauty studio in Accra, East Legon, offering professional hair services, from wig making to braids and installs.",
 };
 
 const pillars = [
@@ -212,11 +212,11 @@ export default function AboutPage() {
             </h2>
             <p className="font-sans text-[14px] text-paper/65 font-light leading-relaxed mb-6 max-w-sm">
               Essakobea is not just a salon. It&apos;s a complete beauty system:
-              book an appointment, shop a wig, manage it all from your phone.
+              choose your service, pick your stylist and book, all from your phone.
             </p>
             <p className="font-sans text-[14px] text-paper/65 font-light leading-relaxed max-w-sm">
               We built the digital side of Essakobea so that our clients never
-              have to chase us down. Your booking, your collection, your history,
+              have to chase us down. Your booking, your payment, your appointment details,
               all in one place.
             </p>
 
@@ -242,10 +242,6 @@ export default function AboutPage() {
               [
                 "Appointment Booking",
                 "Select your service, date, and time, done in under 2 minutes.",
-              ],
-              [
-                "Wig Collection",
-                "Browse and shop premium units from our curated collection.",
               ],
               [
                 "Transparent Pricing",

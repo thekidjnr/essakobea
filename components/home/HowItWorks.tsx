@@ -18,10 +18,10 @@ export default function HowItWorks() {
               Book Now
             </Link>
             <Link
-              href="/shop"
+              href="/services"
               className="inline-block border border-ink text-ink font-sans text-[11px] tracking-widest uppercase px-8 py-4 hover:bg-ink hover:text-paper transition-all duration-300"
             >
-              Shop Wigs
+              View Services
             </Link>
           </div>
         </Reveal>

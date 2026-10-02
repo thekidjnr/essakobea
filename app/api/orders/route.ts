@@ -6,6 +6,11 @@ import type { OrderItem } from '@/lib/supabase/types'
 const DELIVERY_FEE_GHS = 50
 
 export async function POST(req: Request) {
+  // The shop isn't live yet (its pages redirect home in next.config.ts), so take no orders
+  if (process.env.SHOP_ENABLED !== 'true') {
+    return NextResponse.json({ error: 'The shop is not open yet' }, { status: 404 })
+  }
+
   try {
     const body = await req.json()
     const { clientName, clientEmail, clientPhone, items, deliveryMethod, deliveryAddress, notes } = body

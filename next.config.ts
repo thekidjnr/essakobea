@@ -6,6 +6,14 @@ const nextConfig: NextConfig = {
     return [
       // Payouts became Finance once the salon is paid out by Paystack directly
       { source: "/admin/payouts", destination: "/admin/finance", permanent: false },
+      // The shop isn't live yet: keep its pages off the public site until it is
+      { source: "/shop", destination: "/", permanent: false },
+      { source: "/shop/:path*", destination: "/", permanent: false },
+      { source: "/bag", destination: "/", permanent: false },
+      { source: "/checkout", destination: "/", permanent: false },
+      { source: "/checkout/:path*", destination: "/", permanent: false },
+      { source: "/admin/shop", destination: "/admin", permanent: false },
+      { source: "/admin/orders", destination: "/admin", permanent: false },
       { source: "/works/frontal-styling", destination: "/works/ponytails", permanent: true },
       {
         source: "/book",
