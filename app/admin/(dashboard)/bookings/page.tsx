@@ -5,6 +5,7 @@ import Image from "next/image";
 import { whatsAppLink } from "@/lib/phone";
 import { isPriceRange } from "@/lib/booking-fees";
 import { cancellationPolicyText } from "@/lib/refunds";
+import { customizationLabel, getServiceRules } from "@/lib/service-rules";
 import type { DbService } from "@/lib/supabase/types";
 import {
   Page, PageHeader, Segmented, SearchInput, Pill, Button, buttonClass, IconButton, CloseIcon,
@@ -46,9 +47,12 @@ function whatsAppUrlFor(b: Booking, services: DbService[]): string {
     ? `*Payment:* ₵${amountGHS} deposit paid. The remaining balance depends on your styling and is settled on the day.`
     : `*Payment:* ₵${amountGHS} paid in full.`;
 
+  const custLabel = customizationLabel(b.service_id, b.customization_type);
+  const custLine = custLabel ? `\n\n*${getServiceRules(b.service_id).unitStepLabel}:* ${custLabel}` : "";
+
   const policyLine = `*Good to know:* ${cancellationPolicyText(isDeposit ? "deposit" : "payment")}`;
 
-  const message = `Hi ${firstName}, this is Essakobea confirming your appointment:\n\n*${b.service_name}* (${b.treatment})${stylistLine}\n${date} at ${b.time_slot}\n\n${paymentLine}\n\n*Location:* ${ADDRESS}\n${MAPS_LINK}\n\n${policyLine}\n\nSee you then!`;
+  const message = `Hi ${firstName}, this is Essakobea confirming your appointment:\n\n*${b.service_name}* (${b.treatment})${stylistLine}\n${date} at ${b.time_slot}${custLine}\n\n${paymentLine}\n\n*Location:* ${ADDRESS}\n${MAPS_LINK}\n\n${policyLine}\n\nSee you then!`;
 
   return whatsAppLink(b.client_phone, message);
 }
@@ -79,7 +83,7 @@ function BookingDetail({
   const unit = unitLabel && b.bundle_count ? `${unitLabel}, ${b.bundle_count} bundle${b.bundle_count > 1 ? "s" : ""}` : unitLabel;
   const extrasList = [
     b.is_emergency && "Emergency",
-    b.customization_type && `${b.customization_type[0].toUpperCase()}${b.customization_type.slice(1)} customisation`,
+    customizationLabel(b.service_id, b.customization_type),
   ].filter(Boolean).join(", ");
 
   const lines: [string, number][] = [[isDeposit ? "Deposit" : "Service", base]];
@@ -140,6 +144,27 @@ function BookingDetail({
                   ))}
                 </span>
               )}
+            </dd>
+          </div>
+        )}
+        {(b.inspo_photos?.length ?? 0) > 0 && (
+          <div className="grid grid-cols-[84px_minmax(0,1fr)] gap-3 py-3 border-b border-line">
+            <dt className="font-sans text-[13px] text-muted">Inspo</dt>
+            <dd className="font-sans text-[14px] text-ink">
+              <span className="flex gap-2">
+                {b.inspo_photos!.map((url, i) => (
+                  <button
+                    key={url}
+                    type="button"
+                    onClick={() => onPhoto(url)}
+                    aria-label={`View inspo photo ${i + 1}`}
+                    className="w-14 h-14 rounded-[14px] overflow-hidden bg-soft cursor-zoom-in"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={url} alt="" className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </span>
             </dd>
           </div>
         )}

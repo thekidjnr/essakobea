@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // The Ponytails service used to have the slug "frontal-styling"
   async redirects() {
     return [
       // Payouts became Finance once the salon is paid out by Paystack directly
@@ -14,11 +13,13 @@ const nextConfig: NextConfig = {
       { source: "/checkout/:path*", destination: "/", permanent: false },
       { source: "/admin/shop", destination: "/admin", permanent: false },
       { source: "/admin/orders", destination: "/admin", permanent: false },
-      { source: "/works/frontal-styling", destination: "/works/ponytails", permanent: true },
+      // Ponytails was split into Regular and Frontal Ponytails (migration 018)
+      { source: "/works/frontal-styling", destination: "/works/regular-ponytails", permanent: true },
+      { source: "/works/ponytails", destination: "/works/regular-ponytails", permanent: true },
       {
         source: "/book",
-        has: [{ type: "query", key: "service", value: "frontal-styling" }],
-        destination: "/book?service=ponytails",
+        has: [{ type: "query", key: "service", value: "(frontal-styling|ponytails)" }],
+        destination: "/book?service=regular-ponytails",
         permanent: true,
       },
     ];

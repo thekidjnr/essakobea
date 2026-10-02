@@ -378,6 +378,7 @@ function formatDate(d: Date) {
 // ─── Fees ──────────────────────────────────────────────────────────────────────
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const SALON_WHATSAPP = "https://wa.me/233557205803";
 
 // ─── State ────────────────────────────────────────────────────────────────────
 
@@ -387,6 +388,7 @@ interface BookingState {
   hairUnitType: HairUnitType | "";
   customizationType: "standard" | "express" | "";
   unitPhotos: string[];
+  inspoPhotos: string[];
   bundleCount: number | null;
   isEmergency: boolean;
   date: Date | null;
@@ -422,6 +424,7 @@ function loadDraft(): { booking: BookingState; step: number } | null {
     return {
       booking: {
         bundleCount: null,
+        inspoPhotos: [],
         ...d,
         date: y && m && day ? new Date(y, m - 1, day) : null,
       },
@@ -925,6 +928,7 @@ export default function BookingFlow() {
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(true);
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [inspoUploading, setInspoUploading] = useState(false);
 
   // ── Booking state
   const [booking, setBooking] = useState<BookingState>({
@@ -933,6 +937,7 @@ export default function BookingFlow() {
     hairUnitType: "",
     customizationType: "",
     unitPhotos: [],
+    inspoPhotos: [],
     bundleCount: null,
     isEmergency: false,
     date: null,
@@ -1023,7 +1028,8 @@ export default function BookingFlow() {
   } = bookingTotals({
     base: baseDeposit,
     stylistAdj: booking.stylistFeeAdj,
-    customizationType,
+    // Some services settle Standard / Express with the salon, not online
+    customizationType: rules.customizationFees ? customizationType : null,
     isEmergency: booking.isEmergency,
   });
   const allTimeSlots = booking.isEmergency
@@ -1260,7 +1266,9 @@ export default function BookingFlow() {
         (!rules.customization || !!customizationType) &&
         (!rules.askBundles || !!bundleCount) &&
         booking.unitPhotos.length > 0 &&
-        !photoUploading
+        (!rules.inspoPhoto || booking.inspoPhotos.length > 0) &&
+        !photoUploading &&
+        !inspoUploading
       );
     if (s === 3) return true;
     if (s === 4) return !!booking.date && !!booking.time;
@@ -1309,6 +1317,7 @@ export default function BookingFlow() {
           stylistFeeAdjustment: booking.stylistFeeAdj,
           hairUnitType: hairUnitType || null,
           unitPhotos: showUnitStep ? booking.unitPhotos : [],
+          inspoPhotos: showUnitStep && rules.inspoPhoto ? booking.inspoPhotos : [],
           bundleCount,
           customizationType: customizationType || null,
           isEmergency: booking.isEmergency,
@@ -1561,6 +1570,7 @@ export default function BookingFlow() {
                               hairUnitType: "",
                               customizationType: "",
                               unitPhotos: [],
+                              inspoPhotos: [],
                               bundleCount: null,
                             }));
                           }}
@@ -1656,6 +1666,7 @@ export default function BookingFlow() {
                     if (opt.id === "none") {
                       set("customizationType", "");
                       set("unitPhotos", []);
+                      set("inspoPhotos", []);
                       set("bundleCount", null);
                     }
                   }}
@@ -1682,6 +1693,20 @@ export default function BookingFlow() {
                 </button>
               ))}
             </div>
+
+            {rules.hairNote && (
+              <p className="font-sans text-[14px] text-ink/65 -mt-4 mb-10">
+                {rules.hairNote}{" "}
+                <a
+                  href={SALON_WHATSAPP}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-ink border-b border-ink/40 hover:border-ink transition-colors"
+                >
+                  Message us on WhatsApp
+                </a>
+              </p>
+            )}
           </div>
         )}
 
@@ -1722,13 +1747,15 @@ export default function BookingFlow() {
                 <p
                   className={`font-sans text-[14px] leading-relaxed mb-4 ${customizationType === "standard" ? "text-paper/70" : "text-ink/60"}`}
                 >
-                  Drop off your unit 48–72 hrs before your appointment
+                  {rules.customizationCopy.standard.sub}
                 </p>
-                <p
-                  className={`mt-auto font-sans text-[15px] font-medium tabular-nums ${customizationType === "standard" ? "text-paper" : "text-ink"}`}
-                >
-                  +₵{CUSTOMIZATION_FEES.standard}
-                </p>
+                {rules.customizationFees && (
+                  <p
+                    className={`mt-auto font-sans text-[15px] font-medium tabular-nums ${customizationType === "standard" ? "text-paper" : "text-ink"}`}
+                  >
+                    +₵{CUSTOMIZATION_FEES.standard}
+                  </p>
+                )}
               </button>
 
               <button
@@ -1751,13 +1778,14 @@ export default function BookingFlow() {
                 <p
                   className={`font-sans text-[14px] leading-relaxed mb-4 ${customizationType === "express" ? "text-paper/70" : "text-ink/60"}`}
                 >
-                  Bring your unit on the day, allow 45 min–2 hrs extra depending
-                  on density
+                  {rules.customizationCopy.express.sub}
                 </p>
                 <p
                   className={`mt-auto font-sans text-[15px] font-medium tabular-nums ${customizationType === "express" ? "text-paper" : "text-ink"}`}
                 >
-                  +₵{CUSTOMIZATION_FEES.express}
+                  {rules.customizationFees
+                    ? `+₵${CUSTOMIZATION_FEES.express}`
+                    : "Extra cost applies"}
                 </p>
               </button>
             </div>
@@ -1770,9 +1798,7 @@ export default function BookingFlow() {
                   ℹ
                 </span>
                 <p className="font-sans text-[14px] text-ink/70 leading-relaxed">
-                  {customizationType === "standard"
-                    ? "You'll need to drop off your unit at the salon 48–72 hours before your appointment date. We'll have everything ready for you on the day."
-                    : "Bring your unit along to your appointment. Please allow an additional 45 minutes to 2 hours on top of your scheduled time, exact duration depends on the density of the unit."}
+                  {rules.customizationCopy[customizationType].info}
                 </p>
               </div>
             )}
@@ -1803,6 +1829,33 @@ export default function BookingFlow() {
                 onUploadingChange={setPhotoUploading}
               />
             </div>
+
+            {rules.inspoPhoto && (
+              <div className="border border-ink/10 p-6 mb-10">
+                <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/55 mb-2">
+                  {rules.inspoPhoto.label}{" "}
+                  <span className="normal-case tracking-normal text-red-500/80">
+                    *required
+                  </span>
+                </p>
+                <p className="font-sans text-[14px] text-ink/65 mb-5 leading-relaxed">
+                  {rules.inspoPhoto.help}
+                </p>
+                <PhotoUpload
+                  photos={booking.inspoPhotos}
+                  onAdd={(url) =>
+                    setBooking((b) => ({ ...b, inspoPhotos: [...b.inspoPhotos, url] }))
+                  }
+                  onRemove={(i) =>
+                    setBooking((b) => ({
+                      ...b,
+                      inspoPhotos: b.inspoPhotos.filter((_, j) => j !== i),
+                    }))
+                  }
+                  onUploadingChange={setInspoUploading}
+                />
+              </div>
+            )}
 
             {rules.askBundles && (
               <div className="border border-ink/10 p-6 mb-10">
@@ -1851,9 +1904,16 @@ export default function BookingFlow() {
             <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/50 mb-4">
               Step {stepNum} of {totalSteps}
             </p>
-            <h2 className="font-serif text-[clamp(2rem,5vw,3.5rem)] font-light text-ink leading-none mb-10">
+            <h2
+              className={`font-serif text-[clamp(2rem,5vw,3.5rem)] font-light text-ink leading-none ${rules.scheduleNote ? "mb-3" : "mb-10"}`}
+            >
               Pick a <span className="italic">date & time.</span>
             </h2>
+            {rules.scheduleNote && (
+              <p className="font-sans text-[15px] text-ink/65 mb-10 max-w-md leading-relaxed">
+                {rules.scheduleNote}
+              </p>
+            )}
 
             {/* Emergency toggle */}
             <div className="mb-10">
@@ -2341,21 +2401,19 @@ export default function BookingFlow() {
                     {bundleCount
                       ? `${bundleCount} bundle${bundleCount > 1 ? "s" : ""} · `
                       : ""}
-                    {booking.unitPhotos.length} photo
-                    {booking.unitPhotos.length > 1 ? "s" : ""} attached
+                    {booking.unitPhotos.length + (rules.inspoPhoto ? booking.inspoPhotos.length : 0)} photo
+                    {booking.unitPhotos.length + (rules.inspoPhoto ? booking.inspoPhotos.length : 0) > 1 ? "s" : ""} attached
                   </p>
                 )}
               </ReviewRow>
 
               {customizationType && (
-                <ReviewRow label="Customization" onEdit={() => goTo(2)}>
+                <ReviewRow label={rules.unitStepLabel} onEdit={() => goTo(2)}>
                   <p className="font-sans text-[16px] font-medium text-ink capitalize">
                     {customizationType}
                   </p>
                   <p className="font-sans text-[14px] text-ink/60">
-                    {customizationType === "standard"
-                      ? "Drop off 48–72 hrs before appointment"
-                      : "Bring unit on the day, allow 45 min–2 hrs extra"}
+                    {rules.customizationCopy[customizationType].short}
                   </p>
                 </ReviewRow>
               )}

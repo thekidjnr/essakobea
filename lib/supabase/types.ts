@@ -30,6 +30,7 @@ export interface Booking {
   stylist_name:        string | null
   hair_unit_type:      'own_new' | 'own_existing' | 'own_extensions' | 'none' | null
   unit_photos:         string[]
+  inspo_photos?:       string[]
   bundle_count?:       number | null
 }
 

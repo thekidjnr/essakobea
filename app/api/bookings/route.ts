@@ -19,7 +19,7 @@ export async function POST(req: Request) {
       serviceName, treatment,
       bookingDate, timeSlot, notes,
       stylistId,
-      hairUnitType, unitPhotos, bundleCount,
+      hairUnitType, unitPhotos, inspoPhotos, bundleCount,
       customizationType, isEmergency,
     } = body
 
@@ -83,6 +83,10 @@ export async function POST(req: Request) {
     const bundles: number | null =
       bringing && rules.askBundles && (BUNDLE_OPTIONS as readonly number[]).includes(bundleCount)
         ? bundleCount
+        : null
+    const inspo: string[] | null =
+      bringing && rules.inspoPhoto && Array.isArray(inspoPhotos)
+        ? inspoPhotos.filter((u: unknown): u is string => typeof u === 'string')
         : null
 
     // ── 1b. Add-on fees are calculated server-side (see lib/booking-fees) ────
@@ -186,7 +190,13 @@ export async function POST(req: Request) {
       emergencyFee:     emergencyFeeGHS,
       serviceCharge:    serviceChargeGHS,
       total:            depositGHS,
-    } = bookingTotals({ base: baseDepositGHS, stylistAdj, customizationType: customization, isEmergency: emergency })
+    } = bookingTotals({
+      base: baseDepositGHS,
+      stylistAdj,
+      // Some services settle Standard / Express with the salon, not online
+      customizationType: rules.customizationFees ? customization : null,
+      isEmergency: emergency,
+    })
     if (depositGHS <= 0) {
       return NextResponse.json({ error: 'Could not price this booking. Please contact us.' }, { status: 409 })
     }
@@ -213,6 +223,8 @@ export async function POST(req: Request) {
         unit_photos: bringing ? unitPhotos || [] : [],
         // Only sent when set, so other bookings still insert before migration 016 runs
         ...(bundles !== null && { bundle_count: bundles }),
+        // Same for inspo photos and migration 019 (only coloring asks for them)
+        ...(inspo !== null && { inspo_photos: inspo }),
         customization_type: customization,
         is_emergency: emergency,
         customization_fee: customizationFeeGHS * 100,

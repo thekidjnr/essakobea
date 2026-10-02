@@ -5,9 +5,10 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { formatBookingDate } from "@/lib/booking-time";
 import { clearBookingDraft } from "@/lib/booking-draft";
+import { customizationLabel } from "@/lib/service-rules";
 
 interface BookingData {
-  client_name: string; service_name: string; treatment: string;
+  client_name: string; service_id: string; service_name: string; treatment: string;
   booking_date: string; time_slot: string; status: string;
   customization_type: string | null; is_emergency: boolean;
   amount: number; customization_fee: number; emergency_fee: number; service_charge: number;
@@ -109,7 +110,7 @@ function BookingSuccess() {
               ["Service",  booking.service_name],
               ["Treatment",booking.treatment],
               booking.is_emergency ? ["Booking Type", "⚡ Emergency (Priority Handling)"] : null,
-              booking.customization_type ? ["Customization", booking.customization_type === "standard" ? "Standard (drop off 48–72 hrs before)" : "Express (bring unit on the day)"] : null,
+              booking.customization_type ? ["Customization", customizationLabel(booking.service_id, booking.customization_type) ?? booking.customization_type] : null,
               ["Date",     formatBookingDate(booking.booking_date)],
               ["Time",     booking.time_slot],
               ["Location", "East Legon, Accra"],

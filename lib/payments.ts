@@ -11,6 +11,7 @@ import { formatBookingDate } from '@/lib/booking-time'
 import { isPriceRange } from '@/lib/booking-fees'
 import { bookingConfirmationHtml } from '@/emails/booking-confirmation'
 import { bookingAdminAlertHtml } from '@/emails/booking-admin-alert'
+import { customizationLabel } from '@/lib/service-rules'
 import { orderConfirmationHtml } from '@/emails/order-confirmation'
 
 export const ADMIN_NOTIFY_EMAIL = process.env.ADMIN_EMAIL ?? 'essakobea@gmail.com'
@@ -154,6 +155,7 @@ async function sendBookingConfirmedEmails(booking: Row) {
     bookingId:         booking.id,
     appUrl:            process.env.NEXT_PUBLIC_APP_URL ?? '',
     customizationType: booking.customization_type ?? null,
+    customizationLabel: customizationLabel(booking.service_id, booking.customization_type),
     isEmergency:       booking.is_emergency ?? false,
     customizationFee:  Math.round((booking.customization_fee ?? 0) / 100),
     emergencyFee:      Math.round((booking.emergency_fee ?? 0) / 100),

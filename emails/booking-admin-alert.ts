@@ -13,6 +13,8 @@ export function bookingAdminAlertHtml(opts: {
   notes?:             string | null
   appUrl:             string
   customizationType?: string | null
+  /** Worded for the service, from customizationLabel() in lib/service-rules */
+  customizationLabel?: string | null
   isEmergency?:       boolean
   customizationFee?:  number
   emergencyFee?:      number
@@ -25,9 +27,7 @@ export function bookingAdminAlertHtml(opts: {
     ? `₵${opts.depositGHS} deposit paid`
     : `₵${opts.depositGHS} paid in full`
 
-  const custLabel = opts.customizationType === 'standard' ? 'Standard (drop off 48–72 hrs before)'
-                  : opts.customizationType === 'express'  ? 'Express (bring unit on the day)'
-                  : null
+  const custLabel = opts.customizationLabel ?? null
 
   const rows = [
     ['Client',    opts.clientName],
