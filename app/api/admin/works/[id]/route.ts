@@ -1,14 +1,8 @@
 import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/supabase/admin'
-import { createClient } from '@/lib/supabase/server'
+import { getAdmin as requireAdmin } from '@/lib/admin-auth'
 
 export const dynamic = 'force-dynamic'
-
-async function requireAdmin() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  return user
-}
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireAdmin()

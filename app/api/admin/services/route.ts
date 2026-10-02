@@ -1,14 +1,9 @@
 import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/supabase/admin'
-import { createClient } from '@/lib/supabase/server'
+import { getAdmin as requireAdmin } from '@/lib/admin-auth'
+import { validateBookingOptions } from '@/lib/service-options'
 
 export const dynamic = 'force-dynamic'
-
-async function requireAdmin() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  return user
-}
 
 export async function GET() {
   const user = await requireAdmin()
@@ -35,20 +30,26 @@ export async function POST(req: Request) {
   const { name, description, image_url, image_position, flip, booking_options, is_active } = body
 
   if (!name) return NextResponse.json({ error: 'name is required' }, { status: 400 })
+  const invalid = validateBookingOptions(booking_options)
+  if (invalid) return NextResponse.json({ error: invalid }, { status: 400 })
 
-  const { data: existing } = await adminDb.from('services').select('slug')
+  const { data: existing, error: existingError } = await adminDb.from('services').select('slug, number, display_order')
+  if (existingError) return NextResponse.json({ error: existingError.message }, { status: 500 })
   const existingSlugs = new Set((existing ?? []).map((s: { slug: string }) => s.slug))
   const baseSlug = slugify(name) || 'service'
   let slug = baseSlug
   let n = 2
   while (existingSlugs.has(slug)) { slug = `${baseSlug}-${n}`; n += 1 }
 
-  const count = existingSlugs.size
-  const number = String(count + 1).padStart(2, '0')
+  // Next number/position after the highest existing one, so deleting a
+  // service never causes a new one to reuse a number.
+  const maxNumber = Math.max(0, ...(existing ?? []).map((s: { number: string }) => parseInt(s.number, 10) || 0))
+  const maxOrder  = Math.max(-1, ...(existing ?? []).map((s: { display_order: number }) => s.display_order ?? 0))
+  const number = String(maxNumber + 1).padStart(2, '0')
 
   const { data, error } = await adminDb
     .from('services')
-    .insert({ slug, name, number, description: description ?? '', image_url: image_url ?? '', image_position: image_position ?? 'object-center', flip: flip ?? false, booking_options: booking_options ?? [], is_active: is_active ?? true, display_order: count })
+    .insert({ slug, name, number, description: description ?? '', image_url: image_url ?? '', image_position: image_position ?? 'object-center', flip: flip ?? false, booking_options: booking_options ?? [], is_active: is_active ?? true, display_order: maxOrder + 1 })
     .select()
     .single()
 

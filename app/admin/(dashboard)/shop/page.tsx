@@ -36,13 +36,20 @@ export default function AdminShopPage() {
   const [saving, setSaving]     = useState(false);
   const [error, setError]       = useState("");
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [listError, setListError] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("all");
 
   const load = () => {
     setLoading(true);
     fetch("/api/admin/products")
-      .then((r) => r.json())
-      .then((data: DbProduct[]) => { setProducts(data); setLoading(false); });
+      .then(async (r) => {
+        const data = await r.json().catch(() => null);
+        if (!r.ok || !Array.isArray(data)) throw new Error(data?.error ?? "Could not load products.");
+        setProducts(data as DbProduct[]);
+        setListError("");
+      })
+      .catch((e: Error) => setListError(e.message || "Could not load products."))
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => { load(); }, []);
@@ -100,28 +107,34 @@ export default function AdminShopPage() {
     const url    = editing ? `/api/admin/products/${editing.id}` : "/api/admin/products";
     const method = editing ? "PUT" : "POST";
 
-    const res  = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-    const data = await res.json();
-    if (data.error) { setError(data.error); setSaving(false); return; }
+    const res  = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }).catch(() => null);
+    const data = res ? await res.json().catch(() => ({})) : {};
+    if (!res?.ok || data.error) { setError(data.error ?? "Could not save. Please try again."); setSaving(false); return; }
     setSaving(false);
     setModal(null);
     load();
   };
 
   const toggleStock = async (p: DbProduct) => {
-    await fetch(`/api/admin/products/${p.id}`, {
+    setListError("");
+    const res = await fetch(`/api/admin/products/${p.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ in_stock: !p.in_stock }),
-    });
+    }).catch(() => null);
+    const data = res ? await res.json().catch(() => ({})) : {};
+    if (!res?.ok) { setListError(data.error ?? "Could not update product. Please try again."); return; }
     load();
   };
 
   const handleDelete = async (p: DbProduct) => {
     if (!confirm(`Delete "${p.name}"? This cannot be undone.`)) return;
     setDeleting(p.id);
-    await fetch(`/api/admin/products/${p.id}`, { method: "DELETE" });
+    setListError("");
+    const res = await fetch(`/api/admin/products/${p.id}`, { method: "DELETE" }).catch(() => null);
+    const data = res ? await res.json().catch(() => ({})) : {};
     setDeleting(null);
+    if (!res?.ok) { setListError(data.error ?? "Could not delete product. Please try again."); return; }
     load();
   };
 
@@ -160,11 +173,13 @@ export default function AdminShopPage() {
           ))}
       </div>
 
+      {listError && <p className="font-sans text-[12px] text-red-600 mb-4">{listError}</p>}
+
       {loading ? (
         <div className="font-sans text-[12px] text-ink/40">Loading…</div>
       ) : (
         <div className="bg-paper border border-ink/[0.07] divide-y divide-ink/[0.05] fade-up">
-          {filtered.length === 0 && (
+          {filtered.length === 0 && !listError && (
             <div className="px-6 py-12 text-center font-sans text-[13px] text-ink/50">
               No products here yet. Add your first one.
             </div>

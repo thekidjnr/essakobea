@@ -22,22 +22,32 @@ export default function AdminOrders() {
   const [orders, setOrders]   = useState<Order[]>([]);
   const [filter, setFilter]   = useState("all");
   const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState("");
 
   const load = useCallback(() => {
     setLoading(true);
     fetch(`/api/admin/orders?status=${filter}`)
-      .then(r => r.json())
-      .then(data => { setOrders(Array.isArray(data) ? data : []); setLoading(false); });
+      .then(async r => {
+        const data = await r.json().catch(() => null);
+        if (!r.ok || !Array.isArray(data)) throw new Error(data?.error ?? "Could not load orders.");
+        setOrders(data);
+        setError("");
+      })
+      .catch((e: Error) => { setOrders([]); setError(e.message || "Could not load orders."); })
+      .finally(() => setLoading(false));
   }, [filter]);
 
   useEffect(() => { load(); }, [load]);
 
   const updateStatus = async (id: string, status: string) => {
-    await fetch(`/api/orders/${id}`, {
+    setError("");
+    const res = await fetch(`/api/orders/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
-    });
+    }).catch(() => null);
+    const data = res ? await res.json().catch(() => ({})) : {};
+    if (!res?.ok) { setError(data.error ?? "Could not update order status. Please try again."); return; }
     load();
   };
 
@@ -62,9 +72,11 @@ export default function AdminOrders() {
         ))}
       </div>
 
+      {error && <p className="font-sans text-[12px] text-red-600 mb-4">{error}</p>}
+
       {loading ? (
         <p className="font-sans text-[12px] text-ink/40">Loading…</p>
-      ) : orders.length === 0 ? (
+      ) : orders.length === 0 && error ? null : orders.length === 0 ? (
         <p className="font-sans text-[13px] text-ink/55 py-12 text-center">No orders found.</p>
       ) : (
         <>

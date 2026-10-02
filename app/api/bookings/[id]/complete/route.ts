@@ -1,13 +1,20 @@
 import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/supabase/admin'
-import { createClient } from '@/lib/supabase/server'
+import { getAdmin, unauthorized } from '@/lib/admin-auth'
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!(await getAdmin())) return unauthorized()
 
   const { id } = await params
-  await adminDb.from('bookings').update({ status: 'completed' }).eq('id', id)
+  // Only a confirmed booking can be completed; completing counts it toward earnings.
+  const { data, error } = await adminDb
+    .from('bookings')
+    .update({ status: 'completed' })
+    .eq('id', id)
+    .eq('status', 'confirmed')
+    .select('id')
+    .maybeSingle()
+  if (error) return NextResponse.json({ error: 'Failed to complete booking' }, { status: 500 })
+  if (!data) return NextResponse.json({ error: 'Only confirmed bookings can be completed' }, { status: 409 })
   return NextResponse.json({ success: true })
 }

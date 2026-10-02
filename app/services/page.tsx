@@ -64,7 +64,7 @@ export default async function ServicesPage() {
                 images={images}
                 alt={`${service.name} | Essakobea`}
                 position={service.image_position}
-                aspectClassName="aspect-[4/3]"
+                aspectClassName="aspect-[4/5] md:aspect-[4/3]"
                 number={service.number}
               />
 

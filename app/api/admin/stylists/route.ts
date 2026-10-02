@@ -1,12 +1,6 @@
 import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/supabase/admin'
-import { createClient } from '@/lib/supabase/server'
-
-async function requireAdmin() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  return user
-}
+import { getAdmin as requireAdmin } from '@/lib/admin-auth'
 
 export async function GET() {
   const { data, error } = await adminDb

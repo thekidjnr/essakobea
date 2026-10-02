@@ -57,7 +57,7 @@ export const AdminIcons: Record<string, React.ReactNode> = {
       <path d="M2 13c0-2.761 2.462-5 5.5-5s5.5 2.239 5.5 5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
     </svg>
   ),
-  Payouts: (
+  Finance: (
     <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
       <rect x="1" y="3.5" width="13" height="9" rx="0.75" stroke="currentColor" strokeWidth="1.2"/>
       <path d="M1 6h13" stroke="currentColor" strokeWidth="1.2"/>

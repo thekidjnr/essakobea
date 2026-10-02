@@ -25,6 +25,10 @@ function OrderSuccess() {
         if (d.error) setError(d.error);
         else setOrder(d.order);
         setLoading(false);
+      })
+      .catch(() => {
+        setError("We couldn't confirm your payment just now. If you paid, you'll get a confirmation email shortly.");
+        setLoading(false);
       });
   }, [reference]);
 

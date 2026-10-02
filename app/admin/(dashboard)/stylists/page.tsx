@@ -3,6 +3,20 @@
 import { useEffect, useState } from "react";
 import type { Stylist } from "@/lib/supabase/types";
 import ImageUpload from "@/components/admin/ImageUpload";
+import Toggle from "@/components/admin/Toggle";
+import {
+  Page,
+  PageHeader,
+  Button,
+  Pill,
+  inputClass,
+  Field,
+  ErrorNote,
+  Empty,
+  Skeleton,
+  Modal,
+  ConfirmDialog,
+} from "@/components/admin/ui";
 
 const EMPTY: Omit<Stylist, "id" | "created_at"> = {
   name: "",
@@ -14,6 +28,17 @@ const EMPTY: Omit<Stylist, "id" | "created_at"> = {
   daily_capacity: null,
 };
 
+function summary(s: Stylist) {
+  const fee =
+    s.fee_adjustment > 0
+      ? `+₵${s.fee_adjustment} deposit`
+      : s.fee_adjustment < 0
+      ? `−₵${Math.abs(s.fee_adjustment)} deposit`
+      : "No extra fee";
+  const cap = s.daily_capacity ? `${s.daily_capacity} a day` : "No daily limit";
+  return `${fee} · ${cap}`;
+}
+
 export default function AdminStylistsPage() {
   const [stylists, setStylists] = useState<Stylist[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,19 +47,26 @@ export default function AdminStylistsPage() {
   const [form, setForm] = useState<Omit<Stylist, "id" | "created_at">>(EMPTY);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const [formError, setFormError] = useState("");
+  const [confirmRemove, setConfirmRemove] = useState<Stylist | null>(null);
+  const [removeError, setRemoveError] = useState("");
 
   useEffect(() => {
     fetch("/api/admin/stylists")
-      .then((r) => r.json())
-      .then((data: Stylist[]) => {
-        setStylists(data);
-        setLoading(false);
-      });
+      .then(async (r) => {
+        const data = await r.json().catch(() => null);
+        if (!r.ok || !Array.isArray(data)) throw new Error(data?.error ?? "Could not load stylists.");
+        setStylists(data as Stylist[]);
+      })
+      .catch((e: Error) => setError(e.message || "Could not load stylists."))
+      .finally(() => setLoading(false));
   }, []);
 
   const openCreate = () => {
     setEditing(null);
     setForm({ ...EMPTY, display_order: stylists.length });
+    setFormError("");
     setShowModal(true);
   };
 
@@ -49,12 +81,14 @@ export default function AdminStylistsPage() {
       display_order: s.display_order,
       daily_capacity: s.daily_capacity,
     });
+    setFormError("");
     setShowModal(true);
   };
 
   const handleSave = async () => {
     if (!form.name.trim()) return;
     setSaving(true);
+    setFormError("");
 
     const payload = {
       ...form,
@@ -66,326 +100,227 @@ export default function AdminStylistsPage() {
         : Number(form.daily_capacity),
     };
 
-    if (editing) {
-      const res = await fetch(`/api/admin/stylists/${editing.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (!data.error) {
-        setStylists((prev) => prev.map((s) => (s.id === editing.id ? data : s)));
-        setShowModal(false);
-      }
-    } else {
-      const res = await fetch("/api/admin/stylists", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (!data.error) {
-        setStylists((prev) => [...prev, data]);
-        setShowModal(false);
-      }
-    }
+    const res = await fetch(editing ? `/api/admin/stylists/${editing.id}` : "/api/admin/stylists", {
+      method: editing ? "PUT" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }).catch(() => null);
+    const data = res ? await res.json().catch(() => ({})) : {};
     setSaving(false);
+    if (!res?.ok || data.error || !data.id) { setFormError(data.error ?? "Could not save. Please try again."); return; }
+    setStylists((prev) => editing ? prev.map((s) => (s.id === editing.id ? data : s)) : [...prev, data]);
+    setShowModal(false);
+  };
+
+  const askRemove = (s: Stylist) => {
+    setRemoveError("");
+    setConfirmRemove(s);
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Remove this stylist? This cannot be undone.")) return;
     setDeletingId(id);
-    await fetch(`/api/admin/stylists/${id}`, { method: "DELETE" });
-    setStylists((prev) => prev.filter((s) => s.id !== id));
+    setError("");
+    setRemoveError("");
+    const res = await fetch(`/api/admin/stylists/${id}`, { method: "DELETE" }).catch(() => null);
+    const data = res ? await res.json().catch(() => ({})) : {};
     setDeletingId(null);
+    if (!res?.ok) { setRemoveError(data.error ?? "Could not remove stylist. Please try again."); return; }
+    setStylists((prev) => prev.filter((s) => s.id !== id));
+    setConfirmRemove(null);
+    setShowModal(false);
   };
 
+  const total = stylists.length;
+  const taking = stylists.filter((s) => s.is_available).length;
+  const subtitle = loading
+    ? undefined
+    : `${total} ${total === 1 ? "stylist" : "stylists"} · ${taking} taking bookings`;
+
   return (
-    <div className="p-8 md:p-10 max-w-[900px]">
-      {/* Header */}
-      <div className="flex items-end justify-between mb-8 fade-up">
-        <div>
-          <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-1">Admin</p>
-          <h1 className="font-serif text-[2.5rem] font-light text-ink leading-none">
-            Stylists<span className="italic">.</span>
-          </h1>
-          <p className="font-sans text-[13px] text-ink/55 mt-2">
-            Manage team members shown during booking
-          </p>
-        </div>
-        <button
-          onClick={openCreate}
-          className="bg-ink text-paper font-sans text-[11px] tracking-widest uppercase px-6 py-3 hover:bg-ink/80 transition-colors"
-        >
-          + Add Stylist
-        </button>
-      </div>
+    <Page>
+      <PageHeader
+        title="Team"
+        subtitle={subtitle}
+        actions={<Button onClick={openCreate}>Add stylist</Button>}
+      />
+
+      <ErrorNote className="mb-6">{error}</ErrorNote>
 
       {loading ? (
-        <div className="font-sans text-[12px] text-ink/40 py-12">Loading…</div>
-      ) : stylists.length === 0 ? (
-        <div className="border border-dashed border-ink/15 py-20 text-center">
-          <p className="font-sans text-[13px] text-ink/45 mb-4">No stylists yet.</p>
-          <button
-            onClick={openCreate}
-            className="font-sans text-[11px] tracking-widest uppercase text-ink/40 hover:text-ink border border-ink/15 px-5 py-2.5 transition-colors"
-          >
-            + Add First Stylist
-          </button>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-0 divide-y divide-ink/[0.07] fade-up">
-          {stylists.map((s) => (
-            <div key={s.id}>
-            <div className="group hidden md:flex py-5 items-center gap-5 px-3 -mx-3 hover:bg-mist/40 transition-colors">
-              {/* Photo */}
-              <div className="w-14 h-14 bg-mist flex-shrink-0 overflow-hidden">
-                {s.photo_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={s.photo_url} alt={s.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <span className="font-serif text-[1.25rem] text-ink/20 italic">
-                      {s.name.charAt(0)}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <p className="font-sans text-[13px] text-ink font-medium">{s.name}</p>
-                  <span className="font-sans text-[10px] tracking-widest uppercase text-ink/35">
-                    {s.title}
-                  </span>
-                  {!s.is_available && (
-                    <span className="font-sans text-[9px] tracking-widest uppercase text-amber-500 border border-amber-200 px-2 py-0.5">
-                      Unavailable
-                    </span>
-                  )}
-                </div>
-                <p className="font-sans text-[12px] text-ink/50 mt-0.5">
-                  {s.fee_adjustment > 0
-                    ? `+₵${s.fee_adjustment} deposit`
-                    : s.fee_adjustment < 0
-                    ? `−₵${Math.abs(s.fee_adjustment)} deposit`
-                    : "No fee adjustment"}
-                  {" · "}
-                  {s.daily_capacity ? `${s.daily_capacity}/day` : "Unlimited/day"}
-                </p>
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <button
-                  onClick={() => openEdit(s)}
-                  className="font-sans text-[10px] tracking-widest uppercase text-ink/40 hover:text-ink border border-ink/15 px-4 py-2 transition-colors"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(s.id)}
-                  disabled={deletingId === s.id}
-                  className="font-sans text-[10px] tracking-widest uppercase text-ink/25 hover:text-red-500 border border-ink/10 hover:border-red-200 px-4 py-2 transition-colors disabled:opacity-40"
-                >
-                  {deletingId === s.id ? "…" : "Remove"}
-                </button>
-              </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i}>
+              <Skeleton className="aspect-[3/4] rounded-[24px]" />
+              <Skeleton className="mt-3 h-4 w-3/4 rounded-full" />
             </div>
-
-            {/* Mobile row */}
-            <div className="flex md:hidden flex-col gap-3 py-4">
-              <div className="flex items-center gap-3">
-                <div className="w-14 h-14 bg-mist flex-shrink-0 overflow-hidden">
+          ))}
+        </div>
+      ) : stylists.length === 0 && error ? null : stylists.length === 0 ? (
+        <Empty title="No stylists yet">
+          <Button onClick={openCreate} className="mt-2">Add stylist</Button>
+        </Empty>
+      ) : (
+        <ul className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-7 md:gap-x-6 md:gap-y-9 fade-up">
+          {stylists.map((s) => (
+            <li key={s.id}>
+              <button
+                type="button"
+                onClick={() => openEdit(s)}
+                aria-label={`Edit ${s.name}`}
+                className="group block w-full text-left focus:outline-none"
+              >
+                <div className="relative aspect-[3/4] rounded-[24px] overflow-hidden bg-ink group-focus-visible:ring-2 group-focus-visible:ring-ink group-focus-visible:ring-offset-2">
                   {s.photo_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={s.photo_url} alt={s.name} className="w-full h-full object-cover" />
+                    <img
+                      src={s.photo_url}
+                      alt={s.name}
+                      className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03] ${s.is_available ? "" : "grayscale-[60%]"}`}
+                    />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <span className="font-serif text-[1.25rem] text-ink/20 italic">
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="font-serif italic font-light text-[64px] md:text-[80px] text-paper/35 leading-none">
                         {s.name.charAt(0)}
                       </span>
                     </div>
                   )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-sans text-[13px] text-ink font-medium">{s.name}</p>
-                    <span className="font-sans text-[10px] tracking-widest uppercase text-ink/35">{s.title}</span>
-                    {!s.is_available && (
-                      <span className="font-sans text-[9px] tracking-widest uppercase text-amber-500 border border-amber-200 px-2 py-0.5">
-                        Unavailable
-                      </span>
-                    )}
+                  <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-ink/80 via-ink/30 to-transparent" />
+                  {!s.is_available && (
+                    <Pill tone="soft" className="absolute top-3 left-3 bg-paper/90 text-graphite">Away</Pill>
+                  )}
+                  <div className="absolute inset-x-0 bottom-0 p-4 md:p-5">
+                    <p className="font-serif text-[20px] md:text-[24px] leading-tight text-paper truncate">{s.name}</p>
+                    <p className="mt-0.5 font-sans text-[12px] md:text-[13px] text-paper/75 truncate">{s.title}</p>
                   </div>
-                  <p className="font-sans text-[11px] text-ink/50 mt-0.5">
-                    {s.fee_adjustment > 0
-                      ? `+₵${s.fee_adjustment} deposit`
-                      : s.fee_adjustment < 0
-                      ? `−₵${Math.abs(s.fee_adjustment)} deposit`
-                      : "No fee adjustment"}
-                    {" · "}
-                    {s.daily_capacity ? `${s.daily_capacity}/day` : "Unlimited/day"}
-                  </p>
                 </div>
-              </div>
-              <div className="flex items-center gap-2 justify-end">
-                <button
-                  onClick={() => openEdit(s)}
-                  className="font-sans text-[10px] tracking-widest uppercase text-ink/40 hover:text-ink border border-ink/15 px-3 py-1.5 transition-colors"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(s.id)}
-                  disabled={deletingId === s.id}
-                  className="font-sans text-[10px] tracking-widest uppercase text-ink/25 hover:text-red-500 border border-ink/10 hover:border-red-200 px-3 py-1.5 transition-colors disabled:opacity-40"
-                >
-                  {deletingId === s.id ? "…" : "Remove"}
-                </button>
-              </div>
-            </div>
-            </div>
+                <p className="mt-3 px-1 font-sans text-[12px] md:text-[13px] text-muted truncate">{summary(s)}</p>
+              </button>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
 
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 bg-ink/60 flex items-start justify-center p-4 sm:p-6 overflow-y-auto">
-          <div className="bg-paper w-full max-w-[560px] my-12 p-5 sm:p-8 relative">
-            <button
-              onClick={() => setShowModal(false)}
-              className="absolute top-5 right-5 font-sans text-[20px] text-ink/40 hover:text-ink leading-none"
-            >
-              ×
-            </button>
-            <h2 className="font-serif text-[1.5rem] font-light text-ink mb-6">
-              {editing ? "Edit Stylist" : "Add Stylist"}
-            </h2>
+      <Modal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        title={editing ? "Edit stylist" : "Add stylist"}
+        footer={
+          <>
+            {editing && (
+              <Button
+                variant="ghost"
+                onClick={() => askRemove(editing)}
+                disabled={deletingId === editing.id}
+                className="mr-auto -ml-3"
+              >
+                Remove
+              </Button>
+            )}
+            <Button variant="ghost" onClick={() => setShowModal(false)}>Cancel</Button>
+            <Button onClick={handleSave} disabled={!form.name.trim() || saving}>
+              {saving ? "Saving…" : editing ? "Save" : "Add stylist"}
+            </Button>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-5">
+          <div>
+            <span className="block mb-2 font-sans text-[13px] text-graphite">Photo</span>
+            <ImageUpload
+              value={form.photo_url ?? ""}
+              onChange={(url) => setForm((f) => ({ ...f, photo_url: url || null }))}
+              folder="stylists"
+            />
+          </div>
 
-            <div className="flex flex-col gap-5">
-              {/* Photo */}
-              <div>
-                <label className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 block mb-2">
-                  Photo
-                </label>
-                <ImageUpload
-                  value={form.photo_url ?? ""}
-                  onChange={(url) => setForm((f) => ({ ...f, photo_url: url || null }))}
-                  folder="stylists"
-                />
-              </div>
+          <Field label="Name">
+            <input
+              value={form.name}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              placeholder="Akua Mensah"
+              className={inputClass}
+            />
+          </Field>
 
-              {/* Name */}
-              <div>
-                <label className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 block mb-2">
-                  Name *
-                </label>
-                <input
-                  value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  placeholder="e.g. Akua Mensah"
-                  className="w-full border border-ink/15 px-3 py-2.5 font-sans text-[13px] text-ink focus:outline-none focus:border-ink bg-transparent"
-                />
-              </div>
+          <Field label="Title">
+            <input
+              value={form.title}
+              onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+              placeholder="Senior stylist"
+              className={inputClass}
+            />
+          </Field>
 
-              {/* Title */}
-              <div>
-                <label className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 block mb-2">
-                  Title
-                </label>
-                <input
-                  value={form.title}
-                  onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                  placeholder="e.g. Senior Stylist"
-                  className="w-full border border-ink/15 px-3 py-2.5 font-sans text-[13px] text-ink focus:outline-none focus:border-ink bg-transparent"
-                />
-              </div>
+          <div className="flex items-center justify-between gap-4 min-h-[56px] px-4 rounded-2xl bg-soft">
+            <span className="font-sans text-[14px] text-ink">Taking bookings</span>
+            <Toggle
+              checked={form.is_available}
+              onChange={(v) => setForm((f) => ({ ...f, is_available: v }))}
+              label="Taking bookings"
+            />
+          </div>
 
-              {/* Fee adjustment */}
-              <div>
-                <label className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 block mb-2">
-                  Deposit fee adjustment (₵)
-                </label>
+          <details className="group rounded-2xl border border-line">
+            <summary className="flex items-center justify-between gap-4 min-h-[52px] px-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden font-sans text-[14px] text-ink">
+              More options
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 12 12"
+                fill="none"
+                aria-hidden="true"
+                className="text-muted transition-transform duration-200 group-open:rotate-180"
+              >
+                <path d="M2.5 4.5L6 8l3.5-3.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </summary>
+            <div className="flex flex-col gap-5 px-4 pt-1 pb-5">
+              <Field label="Deposit adjustment (₵)" hint="Added to the service deposit · negative for a discount">
                 <input
                   type="number"
                   value={form.fee_adjustment}
                   onChange={(e) => setForm((f) => ({ ...f, fee_adjustment: Number(e.target.value) }))}
                   placeholder="0"
-                  className="w-full border border-ink/15 px-3 py-2.5 font-sans text-[13px] text-ink focus:outline-none focus:border-ink bg-transparent"
+                  className={inputClass}
                 />
-                <p className="font-sans text-[11px] text-ink/45 mt-1">
-                  Added to base deposit. Use negative to discount. 0 = no change.
-                </p>
-              </div>
+              </Field>
 
-              {/* Daily capacity */}
-              <div>
-                <label className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 block mb-2">
-                  Daily capacity
-                </label>
+              <Field label="Daily limit" hint="Leave empty for no limit">
                 <input
                   type="number"
                   min={0}
                   value={form.daily_capacity ?? ""}
                   onChange={(e) => setForm((f) => ({ ...f, daily_capacity: e.target.value === "" ? null : Number(e.target.value) }))}
-                  placeholder="Unlimited"
-                  className="w-full border border-ink/15 px-3 py-2.5 font-sans text-[13px] text-ink focus:outline-none focus:border-ink bg-transparent"
+                  placeholder="No limit"
+                  className={inputClass}
                 />
-                <p className="font-sans text-[11px] text-ink/45 mt-1">
-                  Max appointments this stylist can take per day. Leave blank for unlimited.
-                </p>
-              </div>
+              </Field>
 
-              {/* Availability */}
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id="is_available"
-                  checked={form.is_available}
-                  onChange={(e) => setForm((f) => ({ ...f, is_available: e.target.checked }))}
-                  className="w-4 h-4 accent-ink"
-                />
-                <label htmlFor="is_available" className="font-sans text-[12px] text-ink/60">
-                  Available for booking
-                </label>
-              </div>
-
-              {/* Display order */}
-              <div>
-                <label className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 block mb-2">
-                  Display order
-                </label>
+              <Field label="Display order" hint="Lower numbers show first">
                 <input
                   type="number"
                   value={form.display_order}
                   onChange={(e) => setForm((f) => ({ ...f, display_order: Number(e.target.value) }))}
-                  className="w-full border border-ink/15 px-3 py-2.5 font-sans text-[13px] text-ink focus:outline-none focus:border-ink bg-transparent"
+                  className={inputClass}
                 />
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-3 pt-1">
-                <button
-                  onClick={handleSave}
-                  disabled={!form.name.trim() || saving}
-                  className="flex-1 bg-ink text-paper font-sans text-[11px] tracking-widest uppercase py-4 hover:bg-ink/80 transition-colors disabled:opacity-40"
-                >
-                  {saving ? "Saving…" : editing ? "Save Changes" : "Add Stylist"}
-                </button>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="border border-ink/20 text-ink font-sans text-[11px] tracking-widest uppercase px-8 hover:bg-ink/5 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
+              </Field>
             </div>
-          </div>
+          </details>
+
+          <ErrorNote>{formError}</ErrorNote>
         </div>
-      )}
-    </div>
+      </Modal>
+
+      <ConfirmDialog
+        open={!!confirmRemove}
+        title={confirmRemove ? `Remove ${confirmRemove.name}?` : ""}
+        body="Stylists with upcoming bookings can't be removed. Mark them away instead."
+        confirmLabel="Remove"
+        busy={!!confirmRemove && deletingId === confirmRemove.id}
+        error={removeError}
+        onConfirm={() => confirmRemove && handleDelete(confirmRemove.id)}
+        onClose={() => setConfirmRemove(null)}
+      />
+    </Page>
   );
 }

@@ -1,12 +1,7 @@
 import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/supabase/admin'
-import { createClient } from '@/lib/supabase/server'
-
-async function requireAdmin() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  return user
-}
+import { getAdmin as requireAdmin } from '@/lib/admin-auth'
+import { todayInAccra } from '@/lib/booking-time'
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireAdmin()
@@ -36,6 +31,23 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
+
+  // Deleting a stylist would orphan their upcoming bookings and let those
+  // slots be double-booked. Make the admin reassign or cancel them first.
+  const { count, error: countError } = await adminDb
+    .from('bookings')
+    .select('id', { count: 'exact', head: true })
+    .eq('stylist_id', id)
+    .in('status', ['pending', 'confirmed'])
+    .gte('booking_date', todayInAccra())
+  if (countError) return NextResponse.json({ error: 'Failed to check bookings' }, { status: 500 })
+  if ((count ?? 0) > 0) {
+    return NextResponse.json(
+      { error: `This stylist has ${count} upcoming booking${count === 1 ? '' : 's'}. Mark them unavailable instead, or cancel those bookings first.` },
+      { status: 409 },
+    )
+  }
+
   const { error } = await adminDb.from('stylists').delete().eq('id', id)
 
   if (error) {

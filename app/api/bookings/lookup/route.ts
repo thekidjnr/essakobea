@@ -1,9 +1,19 @@
 import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/supabase/admin'
+import { allowRequest, clientIp } from '@/lib/rate-limit'
 
-// GET /api/bookings/lookup?phone=0557205803
-// Returns the most recent booking for this phone number for pre-filling returning client details
+// GET /api/bookings/lookup?phone=+233557205803
+// Lets the booking form greet a returning client. This is public, so it only
+// ever reveals a first name: never the full name, email or booking history.
+// Anyone could type someone else's number here.
+const LOOKUP_LIMIT = 10
+const LOOKUP_WINDOW_MS = 10 * 60 * 1000
+
 export async function GET(req: Request) {
+  if (!allowRequest(`lookup:${clientIp(req)}`, LOOKUP_LIMIT, LOOKUP_WINDOW_MS)) {
+    return NextResponse.json({ client: null }, { status: 429 })
+  }
+
   const { searchParams } = new URL(req.url)
   const phone = searchParams.get('phone')?.trim()
 
@@ -13,28 +23,27 @@ export async function GET(req: Request) {
 
   // Normalise: strip leading + and spaces
   const normalised = phone.replace(/\s+/g, '').replace(/^\+/, '')
+  // Only digits may reach the query filter below
+  if (!/^\d{7,15}$/.test(normalised)) {
+    return NextResponse.json({ client: null })
+  }
   // Legacy bookings were stored as a raw Ghana local number (e.g. "0557205803")
-  // before the country-code picker existed — also match against that format.
+  // before the country-code picker existed, so also match against that format.
   const legacyLocal = normalised.startsWith('233') ? `0${normalised.slice(3)}` : null
 
-  const variants = [phone, normalised, `+${normalised}`, ...(legacyLocal ? [legacyLocal] : [])]
+  const variants = [normalised, `+${normalised}`, ...(legacyLocal ? [legacyLocal] : [])]
   const orFilter = variants.map((v) => `client_phone.eq.${v}`).join(',')
 
   const { data } = await adminDb
     .from('bookings')
-    .select('client_name, client_email, client_phone')
+    .select('client_name')
     .or(orFilter)
     .order('created_at', { ascending: false })
     .limit(1)
-    .single()
+    .maybeSingle()
 
-  if (!data) return NextResponse.json({ client: null })
+  const firstName = String(data?.client_name ?? '').trim().split(/\s+/)[0]
+  if (!firstName) return NextResponse.json({ client: null })
 
-  return NextResponse.json({
-    client: {
-      name: data.client_name,
-      email: data.client_email,
-      phone: data.client_phone,
-    },
-  })
+  return NextResponse.json({ client: { firstName } })
 }

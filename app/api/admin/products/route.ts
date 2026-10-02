@@ -1,14 +1,8 @@
 import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/supabase/admin'
-import { createClient } from '@/lib/supabase/server'
+import { getAdmin as requireAdmin } from '@/lib/admin-auth'
 
 export const dynamic = 'force-dynamic'
-
-async function requireAdmin() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  return user
-}
 
 export async function GET() {
   const user = await requireAdmin()
@@ -30,8 +24,8 @@ export async function POST(req: Request) {
   const body = await req.json()
   const { slug, name, category, category_label, price_raw, length, description, image_url, tag, in_stock, display_order } = body
 
-  if (!slug || !name || !category) {
-    return NextResponse.json({ error: 'slug, name, and category are required' }, { status: 400 })
+  if (!name || !category) {
+    return NextResponse.json({ error: 'name and category are required' }, { status: 400 })
   }
 
   // Auto-generate slug from name if not provided

@@ -2,6 +2,21 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Toggle from "@/components/admin/Toggle";
+import {
+  Page,
+  PageHeader,
+  SectionTitle,
+  Card,
+  Button,
+  IconButton,
+  Segmented,
+  inputClass,
+  Field,
+  ErrorNote,
+  Empty,
+  Skeleton,
+  ConfirmDialog,
+} from "@/components/admin/ui";
 
 interface AvailDay {
   id: string;
@@ -35,24 +50,85 @@ const TIME_OPTIONS: { value: string; label: string }[] = (() => {
   return opts;
 })();
 
+const CHEVRON = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236B6E75' stroke-width='1.2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E\")";
+
 function TimeSelect({
   value,
   onChange,
+  label,
 }: {
   value: string;
   onChange: (v: string) => void;
+  label: string;
 }) {
   return (
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full border border-ink/15 px-3 py-1.5 font-sans text-[12px] text-ink bg-paper focus:outline-none focus:border-ink appearance-none cursor-pointer pr-7 relative"
-      style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23000' stroke-width='1.2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 10px center" }}
+      aria-label={label}
+      className={`${inputClass} appearance-none cursor-pointer pr-9`}
+      style={{ backgroundImage: CHEVRON, backgroundRepeat: "no-repeat", backgroundPosition: "right 16px center" }}
     >
       {TIME_OPTIONS.map((o) => (
         <option key={o.value} value={o.value}>{o.label}</option>
       ))}
     </select>
+  );
+}
+
+const MinusIcon = (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+    <path d="M3 7h8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+  </svg>
+);
+const PlusIcon = (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+    <path d="M3 7h8M7 3v8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+  </svg>
+);
+
+function Stepper({
+  label,
+  hint,
+  value,
+  display,
+  min,
+  onChange,
+}: {
+  label: string;
+  hint: string;
+  value: number;
+  display?: string;
+  min: number;
+  onChange: (n: number) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 py-4">
+      <div className="min-w-0">
+        <p className="font-sans text-[15px] text-ink">{label}</p>
+        <p className="font-sans text-[13px] text-muted mt-0.5">{hint}</p>
+      </div>
+      <div className="flex items-center gap-1 flex-shrink-0">
+        <IconButton
+          label={`Decrease ${label.toLowerCase()}`}
+          onClick={() => onChange(value - 1)}
+          disabled={value <= min}
+          className="border border-line disabled:opacity-40 disabled:pointer-events-none"
+        >
+          {MinusIcon}
+        </IconButton>
+        <span className="font-serif text-[26px] leading-none text-ink w-10 text-center tabular-nums">
+          {display ?? value}
+        </span>
+        <IconButton
+          label={`Increase ${label.toLowerCase()}`}
+          onClick={() => onChange(value + 1)}
+          className="border border-line"
+        >
+          {PlusIcon}
+        </IconButton>
+      </div>
+    </div>
   );
 }
 
@@ -64,17 +140,31 @@ export default function AdminAvailability() {
   const [newDate, setNewDate]     = useState("");
   const [newReason, setNewReason] = useState("");
   const [blocking, setBlocking]   = useState(false);
+  const [loading, setLoading]     = useState(true);
+  const [scheduleError, setScheduleError] = useState("");
+  const [blockedError, setBlockedError]   = useState("");
+  const [removeTarget, setRemoveTarget]   = useState<BlockedDate | null>(null);
+  const [removing, setRemoving]           = useState(false);
 
   const loadSchedule = useCallback(() => {
     fetch("/api/availability/settings")
-      .then((r) => r.json())
-      .then((data) => { if (Array.isArray(data)) setSchedule(data); });
+      .then(async (r) => {
+        const data = await r.json().catch(() => null);
+        if (!r.ok || !Array.isArray(data)) throw new Error(data?.error ?? "Could not load working hours.");
+        setSchedule(data);
+      })
+      .catch((e: Error) => setScheduleError(e.message || "Could not load working hours."))
+      .finally(() => setLoading(false));
   }, []);
 
   const loadBlocked = useCallback(() => {
     fetch("/api/availability/blocked")
-      .then((r) => r.json())
-      .then((data) => { if (Array.isArray(data)) setBlocked(data); });
+      .then(async (r) => {
+        const data = await r.json().catch(() => null);
+        if (!r.ok || !Array.isArray(data)) throw new Error(data?.error ?? "Could not load blocked dates.");
+        setBlocked(data);
+      })
+      .catch((e: Error) => setBlockedError(e.message || "Could not load blocked dates."));
   }, []);
 
   useEffect(() => { loadSchedule(); loadBlocked(); }, [loadSchedule, loadBlocked]);
@@ -85,7 +175,7 @@ export default function AdminAvailability() {
   const updateTime = (dow: number, field: "open_time" | "close_time", value: string) =>
     setSchedule((prev) => prev.map((d) => d.day_of_week === dow ? { ...d, [field]: value } : d));
 
-  // These are global settings — same for all days; read from first row
+  // These are global settings, the same for all days; read from first row
   const slotInterval = schedule[0]?.slot_interval_minutes ?? 60;
   const setSlotInterval = (mins: number) =>
     setSchedule((prev) => prev.map((d) => ({ ...d, slot_interval_minutes: mins })));
@@ -100,12 +190,15 @@ export default function AdminAvailability() {
 
   const saveSchedule = async () => {
     setSaving(true);
-    await fetch("/api/availability/settings", {
+    setScheduleError("");
+    const res = await fetch("/api/availability/settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(schedule),
-    });
+    }).catch(() => null);
+    const data = res ? await res.json().catch(() => ({})) : {};
     setSaving(false);
+    if (!res?.ok) { setScheduleError(data.error ?? "Could not save schedule. Please try again."); return; }
     setSaveOk(true);
     setTimeout(() => setSaveOk(false), 2500);
   };
@@ -113,20 +206,27 @@ export default function AdminAvailability() {
   const blockDate = async () => {
     if (!newDate) return;
     setBlocking(true);
-    await fetch("/api/availability/blocked", {
+    setBlockedError("");
+    const res = await fetch("/api/availability/blocked", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ date: newDate, reason: newReason || null }),
-    });
-    setNewDate(""); setNewReason(""); setBlocking(false); loadBlocked();
+    }).catch(() => null);
+    const data = res ? await res.json().catch(() => ({})) : {};
+    setBlocking(false);
+    if (!res?.ok) { setBlockedError(data.error ?? "Could not block date. Please try again."); return; }
+    setNewDate(""); setNewReason(""); loadBlocked();
   };
 
   const unblockDate = async (date: string) => {
-    await fetch("/api/availability/blocked", {
+    setBlockedError("");
+    const res = await fetch("/api/availability/blocked", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ date }),
-    });
+    }).catch(() => null);
+    const data = res ? await res.json().catch(() => ({})) : {};
+    if (!res?.ok) { setBlockedError(data.error ?? "Could not remove blocked date. Please try again."); return; }
     loadBlocked();
   };
 
@@ -134,193 +234,199 @@ export default function AdminAvailability() {
     (a, b) => DAY_ORDER.indexOf(a.day_of_week) - DAY_ORDER.indexOf(b.day_of_week)
   );
 
+  const formatDate = (date: string) =>
+    new Date(date + "T00:00:00Z").toLocaleDateString("en-GB", {
+      weekday: "short", day: "numeric", month: "long", year: "numeric", timeZone: "UTC",
+    });
+
+  const confirmRemove = async () => {
+    if (!removeTarget) return;
+    setRemoving(true);
+    await unblockDate(removeTarget.date);
+    setRemoving(false);
+    setRemoveTarget(null);
+  };
+
   return (
-    <div className="p-8 md:p-10 max-w-[900px]">
-      <div className="mb-8 fade-up">
-        <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-1">Admin</p>
-        <h1 className="font-serif text-[2.5rem] font-light text-ink leading-none">
-          Availability<span className="italic">.</span>
-        </h1>
-      </div>
+    <Page>
+      <PageHeader title="Schedule" subtitle="Opening hours and days off" />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 fade-up">
-        {/* Weekly schedule */}
-        <div className="bg-paper border border-ink/[0.07] p-6">
-          <div className="flex items-center justify-between mb-6">
-            <p className="font-sans text-[11px] tracking-widest uppercase text-ink font-medium">
-              Working Hours
-            </p>
-            {/* Slot interval toggle */}
-            <div className="flex items-center gap-1 border border-ink/15 p-0.5">
-              {([30, 60] as const).map((mins) => (
-                <button
-                  key={mins}
-                  onClick={() => setSlotInterval(mins)}
-                  className={`font-sans text-[9px] tracking-widest uppercase px-3 py-1.5 transition-all ${
-                    slotInterval === mins ? "bg-ink text-paper" : "text-ink/40 hover:text-ink"
-                  }`}
-                >
-                  {mins === 30 ? "30 min" : "1 hr"}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Capacity controls */}
-          <div className="flex flex-col gap-4 mb-6 pb-6 border-b border-ink/[0.05]">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="font-sans text-[11px] text-ink">Stations per slot</p>
-                <p className="font-sans text-[11px] text-ink/50 mt-0.5">Physical seats available at once, separate from each stylist's own daily capacity (set per stylist)</p>
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] gap-6 lg:gap-8 items-start fade-up">
+        {/* Opening hours */}
+        <section>
+          <SectionTitle italic="hours">Opening</SectionTitle>
+          <Card>
+            {loading ? (
+              <div className="flex flex-col gap-3">
+                {Array.from({ length: 7 }).map((_, i) => (
+                  <Skeleton key={i} className="h-12" />
+                ))}
               </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <button
-                  onClick={() => setMaxPerSlot(maxPerSlot - 1)}
-                  disabled={maxPerSlot <= 1}
-                  className="w-7 h-7 border border-ink/15 flex items-center justify-center font-sans text-[14px] text-ink hover:bg-ink/5 disabled:opacity-30 transition-colors"
-                >−</button>
-                <span className="font-sans text-[14px] text-ink w-6 text-center">{maxPerSlot}</span>
-                <button
-                  onClick={() => setMaxPerSlot(maxPerSlot + 1)}
-                  className="w-7 h-7 border border-ink/15 flex items-center justify-center font-sans text-[14px] text-ink hover:bg-ink/5 transition-colors"
-                >+</button>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="font-sans text-[11px] text-ink">Daily booking cap</p>
-                <p className="font-sans text-[11px] text-ink/50 mt-0.5">Max total bookings per day (0 = no limit)</p>
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <button
-                  onClick={() => setMaxPerDay(maxPerDay - 1)}
-                  disabled={maxPerDay <= 0}
-                  className="w-7 h-7 border border-ink/15 flex items-center justify-center font-sans text-[14px] text-ink hover:bg-ink/5 disabled:opacity-30 transition-colors"
-                >−</button>
-                <span className="font-sans text-[14px] text-ink w-6 text-center">{maxPerDay === 0 ? "∞" : maxPerDay}</span>
-                <button
-                  onClick={() => setMaxPerDay(maxPerDay + 1)}
-                  className="w-7 h-7 border border-ink/15 flex items-center justify-center font-sans text-[14px] text-ink hover:bg-ink/5 transition-colors"
-                >+</button>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col divide-y divide-ink/[0.05]">
-            {sortedSchedule.map((day) => (
-              <div key={day.day_of_week} className="py-3">
-                {/* Toggle + day name row */}
-                <div className="flex items-center gap-3">
-                  <Toggle checked={day.is_available} onChange={() => toggleDay(day.day_of_week)} />
-                  <span className={`font-sans text-[12px] flex-1 ${day.is_available ? "text-ink" : "text-ink/30"}`}>
-                    {DAY_NAMES[day.day_of_week]}
-                  </span>
-                  {!day.is_available && (
-                    <span className="font-sans text-[11px] text-ink/25 italic">Closed</span>
-                  )}
-                </div>
-
-                {/* Time selects on second line, indented under day name */}
-                {day.is_available && (
-                  <div className="flex items-center gap-2 mt-2 pl-0 md:pl-[52px]">
-                    <div className="flex-1 min-w-0">
-                      <TimeSelect
-                        value={day.open_time}
-                        onChange={(v) => updateTime(day.day_of_week, "open_time", v)}
+            ) : sortedSchedule.length === 0 ? (
+              <Empty title="No hours set" />
+            ) : (
+              <div className="flex flex-col divide-y divide-line -my-2">
+                {sortedSchedule.map((day) => (
+                  <div
+                    key={day.day_of_week}
+                    className="py-3.5 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 sm:min-h-[72px]"
+                  >
+                    <div className="flex items-center gap-4 sm:w-[170px] sm:flex-shrink-0 min-h-[44px]">
+                      <span className={`flex-1 font-sans text-[15px] ${day.is_available ? "text-ink" : "text-muted"}`}>
+                        {DAY_NAMES[day.day_of_week]}
+                      </span>
+                      {!day.is_available && (
+                        <span className="sm:hidden font-sans text-[14px] text-muted">Closed</span>
+                      )}
+                      <Toggle
+                        checked={day.is_available}
+                        onChange={() => toggleDay(day.day_of_week)}
+                        label={DAY_NAMES[day.day_of_week]}
                       />
                     </div>
-                    <span className="font-sans text-[10px] text-ink/30">–</span>
-                    <div className="flex-1 min-w-0">
-                      <TimeSelect
-                        value={day.close_time}
-                        onChange={(v) => updateTime(day.day_of_week, "close_time", v)}
-                      />
-                    </div>
+                    {day.is_available ? (
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <div className="flex-1 min-w-0">
+                          <TimeSelect
+                            label={`${DAY_NAMES[day.day_of_week]} opens`}
+                            value={day.open_time}
+                            onChange={(v) => updateTime(day.day_of_week, "open_time", v)}
+                          />
+                        </div>
+                        <span className="font-sans text-[13px] text-muted">to</span>
+                        <div className="flex-1 min-w-0">
+                          <TimeSelect
+                            label={`${DAY_NAMES[day.day_of_week]} closes`}
+                            value={day.close_time}
+                            onChange={(v) => updateTime(day.day_of_week, "close_time", v)}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="hidden sm:block font-sans text-[14px] text-muted">Closed</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <ErrorNote className="mt-6">{scheduleError}</ErrorNote>
+
+            <div className="mt-6 pt-5 border-t border-line flex items-center justify-end gap-4">
+              {saveOk && <span role="status" className="font-sans text-[13px] text-muted">Saved</span>}
+              <Button onClick={saveSchedule} disabled={saving || schedule.length === 0}>
+                {saving ? "Saving…" : "Save schedule"}
+              </Button>
+            </div>
+          </Card>
+        </section>
+
+        <div className="flex flex-col gap-6 lg:gap-8">
+          {/* Booking rules */}
+          <section>
+            <SectionTitle italic="rules">Booking</SectionTitle>
+            <Card>
+              <div className="flex items-center justify-between gap-4 pb-4">
+                <p className="font-sans text-[15px] text-ink">Slot length</p>
+                <Segmented
+                  options={[
+                    { value: "30", label: "30 min" },
+                    { value: "60", label: "1 hr" },
+                  ]}
+                  value={slotInterval === 30 ? "30" : "60"}
+                  onChange={(v) => setSlotInterval(Number(v))}
+                />
+              </div>
+              <div className="divide-y divide-line border-t border-line">
+                <Stepper
+                  label="Stations per slot"
+                  hint="Chairs in use at the same time"
+                  value={maxPerSlot}
+                  min={1}
+                  onChange={setMaxPerSlot}
+                />
+                <Stepper
+                  label="Daily booking cap"
+                  hint="Most bookings per day · 0 means no limit"
+                  value={maxPerDay}
+                  display={maxPerDay === 0 ? "∞" : undefined}
+                  min={0}
+                  onChange={setMaxPerDay}
+                />
+              </div>
+              <p className="pt-4 border-t border-line font-sans text-[13px] text-muted">
+                Saved with opening hours.
+              </p>
+            </Card>
+          </section>
+
+          {/* Days off */}
+          <section>
+            <SectionTitle italic="off">Days</SectionTitle>
+            <Card>
+              <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+                <Field label="Date" className="sm:w-[44%]">
+                  <input
+                    type="date"
+                    value={newDate}
+                    min={new Date().toISOString().slice(0, 10)}
+                    onChange={(e) => setNewDate(e.target.value)}
+                    className={inputClass}
+                  />
+                </Field>
+                <Field label="Reason (optional)" className="flex-1 min-w-0">
+                  <input
+                    type="text"
+                    value={newReason}
+                    onChange={(e) => setNewReason(e.target.value)}
+                    placeholder="Public holiday"
+                    className={inputClass}
+                  />
+                </Field>
+              </div>
+              <div className="mt-3 flex justify-end">
+                <Button onClick={blockDate} disabled={!newDate || blocking} className="w-full sm:w-auto">
+                  {blocking ? "Blocking…" : "Block date"}
+                </Button>
+              </div>
+
+              <ErrorNote className="mt-4">{blockedError}</ErrorNote>
+
+              <div className="mt-6 border-t border-line">
+                {blocked.length === 0 ? (
+                  <Empty title="No days off" />
+                ) : (
+                  <div className="flex flex-col divide-y divide-line">
+                    {[...blocked]
+                      .sort((a, b) => a.date.localeCompare(b.date))
+                      .map((b) => (
+                        <div key={b.id} className="flex items-center justify-between gap-4 py-4">
+                          <div className="min-w-0">
+                            <p className="font-serif text-[19px] leading-snug text-ink">{formatDate(b.date)}</p>
+                            {b.reason && <p className="font-sans text-[13px] text-muted mt-0.5 truncate">{b.reason}</p>}
+                          </div>
+                          <Button variant="ghost" size="sm" onClick={() => setRemoveTarget(b)} className="h-11 flex-shrink-0">
+                            Remove
+                          </Button>
+                        </div>
+                      ))}
                   </div>
                 )}
               </div>
-            ))}
-          </div>
-
-          <button
-            onClick={saveSchedule}
-            disabled={saving}
-            className="mt-6 w-full bg-ink text-paper font-sans text-[11px] tracking-widest uppercase py-3 hover:bg-ink/80 transition-colors disabled:opacity-50"
-          >
-            {saving ? "Saving…" : saveOk ? "Saved ✓" : "Save Schedule"}
-          </button>
-          <p className="font-sans text-[11px] text-ink/50 mt-3 text-center">
-            Interval and capacity settings apply to all days
-          </p>
-        </div>
-
-        {/* Blocked dates */}
-        <div className="bg-paper border border-ink/[0.07] p-6">
-          <p className="font-sans text-[11px] tracking-widest uppercase text-ink font-medium mb-6">
-            Blocked Dates
-          </p>
-
-          {/* Add date form */}
-          <div className="flex flex-col gap-3 mb-6 pb-6 border-b border-ink/[0.07]">
-            <div>
-              <label className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 block mb-1.5">Date</label>
-              <input
-                type="date"
-                value={newDate}
-                min={new Date().toISOString().slice(0, 10)}
-                onChange={(e) => setNewDate(e.target.value)}
-                className="w-full border border-ink/15 px-3 py-2 font-sans text-[12px] text-ink bg-transparent focus:outline-none focus:border-ink"
-              />
-            </div>
-            <div>
-              <label className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 block mb-1.5">Reason (optional)</label>
-              <input
-                type="text"
-                value={newReason}
-                onChange={(e) => setNewReason(e.target.value)}
-                placeholder="e.g. Public holiday"
-                className="w-full border border-ink/15 px-3 py-2 font-sans text-[12px] text-ink bg-transparent focus:outline-none focus:border-ink"
-              />
-            </div>
-            <button
-              onClick={blockDate}
-              disabled={!newDate || blocking}
-              className="bg-ink text-paper font-sans text-[11px] tracking-widest uppercase py-3 hover:bg-ink/80 transition-colors disabled:opacity-30"
-            >
-              {blocking ? "Blocking…" : "Block Date"}
-            </button>
-          </div>
-
-          {/* Blocked list */}
-          {blocked.length === 0 ? (
-            <p className="font-sans text-[13px] text-ink/50 italic">No dates blocked.</p>
-          ) : (
-            <div className="flex flex-col">
-              {[...blocked]
-                .sort((a, b) => a.date.localeCompare(b.date))
-                .map((b) => (
-                  <div key={b.id} className="flex items-center justify-between py-3 border-b border-ink/[0.05] last:border-0">
-                    <div>
-                      <p className="font-sans text-[12px] text-ink">
-                        {new Date(b.date + "T00:00:00").toLocaleDateString("en-GB", {
-                          weekday: "short", day: "numeric", month: "long", year: "numeric",
-                        })}
-                      </p>
-                      {b.reason && <p className="font-sans text-[11px] text-ink/50 mt-0.5">{b.reason}</p>}
-                    </div>
-                    <button
-                      onClick={() => unblockDate(b.date)}
-                      className="font-sans text-[10px] tracking-widest uppercase text-red-400 hover:text-red-600 transition-colors ml-4 flex-shrink-0"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-            </div>
-          )}
+            </Card>
+          </section>
         </div>
       </div>
-    </div>
+
+      <ConfirmDialog
+        open={!!removeTarget}
+        title="Remove day off?"
+        body={removeTarget ? `${formatDate(removeTarget.date)} will open for bookings again.` : undefined}
+        confirmLabel="Remove"
+        busy={removing}
+        onConfirm={confirmRemove}
+        onClose={() => { if (!removing) setRemoveTarget(null); }}
+      />
+    </Page>
   );
 }

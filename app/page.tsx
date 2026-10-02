@@ -6,6 +6,8 @@ import Collection from "@/components/home/Collection";
 import Statement from "@/components/home/Statement";
 import HowItWorks from "@/components/home/HowItWorks";
 
+export const revalidate = 60;
+
 export default function Home() {
   return (
     <main>

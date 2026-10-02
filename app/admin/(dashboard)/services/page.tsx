@@ -4,16 +4,34 @@ import { useEffect, useState } from "react";
 import type { DbService } from "@/lib/supabase/types";
 import ImageUpload from "@/components/admin/ImageUpload";
 import Toggle from "@/components/admin/Toggle";
+import {
+  Page,
+  PageHeader,
+  Card,
+  Button,
+  IconButton,
+  inputClass,
+  textareaClass,
+  Field,
+  ErrorNote,
+  Empty,
+  SkeletonRows,
+  Modal,
+  ConfirmDialog,
+  CloseIcon,
+} from "@/components/admin/ui";
 
 // ─── Form types ───────────────────────────────────────────────────────────────
 
-type BookOpt = { name: string; price: string; price_raw: string; note: string };
+type BookOpt = { id?: string; name: string; price: string; price_raw: string; note: string };
 
 type ServiceForm = {
   name: string;
   description: string;
   image_url: string;
   image_position: string;
+  // No longer editable in the form (it has no effect on the public site), but
+  // an existing service keeps its stored value on save.
   flip: boolean;
   is_active: boolean;
   booking_options: BookOpt[];
@@ -31,10 +49,12 @@ function dbToForm(svc: DbService): ServiceForm {
     name: svc.name,
     description: svc.description,
     image_url: svc.image_url,
-    image_position: svc.image_position,
+    // Anything we don't offer (or blank) falls back to center.
+    image_position: FOCUS_OPTIONS.some((o) => o.value === svc.image_position) ? svc.image_position : "object-center",
     flip: svc.flip,
     is_active: svc.is_active,
     booking_options: svc.booking_options.map((o) => ({
+      id: o.id,
       name: o.name,
       price: o.price,
       price_raw: String(o.price_raw ?? ""),
@@ -43,7 +63,23 @@ function dbToForm(svc: DbService): ServiceForm {
   };
 }
 
+// Option ids are what bookings reference, so an existing option keeps its id
+// even when renamed. Only new options get one, derived from the name.
+function optionIds(opts: BookOpt[]): string[] {
+  const used = new Set(opts.map((o) => o.id).filter(Boolean) as string[]);
+  return opts.map((o) => {
+    if (o.id) return o.id;
+    const base = o.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") || "option";
+    let id = base;
+    for (let n = 2; used.has(id); n++) id = `${base}-${n}`;
+    used.add(id);
+    return id;
+  });
+}
+
 function formToPayload(form: ServiceForm) {
+  const opts = form.booking_options.filter((o) => o.name.trim());
+  const ids = optionIds(opts);
   return {
     name: form.name,
     description: form.description,
@@ -51,10 +87,9 @@ function formToPayload(form: ServiceForm) {
     image_position: form.image_position,
     flip: form.flip,
     is_active: form.is_active,
-    booking_options: form.booking_options
-      .filter((o) => o.name.trim())
-      .map((o) => ({
-        id: o.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
+    booking_options: opts
+      .map((o, i) => ({
+        id: ids[i],
         name: o.name,
         price: o.price,
         price_raw: Number(o.price_raw) || 0,
@@ -62,6 +97,14 @@ function formToPayload(form: ServiceForm) {
       })),
   };
 }
+
+const FOCUS_OPTIONS = [
+  { value: "object-top", label: "Top" },
+  { value: "object-[50%_25%]", label: "Upper middle" },
+  { value: "object-center", label: "Center" },
+  { value: "object-[50%_75%]", label: "Lower middle" },
+  { value: "object-bottom", label: "Bottom" },
+];
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
@@ -74,12 +117,22 @@ export default function AdminServicesPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<DbService | null>(null);
+  const [deleteError, setDeleteError] = useState("");
+
+  const [listError, setListError] = useState("");
 
   const load = () => {
     setLoading(true);
     fetch("/api/admin/services")
-      .then((r) => r.json())
-      .then((data: DbService[]) => { setServices(data); setLoading(false); });
+      .then(async (r) => {
+        const data = await r.json().catch(() => null);
+        if (!r.ok || !Array.isArray(data)) throw new Error(data?.error ?? "Could not load services.");
+        setServices(data as DbService[]);
+        setListError("");
+      })
+      .catch((e: Error) => setListError(e.message || "Could not load services."))
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => { load(); }, []);
@@ -105,6 +158,11 @@ export default function AdminServicesPage() {
       setError("Name is required.");
       return;
     }
+    const unpriced = form.booking_options.find((o) => o.name.trim() && !(Number(o.price_raw) > 0));
+    if (unpriced) {
+      setError(`"${unpriced.name}" needs a deposit above ₵0.`);
+      return;
+    }
     setSaving(true);
     setError("");
 
@@ -117,221 +175,201 @@ export default function AdminServicesPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    const data = await res.json();
-    if (data.error) { setError(data.error); setSaving(false); return; }
+    const data = await res.json().catch(() => ({ error: "Could not save. Please try again." }));
+    if (!res.ok || data.error) { setError(data.error ?? "Could not save. Please try again."); setSaving(false); return; }
     setSaving(false);
     setModal(null);
     load();
   };
 
   const toggleActive = async (svc: DbService) => {
-    await fetch(`/api/admin/services/${svc.id}`, {
+    setListError("");
+    const res = await fetch(`/api/admin/services/${svc.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ is_active: !svc.is_active }),
-    });
+    }).catch(() => null);
+    const data = res ? await res.json().catch(() => ({})) : {};
+    if (!res?.ok) { setListError(data.error ?? "Could not update service. Please try again."); return; }
     load();
+  };
+
+  const askDelete = (svc: DbService) => {
+    setDeleteError("");
+    setConfirmDelete(svc);
   };
 
   const handleDelete = async (svc: DbService) => {
-    if (!confirm(`Delete "${svc.name}"? This cannot be undone.`)) return;
     setDeleting(svc.id);
-    await fetch(`/api/admin/services/${svc.id}`, { method: "DELETE" });
+    setDeleteError("");
+    setListError("");
+    const res = await fetch(`/api/admin/services/${svc.id}`, { method: "DELETE" }).catch(() => null);
+    const data = res ? await res.json().catch(() => ({})) : {};
     setDeleting(null);
+    if (!res?.ok) { setDeleteError(data.error ?? "Could not delete service. Please try again."); return; }
+    setConfirmDelete(null);
+    setModal(null);
     load();
   };
 
+  const liveCount = services.filter((s) => s.is_active).length;
+
   return (
-    <div className="p-8 md:p-10 max-w-[1000px]">
-      {/* Header */}
-      <div className="flex items-end justify-between mb-8 fade-up">
-        <div>
-          <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-1">Admin</p>
-          <h1 className="font-serif text-[2.5rem] font-light text-ink leading-none">
-            Services<span className="italic">.</span>
-          </h1>
-          <p className="font-sans text-[13px] text-ink/55 mt-2">
-            {loading ? "Loading…" : `${services.length} services · ${services.filter((s) => s.is_active).length} live`}
-          </p>
-        </div>
-        <button
-          onClick={openAdd}
-          className="bg-ink text-paper font-sans text-[11px] tracking-widest uppercase px-6 py-3 hover:bg-ink/80 transition-colors"
-        >
-          + Add Service
-        </button>
-      </div>
+    <Page>
+      <PageHeader
+        title="Services"
+        subtitle={loading ? undefined : `${services.length} ${services.length === 1 ? "service" : "services"} · ${liveCount} live`}
+        actions={<Button onClick={openAdd}>Add service</Button>}
+      />
 
-      {/* Services list */}
+      <ErrorNote className="mb-4">{listError}</ErrorNote>
+
       {loading ? (
-        <div className="font-sans text-[12px] text-ink/40">Loading…</div>
+        <SkeletonRows rows={5} />
+      ) : services.length === 0 ? (
+        listError ? null : <Card><Empty title="No services yet" /></Card>
       ) : (
-        <div className="bg-paper border border-ink/[0.07] divide-y divide-ink/[0.05] fade-up">
-          {services.length === 0 && (
-            <div className="px-6 py-12 text-center font-sans text-[13px] text-ink/50">
-              No services yet. Add your first one.
-            </div>
-          )}
-          {services.map((svc) => (
-            <div key={svc.id}>
-            <div className="group hidden md:flex items-center gap-4 px-6 py-4 hover:bg-mist/40 transition-colors">
-              {svc.image_url
-                // eslint-disable-next-line @next/next/no-img-element
-                ? <div className="w-10 h-10 flex-shrink-0 overflow-hidden bg-mist"><img src={svc.image_url} alt={svc.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" /></div>
-                : <div className="w-10 h-10 bg-mist flex-shrink-0" />
-              }
-              <span className="font-sans text-[10px] tracking-widest text-ink/30 flex-shrink-0 w-8">{svc.number}</span>
-              <div className="flex-1 min-w-0">
-                <p className="font-sans text-[13px] text-ink font-medium truncate">{svc.name}</p>
-                <p className="font-sans text-[12px] text-ink/55 truncate">{svc.description}</p>
-              </div>
-              <div className="flex items-center gap-3 flex-shrink-0">
-                <Toggle checked={svc.is_active} onChange={() => toggleActive(svc)} color="emerald" />
-                <span className={`font-sans text-[10px] tracking-widest uppercase w-14 text-right ${svc.is_active ? "text-emerald-600" : "text-ink/30"}`}>
-                  {svc.is_active ? "Live" : "Hidden"}
-                </span>
-                <button
-                  onClick={() => openEdit(svc)}
-                  className="font-sans text-[11px] tracking-widest uppercase text-ink/50 hover:text-ink border border-ink/15 px-4 py-2 transition-colors"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(svc)}
-                  disabled={deleting === svc.id}
-                  className="font-sans text-[11px] tracking-widest uppercase text-red-400 hover:text-red-600 border border-red-200 px-4 py-2 transition-colors disabled:opacity-40"
-                >
-                  {deleting === svc.id ? "…" : "Delete"}
-                </button>
-              </div>
-            </div>
-
-            {/* Mobile row */}
-            <div className="flex md:hidden flex-col gap-3 px-4 py-4">
-              <div className="flex items-center gap-3">
-                {svc.image_url
-                  // eslint-disable-next-line @next/next/no-img-element
-                  ? <img src={svc.image_url} alt={svc.name} className="w-10 h-10 object-cover flex-shrink-0 bg-mist" />
-                  : <div className="w-10 h-10 bg-mist flex-shrink-0" />
-                }
-                <div className="flex-1 min-w-0">
-                  <p className="font-sans text-[13px] text-ink font-medium truncate">
-                    <span className="text-ink/30 mr-1">{svc.number}</span>{svc.name}
-                  </p>
-                  <p className="font-sans text-[12px] text-ink/55 truncate">{svc.description}</p>
-                </div>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Toggle checked={svc.is_active} onChange={() => toggleActive(svc)} color="emerald" />
-                  <span className={`font-sans text-[10px] tracking-widest uppercase ${svc.is_active ? "text-emerald-600" : "text-ink/30"}`}>
-                    {svc.is_active ? "Live" : "Hidden"}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
+        <Card padded={false} className="fade-up">
+          <ul className="divide-y divide-line">
+            {services.map((svc) => {
+              const optCount = svc.booking_options.length;
+              const optLabel = `${optCount} ${optCount === 1 ? "option" : "options"}`;
+              return (
+                <li key={svc.id} className="flex items-center gap-3 md:gap-5 px-4 md:px-6 py-3.5">
                   <button
+                    type="button"
                     onClick={() => openEdit(svc)}
-                    className="font-sans text-[10px] tracking-widest uppercase text-ink/50 hover:text-ink border border-ink/15 px-3 py-1.5 transition-colors"
+                    className="group flex flex-1 min-w-0 items-center gap-4 text-left"
                   >
+                    <div className="w-14 h-14 flex-shrink-0 overflow-hidden rounded-[14px] bg-soft">
+                      {svc.image_url && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={svc.image_url}
+                          alt=""
+                          className={`w-full h-full object-cover ${svc.image_position} transition-transform duration-300 group-hover:scale-105`}
+                        />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-sans text-[15px] font-medium text-ink truncate">{svc.name}</p>
+                      <p className="font-sans text-[13px] text-muted truncate">
+                        <span className="md:hidden">{optLabel}{svc.description ? " · " : ""}</span>
+                        {svc.description}
+                      </p>
+                    </div>
+                  </button>
+                  <span className="hidden md:block flex-shrink-0 font-sans text-[13px] text-muted w-20 text-right">
+                    {optLabel}
+                  </span>
+                  <label className="flex-shrink-0 flex items-center gap-2.5 h-11 px-1 cursor-pointer">
+                    <span className="hidden md:inline font-sans text-[13px] text-muted w-12 text-right">
+                      {svc.is_active ? "Live" : "Hidden"}
+                    </span>
+                    <Toggle
+                      checked={svc.is_active}
+                      onChange={() => toggleActive(svc)}
+                      label={`${svc.name} visible on site`}
+                    />
+                  </label>
+                  <Button variant="secondary" onClick={() => openEdit(svc)} className="hidden sm:inline-flex">
                     Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(svc)}
-                    disabled={deleting === svc.id}
-                    className="font-sans text-[10px] tracking-widest uppercase text-red-400 hover:text-red-600 border border-red-200 px-3 py-1.5 transition-colors disabled:opacity-40"
-                  >
-                    {deleting === svc.id ? "…" : "Delete"}
-                  </button>
-                </div>
-              </div>
-            </div>
-            </div>
-          ))}
-        </div>
+                  </Button>
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
       )}
 
-      {/* Add / Edit Modal */}
-      {modal && (
-        <div className="fixed inset-0 z-50 bg-ink/60 flex items-start justify-center p-4 sm:p-6 overflow-y-auto">
-          <div className="bg-paper w-full max-w-[780px] my-8 p-5 sm:p-8 relative">
-            <button
-              onClick={() => setModal(null)}
-              className="absolute top-5 right-5 font-sans text-[20px] text-ink/40 hover:text-ink leading-none"
-            >
-              ×
-            </button>
-            <h2 className="font-serif text-[1.75rem] font-light text-ink mb-6">
-              {modal === "add" ? "Add Service" : `Edit ${editing?.name}`}
-            </h2>
-
-            <div className="flex flex-col gap-6">
-
-              {/* ── Basic Info ── */}
-              <FormSection label="Basic Info">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <SField label="Service Name *" value={form.name} onChange={(v) => patchForm({ name: v })} />
-                  <SToggle label="Visibility" onLabel="Live" offLabel="Hidden" value={form.is_active} onChange={(v) => patchForm({ is_active: v })} color="emerald" />
-                </div>
-                <STextArea label="Description" value={form.description} onChange={(v) => patchForm({ description: v })} rows={3} />
-              </FormSection>
-
-              {/* ── Image ── */}
-              <FormSection label="Image">
-                <ImageUpload value={form.image_url} onChange={(url) => patchForm({ image_url: url })} folder="services" />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
-                  <div>
-                    <label className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 block mb-2">Focus Point</label>
-                    <select
-                      value={form.image_position}
-                      onChange={(e) => patchForm({ image_position: e.target.value })}
-                      className="w-full border border-ink/15 px-3 py-2.5 font-sans text-[13px] text-ink bg-transparent focus:outline-none focus:border-ink"
-                    >
-                      <option value="object-top">Top</option>
-                      <option value="object-center">Center</option>
-                      <option value="object-bottom">Bottom</option>
-                    </select>
-                  </div>
-                  <SToggle label="Layout" onLabel="Image on right" offLabel="Image on left" value={form.flip} onChange={(v) => patchForm({ flip: v })} />
-                </div>
-              </FormSection>
-
-              {/* ── Booking Options ── */}
-              <FormSection
-                label="Booking Options"
-                hint="What clients select when booking. Deposit is charged online to secure the slot."
-              >
-                <BookingOptionsBuilder
-                  options={form.booking_options}
-                  onChange={(opts) => patchForm({ booking_options: opts })}
-                />
-              </FormSection>
-
-              {error && <p className="font-sans text-[12px] text-red-500">{error}</p>}
-
-              <div className="flex gap-3 pt-2">
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="flex-1 bg-ink text-paper font-sans text-[11px] tracking-widest uppercase py-4 hover:bg-ink/80 transition-colors disabled:opacity-50"
-                >
-                  {saving ? "Saving…" : modal === "add" ? "Create Service" : "Save Changes"}
-                </button>
-                <button
-                  onClick={() => setModal(null)}
-                  className="border border-ink/20 text-ink font-sans text-[11px] tracking-widest uppercase px-8 hover:bg-ink/5 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
+      {/* Add / edit */}
+      <Modal
+        open={modal !== null && confirmDelete === null}
+        onClose={() => setModal(null)}
+        title={modal === "add" ? "New service" : editing?.name ?? "Edit service"}
+        size="lg"
+        footer={
+          <>
+            <ErrorNote className="w-full">{error}</ErrorNote>
+            {modal === "edit" && editing && (
+              <Button variant="ghost" onClick={() => askDelete(editing)} className="mr-auto -ml-3">
+                Delete
+              </Button>
+            )}
+            <Button variant="ghost" onClick={() => setModal(null)}>Cancel</Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? "Saving…" : modal === "add" ? "Create service" : "Save changes"}
+            </Button>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-4">
+            <Field label="Name">
+              <input
+                value={form.name}
+                onChange={(e) => patchForm({ name: e.target.value })}
+                className={inputClass}
+              />
+            </Field>
+            <Field label="Description">
+              <textarea
+                value={form.description}
+                onChange={(e) => patchForm({ description: e.target.value })}
+                rows={3}
+                className={textareaClass}
+              />
+            </Field>
           </div>
+
+          <FormSection title="Image">
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_190px] gap-4 sm:items-start">
+              <ImageUpload value={form.image_url} onChange={(url) => patchForm({ image_url: url })} folder="services" positionClass={form.image_position || "object-center"} />
+              <Field label="Focus point">
+                <span className="relative block">
+                  <select
+                    value={form.image_position}
+                    onChange={(e) => patchForm({ image_position: e.target.value })}
+                    className={`${inputClass} appearance-none cursor-pointer pr-10`}
+                  >
+                    {FOCUS_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted">
+                    <path d="M3 4.5l3 3 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
+              </Field>
+            </div>
+          </FormSection>
+
+          <FormSection title="Booking options">
+            <BookingOptionsBuilder
+              options={form.booking_options}
+              onChange={(opts) => patchForm({ booking_options: opts })}
+            />
+          </FormSection>
         </div>
-      )}
-    </div>
+      </Modal>
+
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        title="Delete service?"
+        body={confirmDelete ? `${confirmDelete.name} will be removed. This cannot be undone.` : undefined}
+        confirmLabel="Delete"
+        busy={!!confirmDelete && deleting === confirmDelete.id}
+        error={deleteError}
+        onConfirm={() => confirmDelete && handleDelete(confirmDelete)}
+        onClose={() => setConfirmDelete(null)}
+      />
+    </Page>
   );
 }
 
 // ─── Booking Options Builder ──────────────────────────────────────────────────
+
+const OPT_GRID = "sm:grid sm:grid-cols-[minmax(0,1fr)_150px_120px_44px] sm:gap-2 sm:items-center";
 
 function BookingOptionsBuilder({
   options,
@@ -342,138 +380,117 @@ function BookingOptionsBuilder({
 }) {
   const update = (i: number, field: keyof BookOpt, val: string) =>
     onChange(options.map((o, idx) => (idx === i ? { ...o, [field]: val } : o)));
+  const remove = (i: number) => {
+    setEditingNote(null);
+    onChange(options.filter((_, idx) => idx !== i));
+  };
+  // The note shows as small text with a pencil until tapped. Inputs stay at
+  // 16px (so iOS doesn't zoom), so the field only appears while editing.
+  const [editingNote, setEditingNote] = useState<number | null>(null);
 
   return (
-    <div className="flex flex-col gap-2">
-      {options.length === 0 && (
-        <p className="font-sans text-[12px] text-ink/50 py-1">No options yet. Add at least one for clients to select.</p>
-      )}
-      {/* Column headers - desktop only */}
-      {options.length > 0 && (
-        <div className="hidden sm:flex gap-2 items-center">
-          <span className="w-44 flex-shrink-0 font-sans text-[9px] tracking-widest uppercase text-ink/30">Option Name</span>
-          <span className="w-28 flex-shrink-0 font-sans text-[9px] tracking-widest uppercase text-ink/30">Price (display)</span>
-          <span className="w-24 flex-shrink-0 font-sans text-[9px] tracking-widest uppercase text-ink/30">Deposit ₵</span>
-          <span className="flex-1 font-sans text-[9px] tracking-widest uppercase text-ink/30">Note (optional)</span>
-          <span className="w-8" />
-        </div>
-      )}
-      {options.map((opt, i) => (
-        <div key={i} className="border border-ink/10 sm:border-0 p-3 sm:p-0 flex flex-col sm:flex-row gap-2 sm:items-center">
-          <div className="sm:hidden flex items-center justify-between mb-1">
-            <span className="font-sans text-[9px] tracking-widest uppercase text-ink/30">Option {i + 1}</span>
-            <button
-              onClick={() => onChange(options.filter((_, idx) => idx !== i))}
-              className="text-ink/25 hover:text-red-400 text-[16px] leading-none"
-            >
-              ×
-            </button>
-          </div>
-          <input
-            value={opt.name}
-            onChange={(e) => update(i, "name", e.target.value)}
-            placeholder="e.g. Full Wig Installation"
-            className="w-full sm:w-44 flex-shrink-0 border border-ink/15 px-3 py-2 font-sans text-[12px] text-ink focus:outline-none focus:border-ink bg-transparent"
-          />
-          <input
-            value={opt.price}
-            onChange={(e) => update(i, "price", e.target.value)}
-            placeholder="₵300"
-            className="w-full sm:w-28 flex-shrink-0 border border-ink/15 px-3 py-2 font-sans text-[12px] text-ink focus:outline-none focus:border-ink bg-transparent"
-          />
-          <input
-            type="number"
-            value={opt.price_raw}
-            onChange={(e) => update(i, "price_raw", e.target.value)}
-            placeholder="300"
-            className="w-full sm:w-24 flex-shrink-0 border border-ink/15 px-3 py-2 font-sans text-[12px] text-ink focus:outline-none focus:border-ink bg-transparent"
-          />
-          <input
-            value={opt.note}
-            onChange={(e) => update(i, "note", e.target.value)}
-            placeholder="e.g. Includes bleaching & plucking"
-            className="w-full sm:flex-1 border border-ink/15 px-3 py-2 font-sans text-[12px] text-ink/60 focus:outline-none focus:border-ink bg-transparent"
-          />
-          <button
-            onClick={() => onChange(options.filter((_, idx) => idx !== i))}
-            className="hidden sm:block text-ink/25 hover:text-red-400 text-[18px] w-8 flex-shrink-0 transition-colors leading-none"
-          >
-            ×
-          </button>
-        </div>
-      ))}
-      <p className="font-sans text-[10px] text-ink/45 mt-1">
-        Deposit is charged online now; Price is what clients see (e.g. ₵250 – ₵450).
+    <div className="flex flex-col gap-4">
+      <p className="font-sans text-[13px] text-muted">
+        Clients see the &ldquo;Shown as&rdquo; price. The deposit is charged online to hold the slot.
       </p>
-      <button
-        onClick={() => onChange([...options, { ...EMPTY_OPT }])}
-        className="self-start font-sans text-[10px] tracking-widest uppercase text-ink/40 hover:text-ink border border-ink/15 px-4 py-2 transition-colors mt-1"
-      >
-        + Add Option
-      </button>
+
+      {options.length === 0 && (
+        <p className="font-sans text-[14px] text-graphite">No options yet.</p>
+      )}
+
+      {options.length > 0 && (
+        <div className={`hidden ${OPT_GRID} font-sans text-[12px] text-muted px-1`}>
+          <span>Option</span>
+          <span>Shown as</span>
+          <span>Deposit (₵)</span>
+          <span />
+        </div>
+      )}
+
+      {options.length > 0 && (
+        <ul className="flex flex-col divide-y divide-line sm:divide-y-0 sm:gap-4">
+          {options.map((opt, i) => (
+            <li key={i} className="py-4 first:pt-0 sm:py-0 flex flex-col gap-2">
+              <div className="flex items-center justify-between sm:hidden">
+                <span className="font-sans text-[13px] text-graphite">Option {i + 1}</span>
+                <IconButton label="Remove option" onClick={() => remove(i)} className="-mr-3">{CloseIcon}</IconButton>
+              </div>
+              <div className={`flex flex-col gap-2 ${OPT_GRID}`}>
+                <input
+                  value={opt.name}
+                  onChange={(e) => update(i, "name", e.target.value)}
+                  placeholder="e.g. Full wig installation"
+                  aria-label="Option name"
+                  className={inputClass}
+                />
+                <div className="grid grid-cols-2 gap-2 sm:contents">
+                  <input
+                    value={opt.price}
+                    onChange={(e) => update(i, "price", e.target.value)}
+                    placeholder="Shown as, ₵300"
+                    aria-label="Shown as"
+                    className={inputClass}
+                  />
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    value={opt.price_raw}
+                    onChange={(e) => update(i, "price_raw", e.target.value)}
+                    placeholder="Deposit, 300"
+                    aria-label="Deposit (₵)"
+                    className={inputClass}
+                  />
+                </div>
+                <IconButton label="Remove option" onClick={() => remove(i)} className="hidden sm:inline-flex">
+                  {CloseIcon}
+                </IconButton>
+              </div>
+              {editingNote === i ? (
+                <input
+                  autoFocus
+                  value={opt.note}
+                  onChange={(e) => update(i, "note", e.target.value)}
+                  onBlur={() => setEditingNote(null)}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === "Escape") { e.preventDefault(); setEditingNote(null); } }}
+                  placeholder="Short note clients see"
+                  aria-label="Note"
+                  maxLength={80}
+                  className={`${inputClass} h-10 sm:w-[calc(100%-52px)]`}
+                />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setEditingNote(i)}
+                  className="group w-full sm:w-[calc(100%-52px)] min-h-[40px] flex items-center gap-2 px-1 text-left font-sans text-[12px] text-muted hover:text-ink transition-colors"
+                >
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="flex-shrink-0">
+                    <path d="M10.5 2.5l3 3L6 13H3v-3l7.5-7.5z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+                  </svg>
+                  <span className={`truncate ${opt.note ? "" : "underline decoration-dotted underline-offset-4"}`}>
+                    {opt.note || "Add a note"}
+                  </span>
+                  {opt.note && <span className="ml-auto flex-shrink-0 text-[12px] text-muted/80 group-hover:text-ink">Edit</span>}
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <Button variant="secondary" onClick={() => onChange([...options, { ...EMPTY_OPT }])} className="self-start">
+        Add option
+      </Button>
     </div>
   );
 }
 
 // ─── Shared sub-components ────────────────────────────────────────────────────
 
-function FormSection({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+function FormSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div>
-      <div className="flex items-baseline gap-3 mb-3">
-        <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/50 flex-shrink-0">{label}</p>
-        {hint && <p className="font-sans text-[11px] text-ink/45 leading-snug">{hint}</p>}
-        <div className="h-px flex-1 bg-ink/8" />
-      </div>
-      <div className="flex flex-col gap-3">{children}</div>
-    </div>
-  );
-}
-
-function SToggle({
-  label, onLabel, offLabel, value, onChange, color = "ink",
-}: {
-  label: string; onLabel: string; offLabel: string; value: boolean; onChange: (v: boolean) => void; color?: "ink" | "emerald";
-}) {
-  return (
-    <div className="flex flex-col gap-2 justify-end">
-      <label className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40">{label}</label>
-      <div className="flex items-center gap-3">
-        <Toggle checked={value} onChange={onChange} color={color === "emerald" ? "emerald" : "ink"} />
-        <span className="font-sans text-[11px] text-ink/50">{value ? onLabel : offLabel}</span>
-      </div>
-    </div>
-  );
-}
-
-function SField({ label, value, onChange, type = "text" }: {
-  label: string; value: string; onChange: (v: string) => void; type?: string;
-}) {
-  return (
-    <div>
-      <label className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 block mb-2">{label}</label>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full border border-ink/15 px-3 py-2.5 font-sans text-[13px] text-ink focus:outline-none focus:border-ink transition-colors bg-transparent"
-      />
-    </div>
-  );
-}
-
-function STextArea({ label, value, onChange, rows = 3 }: {
-  label: string; value: string; onChange: (v: string) => void; rows?: number;
-}) {
-  return (
-    <div>
-      <label className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 block mb-2">{label}</label>
-      <textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        rows={rows}
-        className="w-full border border-ink/15 px-3 py-2.5 font-sans text-[13px] text-ink focus:outline-none focus:border-ink transition-colors resize-y bg-transparent"
-      />
-    </div>
+    <section className="border-t border-line pt-6">
+      <h4 className="font-serif text-[22px] font-normal text-ink leading-tight mb-4">{title}</h4>
+      {children}
+    </section>
   );
 }

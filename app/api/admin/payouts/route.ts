@@ -1,37 +1,47 @@
 import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/supabase/admin'
-import { createClient } from '@/lib/supabase/server'
 import { getResend, FROM_ADMIN } from '@/lib/resend'
+import { getAdmin as requireAdmin, isOperatorEmail as isOperator } from '@/lib/admin-auth'
+import { autoCompletePastBookings } from '@/lib/bookings-maintenance'
 import { payoutRequestedAlertHtml } from '@/emails/payout-requested-alert'
-
-async function requireAdmin() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  return user
-}
 
 function operatorEmails() {
   return (process.env.OPERATOR_EMAILS ?? '')
     .split(',').map((e) => e.trim().toLowerCase()).filter(Boolean)
 }
 
-function isOperator(email: string | null | undefined) {
-  return !!email && operatorEmails().includes(email.toLowerCase())
-}
-
 // Earned balance is derived, not stored: completed+paid bookings (minus the
-// 5% service_charge, which is our platform fee, not essakobea's) plus
-// delivered+paid orders (no platform fee carved out of these yet), minus
-// payouts already paid or still in flight (pending/approved) so the same
-// money can't be requested twice.
+// 5% service_charge, which is our platform fee, not essakobea's), plus the
+// part of cancelled bookings' payments that wasn't refunded (forfeited
+// deposits, same proportional fee carved out), plus delivered+paid orders
+// (no platform fee carved out of these yet), minus payouts already paid or
+// still in flight (pending/approved) so the same money can't be requested twice.
+//
+// Throws if any query fails: a missing table read must never be treated as
+// zero, or the available balance would be overstated.
 async function computeBalance() {
-  const [{ data: bookings }, { data: orders }, { data: payouts }] = await Promise.all([
+  await autoCompletePastBookings()
+
+  const [bookingsRes, cancelledRes, ordersRes, payoutsRes] = await Promise.all([
     adminDb.from('bookings').select('amount, service_charge').eq('status', 'completed').eq('payment_status', 'paid'),
+    adminDb.from('bookings').select('amount, service_charge, refund_amount').eq('status', 'cancelled').in('payment_status', ['paid', 'refunded']),
     adminDb.from('orders').select('total').eq('status', 'delivered').eq('payment_status', 'paid'),
     adminDb.from('payouts').select('requested_amount, status').in('status', ['pending', 'approved', 'paid']),
   ])
+  const failed = [bookingsRes, cancelledRes, ordersRes, payoutsRes].find((r) => r.error)
+  if (failed) throw failed.error
 
-  const bookingsNetPesewas = (bookings ?? []).reduce((sum, b) => sum + (b.amount - b.service_charge), 0)
+  const bookings = bookingsRes.data
+  const orders   = ordersRes.data
+  const payouts  = payoutsRes.data
+
+  const completedNetPesewas = (bookings ?? []).reduce((sum, b) => sum + (b.amount - b.service_charge), 0)
+  const forfeitedNetPesewas = (cancelledRes.data ?? []).reduce((sum, b) => {
+    const kept = Math.max(0, b.amount - (b.refund_amount ?? 0))
+    if (kept === 0 || b.amount <= 0) return sum
+    return sum + kept - Math.round(b.service_charge * (kept / b.amount))
+  }, 0)
+  const bookingsNetPesewas = completedNetPesewas + forfeitedNetPesewas
   const ordersNetPesewas   = (orders ?? []).reduce((sum, o) => sum + o.total, 0)
   const earnedPesewas      = bookingsNetPesewas + ordersNetPesewas
 
@@ -50,8 +60,15 @@ export async function GET() {
   const user = await requireAdmin()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const [balance, { data: account }, { data: payouts, error }] = await Promise.all([
-    computeBalance(),
+  let balance: Awaited<ReturnType<typeof computeBalance>>
+  try {
+    balance = await computeBalance()
+  } catch (err) {
+    console.error(err)
+    return NextResponse.json({ error: 'Failed to calculate balance' }, { status: 500 })
+  }
+
+  const [{ data: account }, { data: payouts, error }] = await Promise.all([
     adminDb.from('payout_account').select('*').maybeSingle(),
     adminDb.from('payouts').select('*').order('created_at', { ascending: false }),
   ])
@@ -83,7 +100,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Add a withdrawal account before requesting a payout' }, { status: 400 })
   }
 
-  const { availableGHS } = await computeBalance()
+  let availableGHS: number
+  try {
+    ({ availableGHS } = await computeBalance())
+  } catch (err) {
+    console.error(err)
+    return NextResponse.json({ error: 'Failed to calculate balance' }, { status: 500 })
+  }
   if (requestedAmountGHS > availableGHS) {
     return NextResponse.json(
       { error: `Requested amount exceeds available balance (GHS ${availableGHS.toFixed(2)})` },
@@ -112,6 +135,17 @@ export async function POST(req: Request) {
   if (error) {
     console.error(error)
     return NextResponse.json({ error: 'Failed to create payout request' }, { status: 500 })
+  }
+
+  // Two requests submitted at the same moment can both pass the check above.
+  // Re-check now that ours is counted, and withdraw it if we overdrew.
+  const after = await computeBalance().catch(() => null)
+  if (!after || after.availableGHS < -0.005) {
+    await adminDb.from('payouts').delete().eq('id', data.id)
+    return NextResponse.json(
+      { error: 'Requested amount exceeds available balance. Please refresh and try again.' },
+      { status: 409 },
+    )
   }
 
   // Never let a delivery failure here break the requester's already-created request.

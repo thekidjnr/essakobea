@@ -1,21 +1,18 @@
 import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/supabase/admin'
-import { createClient } from '@/lib/supabase/server'
+import { getAdmin as requireAdmin } from '@/lib/admin-auth'
+import { validateBookingOptions, pickServiceFields } from '@/lib/service-options'
 
 export const dynamic = 'force-dynamic'
-
-async function requireAdmin() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  return user
-}
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireAdmin()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
-  const body = await req.json()
+  const body = pickServiceFields(await req.json())
+  const invalid = validateBookingOptions(body.booking_options)
+  if (invalid) return NextResponse.json({ error: invalid }, { status: 400 })
 
   const { data, error } = await adminDb
     .from('services')

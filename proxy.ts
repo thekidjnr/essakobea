@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
+import { isAdminEmail } from '@/lib/admin-emails'
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -29,7 +30,8 @@ export async function proxy(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user) {
+  if (!user || !isAdminEmail(user.email)) {
+    if (user) await supabase.auth.signOut()
     const loginUrl = new URL('/admin/login', request.url)
     loginUrl.searchParams.set('next', pathname)
     return NextResponse.redirect(loginUrl)

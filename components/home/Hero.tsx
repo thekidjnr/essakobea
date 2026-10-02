@@ -33,20 +33,20 @@ export default function Hero() {
       </div>
 
       {/* Dark overlay — subtle gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-ink/60 via-ink/30 to-ink/70" />
+      <div className="absolute inset-0 bg-gradient-to-b from-ink/60 via-ink/45 to-ink/70" />
 
       {/* Content */}
       <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-6 md:px-16 max-w-[1400px] mx-auto">
-        {/* Eyebrow */}
-        <p className="fade-up fade-up-delay-1 font-sans text-[10px] md:text-[11px] tracking-widest2 uppercase text-paper/60 mb-6">
-          Premium Beauty Salon
-        </p>
-
         {/* Headline */}
         <h1 className="fade-up fade-up-delay-2 font-serif text-[clamp(3rem,8vw,7.5rem)] leading-[0.9] text-paper font-light">
           Welcome to{" "}
           <span className="italic">Essakobea</span>
         </h1>
+
+        {/* Subtext */}
+        <p className="fade-up fade-up-delay-3 font-serif italic font-normal text-[1.25rem] md:text-[1.6rem] text-paper mt-6 [text-shadow:0_2px_16px_rgba(0,0,0,0.6)]">
+          Ready to become an Esk Babe?
+        </p>
 
         {/* CTAs */}
         <div className="fade-up fade-up-delay-4 flex flex-col sm:flex-row gap-3 mt-10">

@@ -1,13 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant, Inter } from "next/font/google";
+import { Cormorant, Manrope } from "next/font/google";
 import "./globals.css";
 import { BagProvider } from "@/contexts/BagContext";
 import TopLoader from "@/components/admin/TopLoader";
 
-const inter = Inter({
-  variable: "--font-inter",
+const manrope = Manrope({
+  variable: "--font-sans",
   subsets: ["latin"],
-  weight: ["300", "400", "500"],
+  weight: ["300", "400", "500", "600"],
 });
 
 const cormorant = Cormorant({
@@ -47,7 +47,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${cormorant.variable}`}>
+    <html lang="en" className={`${manrope.variable} ${cormorant.variable}`}>
       <body className="antialiased">
         <TopLoader />
         <BagProvider>{children}</BagProvider>

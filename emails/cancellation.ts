@@ -1,3 +1,6 @@
+const esc = (v: string) =>
+  v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+
 export function cancellationHtml(opts: {
   clientName:  string
   serviceName: string
@@ -5,13 +8,23 @@ export function cancellationHtml(opts: {
   bookingDate: string
   timeSlot:    string
   reason?:     string
-  hoursNotice: number
+  cancelledBy: 'client' | 'salon'
+  paid:        boolean
+  refundShare: number   // 0, 0.5 or 1 of what they paid
 }): string {
-  const refundNote = opts.hoursNotice >= 24
-    ? 'If you paid a deposit, we&rsquo;ll process your refund within 3–5 business days.'
-    : opts.hoursNotice >= 0
-    ? 'As this cancellation is within a few hours of your appointment, 50% of your payment is forfeited. We&rsquo;ll refund the remaining 50% within 3–5 business days.'
-    : 'As this cancellation was made without prior notice, the full payment is non-refundable.'
+  const refundNote = !opts.paid
+    ? 'No payment was taken for this booking.'
+    : opts.cancelledBy === 'salon'
+    ? 'We&rsquo;re sorry for the inconvenience. We&rsquo;ll refund your payment in full within 3 to 5 business days.'
+    : opts.refundShare >= 1
+    ? 'We&rsquo;ll refund your payment in full within 3 to 5 business days.'
+    : opts.refundShare > 0
+    ? 'As this cancellation is within 24 hours of your appointment, 50% of your payment is forfeited. We&rsquo;ll refund the remaining 50% within 3 to 5 business days.'
+    : 'As this cancellation was made after your appointment time, the payment is non-refundable.'
+
+  const sub = opts.cancelledBy === 'salon'
+    ? 'We&rsquo;ve had to cancel your booking.'
+    : 'Your booking has been cancelled as requested.'
 
   return `<!DOCTYPE html>
 <html>
@@ -30,14 +43,14 @@ export function cancellationHtml(opts: {
 <body>
 <div class="card">
   <p class="brand">Essakobea</p>
-  <h1>Appointment <em>cancelled,</em><br>${opts.clientName}.</h1>
-  <p class="sub">Your booking has been cancelled as requested.</p>
+  <h1>Appointment <em>cancelled,</em><br>${esc(opts.clientName)}.</h1>
+  <p class="sub">${sub}</p>
 
   <div class="row"><span class="label">Service</span><span class="value">${opts.serviceName}</span></div>
   <div class="row"><span class="label">Treatment</span><span class="value">${opts.treatment}</span></div>
   <div class="row"><span class="label">Date</span><span class="value">${opts.bookingDate}</span></div>
   <div class="row"><span class="label">Time</span><span class="value">${opts.timeSlot}</span></div>
-  ${opts.reason ? `<div class="row"><span class="label">Reason</span><span class="value">${opts.reason}</span></div>` : ''}
+  ${opts.reason ? `<div class="row"><span class="label">Reason</span><span class="value">${esc(opts.reason)}</span></div>` : ''}
 
   <p class="note">
     ${refundNote}<br><br>

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/supabase/admin'
-import { createClient } from '@/lib/supabase/server'
+import { getAdmin } from '@/lib/admin-auth'
 
 export async function GET() {
   const { data } = await adminDb.from('blocked_dates').select('*').order('date')
@@ -8,8 +8,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAdmin()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { date, reason } = await req.json()
@@ -19,11 +18,11 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAdmin()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { date } = await req.json()
-  await adminDb.from('blocked_dates').delete().eq('date', date)
+  const { error } = await adminDb.from('blocked_dates').delete().eq('date', date)
+  if (error) return NextResponse.json({ error: 'Failed to unblock date' }, { status: 500 })
   return NextResponse.json({ success: true })
 }

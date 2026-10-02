@@ -1,132 +1,50 @@
 import { NextResponse } from 'next/server'
-import { adminDb } from '@/lib/supabase/admin'
 import { verifyPayment } from '@/lib/paystack'
-import { getResend, FROM, FROM_ADMIN } from '@/lib/resend'
-import { bookingConfirmationHtml } from '@/emails/booking-confirmation'
-import { bookingAdminAlertHtml } from '@/emails/booking-admin-alert'
-import { orderConfirmationHtml } from '@/emails/order-confirmation'
+import { settlePayment, releaseUnpaidBooking } from '@/lib/payments'
 
-const ADMIN_NOTIFY_EMAIL = process.env.ADMIN_EMAIL ?? 'essakobea@gmail.com'
-
+// Called by the success page after Paystack redirects back. The webhook
+// records the same payment independently, so this is safe to call repeatedly.
 export async function POST(req: Request) {
   try {
     const { reference } = await req.json()
     if (!reference) return NextResponse.json({ error: 'reference required' }, { status: 400 })
 
     const result = await verifyPayment(reference)
-    if (!result.success) return NextResponse.json({ error: 'Payment not successful' }, { status: 400 })
-
-    const { metadata } = result
-
-    if (metadata.type === 'booking') {
-      const bookingId = metadata.bookingId as string
-      const { data: booking } = await adminDb.from('bookings').select('*').eq('id', bookingId).single()
-      if (!booking) return NextResponse.json({ error: 'Booking not found' }, { status: 404 })
-
-      await adminDb.from('bookings').update({
-        payment_status: 'paid',
-        payment_reference: reference,
-        status: 'confirmed',
-      }).eq('id', bookingId)
-
-      const formattedDate = new Date(booking.booking_date).toLocaleDateString('en-GB', {
-        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-      })
-      const depositGHS = Math.round((booking.amount ?? 0) / 100)
-      // Determine if this was a deposit (range-priced service) by checking the option's display price
-      let isDeposit = false
-      if (booking.service_id && booking.treatment) {
-        const { data: svc } = await adminDb.from('services').select('booking_options').eq('slug', booking.service_id).single()
-        const options = svc?.booking_options as { name?: string; price?: string }[] | null
-        const opt = options?.find((o) => o.name === booking.treatment)
-        if (opt?.price && /[-–]/.test(opt.price)) isDeposit = true
+    if (!result.success) {
+      // Abandoned or failed: nothing was charged, so free the slot right away.
+      // Anything still in progress (e.g. a Mobile Money approval) is left alone.
+      const bookingId = result.metadata.type === 'booking' ? result.metadata.bookingId : null
+      const notPaid = result.status === 'abandoned' || result.status === 'failed'
+      const inProgress = ['ongoing', 'pending', 'processing', 'queued'].includes(result.status)
+      if (typeof bookingId === 'string' && notPaid) await releaseUnpaidBooking(bookingId)
+      if (notPaid) {
+        return NextResponse.json({ code: 'not_paid', error: 'Your payment was not completed, so you have not been charged.' }, { status: 400 })
       }
-
-      const sharedFields = {
-        serviceName:       booking.service_name,
-        treatment:         booking.treatment,
-        bookingDate:       formattedDate,
-        timeSlot:          booking.time_slot,
-        depositGHS,
-        isDeposit,
-        stylistName:       booking.stylist_name ?? null,
-        bookingId:         booking.id,
-        appUrl:            process.env.NEXT_PUBLIC_APP_URL ?? '',
-        customizationType: booking.customization_type ?? null,
-        isEmergency:       booking.is_emergency ?? false,
-        customizationFee:  Math.round((booking.customization_fee ?? 0) / 100),
-        emergencyFee:      Math.round((booking.emergency_fee ?? 0) / 100),
-        serviceCharge:     Math.round((booking.service_charge ?? 0) / 100),
+      if (inProgress) {
+        return NextResponse.json({ code: 'pending', error: 'Your payment is still being processed. You will get a confirmation email once it goes through.' }, { status: 400 })
       }
-
-      if (booking.client_email) {
-        await getResend().emails.send({
-          from: FROM,
-          to: booking.client_email,
-          subject: `Booking confirmed: ${booking.service_name} on ${formattedDate}`,
-          html: bookingConfirmationHtml({
-            clientName:  booking.client_name,
-            cancelToken: booking.cancel_token,
-            ...sharedFields,
-          }),
-        })
-      }
-
-      // Admin alert — never let a delivery failure here break the customer's
-      // already-confirmed booking response.
-      try {
-        await getResend().emails.send({
-          from: FROM_ADMIN,
-          to: ADMIN_NOTIFY_EMAIL,
-          subject: `New booking: ${booking.client_name} · ${booking.service_name} on ${formattedDate}`,
-          html: bookingAdminAlertHtml({
-            clientName:  booking.client_name,
-            clientPhone: booking.client_phone,
-            clientEmail: booking.client_email,
-            notes:       booking.notes ?? null,
-            ...sharedFields,
-          }),
-        })
-      } catch (err) {
-        console.error('Failed to send admin booking alert email', err)
-      }
-
-      return NextResponse.json({ type: 'booking', id: bookingId, booking })
+      return NextResponse.json({ code: 'unknown_payment', error: 'We could not find this payment. If you were charged, please contact us.' }, { status: 400 })
     }
 
-    if (metadata.type === 'order') {
-      const orderId = metadata.orderId as string
-      const { data: order } = await adminDb.from('orders').select('*').eq('id', orderId).single()
-      if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 })
-
-      await adminDb.from('orders').update({
-        payment_status: 'paid',
-        payment_reference: reference,
-        status: 'processing',
-      }).eq('id', orderId)
-
-      if (order.client_email) {
-        await getResend().emails.send({
-          from: FROM,
-          to: order.client_email,
-          subject: `Order confirmed | Essakobea`,
-          html: orderConfirmationHtml({
-            clientName: order.client_name,
-            orderId: order.id,
-            items: order.items,
-            subtotal: order.subtotal,
-            total: order.total,
-            deliveryMethod: order.delivery_method,
-            deliveryAddress: order.delivery_address,
-            appUrl: process.env.NEXT_PUBLIC_APP_URL ?? '',
-          }),
-        })
-      }
-
-      return NextResponse.json({ type: 'order', id: orderId, order })
+    const settled = await settlePayment(reference, result.amount, result.metadata)
+    if (!settled) return NextResponse.json({ code: 'unknown', error: 'Unknown payment type' }, { status: 400 })
+    if (settled.outcome === 'not_found') {
+      return NextResponse.json({ code: 'not_found', error: settled.type === 'booking' ? 'Booking not found' : 'Order not found' }, { status: 404 })
+    }
+    if (settled.outcome === 'amount_mismatch') {
+      return NextResponse.json({ code: 'amount_mismatch', error: 'Payment amount did not match. Please contact us.' }, { status: 400 })
+    }
+    if (settled.outcome === 'refund_owed') {
+      return NextResponse.json(
+        { code: 'refund_owed', error: 'Your payment went through, but this slot is no longer available. We will contact you about a full refund or a new time.' },
+        { status: 409 },
+      )
+    }
+    if (settled.type === 'booking' && settled.record?.status === 'cancelled') {
+      return NextResponse.json({ code: 'cancelled', error: 'This booking has been cancelled.' }, { status: 409 })
     }
 
-    return NextResponse.json({ error: 'Unknown payment type' }, { status: 400 })
+    return NextResponse.json({ type: settled.type, id: settled.id, [settled.type]: settled.record })
   } catch (err) {
     console.error(err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

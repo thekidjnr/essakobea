@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/supabase/admin'
-import { createClient } from '@/lib/supabase/server'
+import { getAdmin } from '@/lib/admin-auth'
 
 export async function GET() {
   const { data } = await adminDb.from('availability').select('*').order('day_of_week')
@@ -8,13 +8,14 @@ export async function GET() {
 }
 
 export async function PUT(req: Request) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAdmin()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const days = await req.json() // AvailabilityDay[]
+  if (!Array.isArray(days)) return NextResponse.json({ error: 'Expected a list of days' }, { status: 400 })
+  const failed: number[] = []
   for (const day of days) {
-    await adminDb.from('availability')
+    const { error } = await adminDb.from('availability')
       .update({
         is_available:          day.is_available,
         open_time:             day.open_time,
@@ -24,6 +25,13 @@ export async function PUT(req: Request) {
         max_bookings_per_day:  day.max_bookings_per_day  ?? 0,
       })
       .eq('day_of_week', day.day_of_week)
+    if (error) {
+      console.error(error)
+      failed.push(day.day_of_week)
+    }
+  }
+  if (failed.length > 0) {
+    return NextResponse.json({ error: 'Some days could not be saved. Please try again.' }, { status: 500 })
   }
   return NextResponse.json({ success: true })
 }

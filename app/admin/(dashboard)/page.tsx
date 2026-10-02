@@ -1,109 +1,215 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { whatsAppLink } from "@/lib/phone";
+import { Page, SectionTitle, Card, Pill, Skeleton, Button, ErrorNote, Empty, buttonClass } from "@/components/admin/ui";
+import {
+  type AdminBooking, bookingStatus, formatSlot, startOf, todayISO, countdown, useServices, serviceFor,
+} from "@/components/admin/bookingDisplay";
 
 interface Stats {
   todayBookings:     number;
   completedBookings: number;
   cancelledBookings: number;
   monthRevenueGHS:   number;
+  refundsOwedGHS:    number;
+  refundsOwedCount:  number;
 }
 
-interface Booking {
-  id: string; client_name: string; service_name: string; treatment: string;
-  booking_date: string; time_slot: string; status: string; payment_status: string;
-}
-
-const STATUS_COLORS: Record<string, string> = {
-  pending:    "bg-amber-100 text-amber-800",
-  confirmed:  "bg-emerald-100 text-emerald-800",
-  completed:  "bg-blue-100 text-blue-800",
-  cancelled:  "bg-red-100 text-red-800",
-  processing: "bg-violet-100 text-violet-800",
-  shipped:    "bg-sky-100 text-sky-800",
-  delivered:  "bg-emerald-100 text-emerald-800",
-};
-
-function Badge({ label }: { label: string }) {
-  return (
-    <span className={`inline-block px-2 py-0.5 rounded-sm font-sans text-[10px] tracking-wide uppercase font-medium ${STATUS_COLORS[label] ?? "bg-ink/10 text-ink/60"}`}>
-      {label}
-    </span>
-  );
+function greeting() {
+  const h = new Date().getHours();
+  return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
 }
 
 export default function AdminDashboard() {
   const [stats, setStats]       = useState<Stats | null>(null);
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [today, setToday]       = useState<AdminBooking[]>([]);
   const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState("");
+  const [now, setNow]           = useState(() => Date.now());
+  const services = useServices();
 
   useEffect(() => {
+    const getJson = async (url: string) => {
+      const r = await fetch(url);
+      const data = await r.json().catch(() => null);
+      if (!r.ok) throw new Error(data?.error ?? "Could not load the dashboard");
+      return data;
+    };
     Promise.all([
-      fetch("/api/admin/stats").then(r => r.json()),
-      fetch("/api/admin/bookings?status=all").then(r => r.json()),
-    ]).then(([s, b]) => {
-      setStats(s);
-      setBookings(Array.isArray(b) ? b.slice(0, 8) : []);
-      setLoading(false);
-    });
+      getJson("/api/admin/stats"),
+      getJson(`/api/admin/bookings?status=all&date=${todayISO()}`),
+    ])
+      .then(([s, b]) => {
+        setStats(s);
+        const list: AdminBooking[] = Array.isArray(b) ? b : [];
+        setToday(list.filter((x) => x.status !== "cancelled").sort((x, y) => startOf(x) - startOf(y)));
+      })
+      .catch((err) => setError(err.message || "Could not load the dashboard"))
+      .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return (
-    <div className="p-10 font-sans text-[12px] text-ink/40">Loading…</div>
+  // Keep the "in 1h 20m" countdown honest.
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(t);
+  }, []);
+
+  if (error) return (
+    <Page>
+      <Empty title="The dashboard didn't load">
+        <ErrorNote className="mb-5">{error}</ErrorNote>
+        <Button variant="secondary" onClick={() => window.location.reload()}>Try again</Button>
+      </Empty>
+    </Page>
   );
 
-  const STAT_CARDS = [
-    { label: "Today's Bookings",   value: stats?.todayBookings ?? 0,                              sub: "appointments today" },
-    { label: "Revenue (Month)",    value: `₵${(stats?.monthRevenueGHS ?? 0).toLocaleString()}`,   sub: "paid this month" },
-    { label: "Completed Bookings", value: stats?.completedBookings ?? 0,                          sub: "done this month" },
-    { label: "Cancelled Bookings", value: stats?.cancelledBookings ?? 0,                          sub: "cancelled this month" },
+  const next = today.find((b) => b.status === "confirmed" && startOf(b) > now);
+  const nextImage = next ? serviceFor(services, next)?.image_url : undefined;
+  const dateLine = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+  const month = new Date().toLocaleDateString("en-GB", { month: "long" });
+
+  const FIGURES = [
+    { value: String(stats?.todayBookings ?? 0),                         label: "appointments today" },
+    { value: `₵${(stats?.monthRevenueGHS ?? 0).toLocaleString()}`,      label: `earned in ${month}` },
+    { value: String(stats?.completedBookings ?? 0),                     label: "clients served" },
   ];
 
   return (
-    <div className="p-8 md:p-10 max-w-[1200px]">
-      {/* Header */}
-      <div className="mb-10 fade-up">
-        <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-1">
-          {new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-        </p>
-        <h1 className="font-serif text-[2.5rem] font-light text-ink leading-none">
-          Good {new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening"}<span className="italic">.</span>
-        </h1>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12 fade-up fade-up-delay-1">
-        {STAT_CARDS.map((s) => (
-          <div key={s.label} className="bg-paper p-6 border border-ink/[0.07]">
-            <p className="font-sans text-[10px] tracking-widest uppercase text-ink/35 mb-3">{s.label}</p>
-            <p className="font-serif text-[2rem] font-light text-ink leading-none mb-1">{s.value}</p>
-            <p className="font-sans text-[11px] text-ink/50">{s.sub}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Recent Bookings */}
-      <div className="bg-paper border border-ink/[0.07] fade-up fade-up-delay-2">
-        <div className="px-6 py-5 border-b border-ink/[0.07] flex items-center justify-between">
-          <p className="font-sans text-[11px] tracking-widest uppercase text-ink font-medium">Recent Bookings</p>
-          <a href="/admin/bookings" className="font-sans text-[10px] tracking-widest uppercase text-ink/40 hover:text-ink transition-colors">View all →</a>
+    <Page>
+      {/* Welcome */}
+      <section className="rounded-[28px] bg-ink text-paper px-6 py-7 md:px-12 md:py-10 flex flex-col md:flex-row md:items-end md:justify-between gap-8 fade-up">
+        <div>
+          <p className="font-sans text-[13px] text-paper/60">{dateLine}</p>
+          <h1 className="mt-2 font-serif text-[40px] md:text-[52px] font-light leading-none tracking-[-0.01em]">
+            {greeting()}<span className="italic">.</span>
+          </h1>
         </div>
-        <div className="divide-y divide-ink/[0.05]">
-          {bookings.length === 0 && <p className="px-6 py-8 font-sans text-[13px] text-ink/50">No bookings yet.</p>}
-          {bookings.map((b) => (
-            <div key={b.id} className="px-6 py-4 flex items-start justify-between gap-4">
-              <div>
-                <p className="font-sans text-[13px] text-ink font-medium">{b.client_name}</p>
-                <p className="font-sans text-[12px] text-ink/55 mt-0.5">{b.treatment}</p>
-                <p className="font-sans text-[11px] text-ink/45 mt-1">
-                  {new Date(b.booking_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} · {b.time_slot}
-                </p>
-              </div>
-              <Badge label={b.status} />
+        <div className="flex">
+          {FIGURES.map((f, i) => (
+            <div key={f.label} className={`flex flex-col gap-1.5 ${i === 0 ? "pr-4 md:pr-7" : "px-4 md:px-7 border-l border-paper/15"} ${i === FIGURES.length - 1 ? "md:pr-0" : ""}`}>
+              {loading ? (
+                <span className="block h-[30px] w-14 rounded-xl bg-paper/10 animate-pulse" />
+              ) : (
+                <span className="font-serif text-[26px] md:text-[34px] leading-none [font-variant-numeric:lining-nums]">{f.value}</span>
+              )}
+              <span className="font-sans text-[11px] md:text-[12px] text-paper/60">{f.label}</span>
             </div>
           ))}
         </div>
+      </section>
+
+      {(stats?.refundsOwedCount ?? 0) > 0 && (
+        <Link
+          href="/admin/bookings?filter=refunds"
+          className="mt-5 flex items-center justify-between gap-4 pl-3 pr-5 py-3 rounded-full border border-line hover:border-ink/30 transition-colors fade-up fade-up-delay-1"
+        >
+          <span className="flex items-center gap-3.5 font-sans text-[14px] text-ink">
+            <span className="w-7 h-7 flex-shrink-0 rounded-full bg-ink text-paper inline-flex items-center justify-center text-[12px] font-medium">
+              {stats!.refundsOwedCount}
+            </span>
+            <span>
+              {stats!.refundsOwedCount === 1 ? "Refund" : "Refunds"} waiting to be sent
+              <span className="hidden sm:inline">, ₵{stats!.refundsOwedGHS.toLocaleString()} in total</span>
+            </span>
+          </span>
+          <span className="flex items-center gap-2 font-sans text-[13px] text-graphite">
+            <span className="hidden sm:inline">Review</span>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+        </Link>
+      )}
+
+      <div className={`mt-9 grid gap-9 lg:gap-7 fade-up fade-up-delay-2 ${loading || next ? "lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]" : ""}`}>
+        {/* Next up, only while there's someone still to come today */}
+        {(loading || next) && (
+        <section>
+          <SectionTitle italic="up">Next</SectionTitle>
+          {loading ? (
+            <Skeleton className="h-[380px] lg:h-[440px] rounded-[24px]" />
+          ) : next ? (
+            <div className="relative h-[380px] lg:h-[440px] rounded-[24px] overflow-hidden bg-graphite text-paper">
+              {nextImage && (
+                <Image src={nextImage} alt="" fill sizes="(min-width: 1024px) 440px, 100vw" className="object-cover object-[center_30%]" />
+              )}
+              <span className="absolute inset-0 bg-[linear-gradient(180deg,rgba(26,33,43,0)_35%,rgba(26,33,43,0.92)_82%)]" />
+              <span className="absolute top-4 left-4 h-8 px-3.5 inline-flex items-center rounded-full bg-paper/95 text-ink font-sans text-[12px] font-medium">
+                {formatSlot(next.time_slot)} · {countdown(startOf(next), now)}
+              </span>
+              <div className="absolute inset-x-6 bottom-6">
+                <p className="font-serif text-[34px] leading-none">{next.client_name}</p>
+                <p className="mt-2 font-sans text-[13px] text-paper/75">
+                  {next.treatment || next.service_name}{next.stylist_name ? ` · with ${next.stylist_name}` : ""}
+                </p>
+                <div className="mt-5 flex gap-2">
+                  <a
+                    href={whatsAppLink(next.client_phone, `Hi ${next.client_name.split(" ")[0]}, this is Essakobea. `)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`${buttonClass("light")} flex-1`}
+                  >
+                    WhatsApp
+                  </a>
+                  <Link href={`/admin/bookings?open=${next.id}`} className="inline-flex items-center justify-center h-11 px-5 rounded-full border border-paper/35 hover:border-paper font-sans text-[14px] font-medium text-paper transition-colors">
+                    Details
+                  </Link>
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </section>
+        )}
+
+        {/* Today */}
+        <section>
+          <SectionTitle
+            italic="appointments"
+            action={<Link href="/admin/bookings" className="font-sans text-[13px] text-graphite hover:text-ink">All bookings</Link>}
+          >
+            Today’s
+          </SectionTitle>
+          <Card padded={false} className="px-4 md:px-6 py-2">
+            {loading ? (
+              <div className="py-3 flex flex-col gap-3">
+                {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-14" />)}
+              </div>
+            ) : today.length === 0 ? (
+              <p className="py-10 text-center font-serif italic text-[20px] text-muted">Nothing booked today</p>
+            ) : (
+              <ul className="divide-y divide-line">
+                {today.map((b) => {
+                  const s = bookingStatus(b);
+                  const isNext = next?.id === b.id;
+                  const img = serviceFor(services, b)?.image_url;
+                  return (
+                    <li key={b.id}>
+                      <Link href={`/admin/bookings?open=${b.id}`} className="grid grid-cols-[48px_44px_minmax(0,1fr)_auto] md:grid-cols-[60px_48px_minmax(0,1fr)_auto] items-center gap-3 md:gap-4 py-3.5">
+                        <span className={`font-serif text-[18px] md:text-[20px] [font-variant-numeric:lining-nums_tabular-nums] ${s.faded ? "text-muted" : "text-ink"}`}>
+                          {formatSlot(b.time_slot)}
+                        </span>
+                        <span className={`relative w-11 h-11 md:w-12 md:h-12 rounded-[14px] overflow-hidden bg-soft ${s.faded ? "opacity-55" : ""}`}>
+                          {img && <Image src={img} alt="" fill sizes="48px" className="object-cover" />}
+                        </span>
+                        <span className="min-w-0">
+                          <span className={`block font-sans text-[15px] font-medium truncate ${s.faded ? "text-muted" : "text-ink"}`}>{b.client_name}</span>
+                          <span className="block font-sans text-[13px] text-muted truncate">
+                            {b.treatment || b.service_name}{b.stylist_name ? ` · ${b.stylist_name}` : ""}
+                          </span>
+                        </span>
+                        {isNext ? <Pill tone="solid">Next</Pill> : <Pill tone={s.tone} className={s.tone === "outline" ? "hidden sm:inline-flex" : ""}>{s.label}</Pill>}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Card>
+        </section>
       </div>
-    </div>
+    </Page>
   );
 }

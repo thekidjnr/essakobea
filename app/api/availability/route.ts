@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/supabase/admin'
 import type { Stylist } from '@/lib/supabase/types'
+import { dayOfWeek } from '@/lib/booking-time'
 
 // Matches the hold window in the bookings API
 const SLOT_HOLD_MS = 30 * 60 * 1000
@@ -26,10 +27,10 @@ export async function GET(req: Request) {
   const stylistId = searchParams.get('stylistId') || null
   if (!date) return NextResponse.json({ error: 'date required' }, { status: 400 })
 
-  const dayOfWeek = new Date(date).getDay()
+  const weekday = dayOfWeek(date)
 
   const [{ data: avail }, { data: blocked }, { data: bookings }, { data: stylists }] = await Promise.all([
-    adminDb.from('availability').select('*').eq('day_of_week', dayOfWeek).single(),
+    adminDb.from('availability').select('*').eq('day_of_week', weekday).maybeSingle(),
     adminDb.from('blocked_dates').select('id').eq('date', date).maybeSingle(),
     adminDb
       .from('bookings')

@@ -82,28 +82,29 @@ export default function AboutPage() {
             </p>
             <div className="flex flex-col gap-6">
               <p className="font-serif text-[1.5rem] md:text-[1.75rem] font-light text-ink leading-snug">
-                I began in my hostel room at the University of Ghana, long
-                before Essakobea had a name.
+                Essakobea was founded in 2023 with a simple vision: to create a
+                beauty experience where exceptional hair, personal style, and a
+                premium experience come together.
               </p>
               <p className="font-sans text-[14px] text-ink/70 font-light leading-relaxed">
-                Back then it was just me, doing hair for friends and
-                coursemates because I loved it, with no brand name attached,
-                just skill and word of mouth. After school, I kept going from
-                home, working with what I had before I ever had a studio to
-                call my own.
+                Our first studio in East Legon was the beginning of that
+                vision. It was a space where we built our community, refined
+                our craft, and welcomed clients who became part of the
+                Essakobea story.
               </p>
               <p className="font-sans text-[14px] text-ink/70 font-light leading-relaxed">
-                My first shop opened in East Legon, and we&apos;ve since moved
-                into a new space, also in East Legon, built for the studio
-                I&apos;d always pictured. Essakobea as a brand was founded in
-                2023, but the craft behind it started years earlier, in a
-                university hostel with nothing but a comb, a client, and the
-                belief that hair could be someone&apos;s whole confidence.
+                As the brand continued to grow, so did the vision. Today,
+                we&apos;re proud to welcome you into our new East Legon studio,
+                a bigger, more thoughtfully designed space created to reflect
+                where Essakobea is today and where we&apos;re going next.
               </p>
               <p className="font-sans text-[14px] text-ink/70 font-light leading-relaxed">
-                I built this platform so booking your next appointment feels
-                as seamless as shopping your next look, because great hair
-                shouldn&apos;t come with friction.
+                From the way you discover your next look to the moment you book
+                your appointment and walk through our doors, every detail is
+                designed to make the Essakobea experience feel effortless.
+              </p>
+              <p className="font-serif text-[1.25rem] md:text-[1.4rem] italic font-light text-ink leading-snug">
+                Because great hair deserves an experience to match.
               </p>
             </div>
             <div className="mt-10 pt-6 border-t border-ink/10">

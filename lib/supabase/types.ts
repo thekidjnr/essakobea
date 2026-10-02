@@ -28,8 +28,9 @@ export interface Booking {
   cancel_token:        string
   stylist_id:          string | null
   stylist_name:        string | null
-  hair_unit_type:      'own_new' | 'own_existing' | 'none' | null
+  hair_unit_type:      'own_new' | 'own_existing' | 'own_extensions' | 'none' | null
   unit_photos:         string[]
+  bundle_count?:       number | null
 }
 
 export interface OrderItem {

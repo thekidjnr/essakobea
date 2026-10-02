@@ -7,6 +7,7 @@ export interface Country {
   iso2:  string   // ISO 3166-1 alpha-2
   dial:  string   // e.g. "+233"
   example: string // placeholder shown for the local number part (no dial code)
+  minDigits?: number // when local numbers vary in length; defaults to the example's length
 }
 
 // Ghana pinned first as the default. Rest covers West Africa + common
@@ -25,7 +26,7 @@ export const COUNTRIES: Country[] = [
   { name: "United Kingdom", iso2: "GB", dial: "+44",  example: "7911 123456" },
   { name: "United States",  iso2: "US", dial: "+1",   example: "201 555 0123" },
   { name: "Canada",         iso2: "CA", dial: "+1",   example: "201 555 0123" },
-  { name: "Germany",        iso2: "DE", dial: "+49",  example: "1512 3456789" },
+  { name: "Germany",        iso2: "DE", dial: "+49",  example: "1512 3456789", minDigits: 10 },
   { name: "France",         iso2: "FR", dial: "+33",  example: "6 12 34 56 78" },
   { name: "Netherlands",    iso2: "NL", dial: "+31",  example: "6 12345678" },
   { name: "United Arab Emirates", iso2: "AE", dial: "+971", example: "50 123 4567" },
@@ -65,6 +66,16 @@ export function expectedDigitCount(example: string): number {
   return example.replace(/\D/g, "").length
 }
 
+// True once a stored phone value has a full local number for its country.
+// Used to block the booking form until the WhatsApp number is usable.
+export function isPhoneComplete(value: string): boolean {
+  if (!value) return false
+  const { dial, localDigits } = splitPhone(value)
+  const country = COUNTRIES.find((c) => c.dial === dial)
+  if (!country) return localDigits.length >= 7
+  return localDigits.length >= (country.minDigits ?? expectedDigitCount(country.example))
+}
+
 // Composes a country dial code + locally-typed digits into an E.164-ish string.
 // Strips a single leading 0 from the local part (common when people type
 // their number as if dialing domestically, e.g. "0557205803" -> "557205803").
@@ -83,6 +94,19 @@ export function splitPhone(value: string): { dial: string; localDigits: string }
     .find((c) => cleaned.startsWith(c.dial))
   if (match) return { dial: match.dial, localDigits: cleaned.slice(match.dial.length) }
   return { dial: "+233", localDigits: cleaned.replace(/^\+/, "") }
+}
+
+// Formats a stored phone value for display, e.g. "+233241234567" -> "+233 24 123 4567".
+// Values that don't start with a known dial code are returned unchanged.
+export function formatPhoneDisplay(value: string): string {
+  const cleaned = value.replace(/[^\d+]/g, "")
+  const country = COUNTRIES
+    .slice()
+    .sort((a, b) => b.dial.length - a.dial.length)
+    .find((c) => cleaned.startsWith(c.dial))
+  if (!country) return value
+  const local = formatLocalDigits(cleaned.slice(country.dial.length), country.example)
+  return local ? `${country.dial} ${local}` : value
 }
 
 // Converts a stored phone value into digits-only, ready for a wa.me link.

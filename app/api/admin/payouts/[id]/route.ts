@@ -1,24 +1,13 @@
 import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/supabase/admin'
-import { createClient } from '@/lib/supabase/server'
+import { getAdmin as requireAdmin, isOperatorEmail as isOperator } from '@/lib/admin-auth'
 import { getResend, FROM_ADMIN } from '@/lib/resend'
 import { payoutStatusUpdateHtml } from '@/emails/payout-status-update'
 import type { Payout } from '@/lib/supabase/types'
 
-async function requireAdmin() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  return user
-}
-
 // Any signed-in admin (including essakobea's login) can view/request payouts.
 // Only emails in OPERATOR_EMAILS can approve/reject/mark them paid — that's
 // you, since you're the one actually holding and sending the money.
-function isOperator(email: string | null | undefined) {
-  const allowed = (process.env.OPERATOR_EMAILS ?? '')
-    .split(',').map((e) => e.trim().toLowerCase()).filter(Boolean)
-  return !!email && allowed.includes(email.toLowerCase())
-}
 
 // Never let a delivery failure here break the status change that already happened.
 async function notifyRequester(payout: Payout) {

@@ -17,6 +17,7 @@ export function bookingAdminAlertHtml(opts: {
   customizationFee?:  number
   emergencyFee?:      number
   serviceCharge?:     number
+  bundleCount?:       number | null
 }): string {
   const bookingsUrl = `${opts.appUrl}/admin/bookings`
   const ref         = opts.bookingId.slice(0, 8).toUpperCase()
@@ -39,6 +40,7 @@ export function bookingAdminAlertHtml(opts: {
     ['Time',      opts.timeSlot],
     opts.isEmergency ? ['Booking Type', '⚡ Emergency (Priority Handling)'] : null,
     custLabel ? ['Customization', custLabel] : null,
+    opts.bundleCount ? ['Extensions', `Bringing ${opts.bundleCount} bundle${opts.bundleCount > 1 ? 's' : ''}`] : null,
     ['Booking Ref', ref],
   ].filter(Boolean) as [string, string][]
 

@@ -44,6 +44,7 @@ export async function initializePayment(payload: InitPayload): Promise<{ url: st
 
 export async function verifyPayment(reference: string): Promise<{
   success:  boolean
+  status:   string   // Paystack's own status: success, abandoned, failed, ongoing, pending...
   amount:   number   // pesewas
   email:    string
   metadata: Record<string, unknown>
@@ -51,13 +52,25 @@ export async function verifyPayment(reference: string): Promise<{
   const res = await fetch(`${PAYSTACK_API}/transaction/verify/${reference}`, {
     headers: authHeaders(),
   })
-  const data = await res.json()
-  const tx = data.data
+  const data = await res.json().catch(() => null)
+  const tx = data?.data ?? {}
 
   return {
-    success:  data.status && tx.status === 'success',
+    success:  !!data?.status && tx.status === 'success',
+    status:   typeof tx.status === 'string' ? tx.status : '',
     amount:   tx.amount ?? 0,
     email:    tx.customer?.email ?? '',
     metadata: tx.metadata ?? {},
   }
+}
+
+// Paystack signs webhook bodies with HMAC-SHA512 of the raw body, keyed by
+// the secret key. Anything that doesn't match is not from Paystack.
+export async function isValidWebhookSignature(rawBody: string, signature: string | null): Promise<boolean> {
+  if (!signature || !process.env.PAYSTACK_SECRET_KEY) return false
+  const { createHmac, timingSafeEqual } = await import('crypto')
+  const expected = createHmac('sha512', process.env.PAYSTACK_SECRET_KEY).update(rawBody).digest('hex')
+  const a = Buffer.from(expected)
+  const b = Buffer.from(signature)
+  return a.length === b.length && timingSafeEqual(a, b)
 }
