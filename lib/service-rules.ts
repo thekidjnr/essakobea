@@ -10,6 +10,7 @@
 // never charges for a step the form didn't show.
 
 import type { CustomizationType } from '@/lib/booking-fees'
+import { COLORING_POLICY, type ServicePolicy } from '@/lib/policies'
 
 export type HairUnitType = 'own_new' | 'own_existing' | 'own_extensions' | 'none'
 
@@ -52,6 +53,10 @@ export interface ServiceRules {
   scheduleNote?: string
   /** A second required upload for inspiration photos */
   inspoPhoto?: { label: string; help: string }
+  /** When the rest of a deposit is paid, worded for the booking popup */
+  balanceDue: string
+  /** Extra terms shown in the booking popup and the confirmation email */
+  servicePolicy?: ServicePolicy
 }
 
 export const BUNDLE_OPTIONS = [1, 2, 3, 4, 5, 6] as const
@@ -84,6 +89,7 @@ const DEFAULT_RULES: ServiceRules = {
   unitStepIntro: 'How would you like your unit prepared?',
   photoLabel: 'Unit photo',
   photoHelp: 'Add at least one photo of your unit so your stylist can prepare in advance.',
+  balanceDue: 'when the service is done',
 }
 
 const PONYTAILS: Partial<ServiceRules> = {
@@ -144,6 +150,8 @@ const COLORING: Partial<ServiceRules> = {
   photoHelp: "A photo of the unit you're dropping off.",
   inspoPhoto: { label: 'Color inspo', help: "A photo of the color you'd like." },
   scheduleNote: "This is the day you drop off your unit. We'll start on it from then.",
+  balanceDue: 'when you drop off your unit, before colouring begins',
+  servicePolicy: COLORING_POLICY,
 }
 
 const OVERRIDES: Record<string, Partial<ServiceRules>> = {

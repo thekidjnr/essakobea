@@ -1,4 +1,5 @@
 import { cancellationPolicyText } from '@/lib/refunds'
+import type { ServicePolicy } from '@/lib/policies'
 
 export function bookingConfirmationHtml(opts: {
   clientName:         string
@@ -20,6 +21,8 @@ export function bookingConfirmationHtml(opts: {
   emergencyFee?:      number
   serviceCharge?:     number
   bundleCount?:       number | null
+  /** Extra terms the client agreed to when booking, e.g. the colouring policy */
+  servicePolicy?:     ServicePolicy | null
 }): string {
   const cancelUrl  = `${opts.appUrl}/cancel/${opts.cancelToken}`
   const ref        = opts.bookingId.slice(0, 8).toUpperCase()
@@ -70,6 +73,25 @@ export function bookingConfirmationHtml(opts: {
         The remaining balance is due on the day of your appointment.
        </p>`
     : ''
+
+  const text = `font-size:13px;color:#55504a;font-family:'Inter',Arial,sans-serif;line-height:1.6`
+  const policy = opts.servicePolicy
+  const policyHtml = policy ? `
+        <tr><td style="padding:0 48px"><hr style="border:none;border-top:1px solid #f0ede8;margin:0"></td></tr>
+        <tr>
+          <td style="padding:32px 48px">
+            <p style="margin:0 0 8px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#9A9590;font-family:'Inter',Arial,sans-serif">${policy.title}</p>
+            <p style="margin:0 0 16px;${text}">${policy.intro}</p>
+            ${policy.sections.map((section) => [
+              section.heading ? `<p style="margin:20px 0 8px;font-size:13px;font-weight:500;color:#1A212B;font-family:'Inter',Arial,sans-serif">${section.heading}</p>` : '',
+              ...(section.paragraphs ?? []).map((p) => `<p style="margin:0 0 10px;${text}">${p}</p>`),
+              section.bullets ? `<ul style="margin:0 0 10px;padding-left:18px">${section.bullets.map((b) => `<li style="margin:0 0 8px;${text}">${b}</li>`).join('')}</ul>` : '',
+              section.numbered ? `<ol style="margin:0 0 10px;padding-left:18px">${section.numbered.map((n) => `<li style="margin:0 0 6px;${text}">${n}</li>`).join('')}</ol>` : '',
+              ...(section.after ?? []).map((p) => `<p style="margin:0 0 10px;${text}">${p}</p>`),
+            ].join('')).join('')}
+            <p style="margin:16px 0 0;font-size:13px;font-weight:500;color:#1A212B;font-family:'Inter',Arial,sans-serif;line-height:1.6">${policy.closing}</p>
+          </td>
+        </tr>` : ''
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -168,6 +190,9 @@ export function bookingConfirmationHtml(opts: {
             </table>
           </td>
         </tr>
+
+        <!-- Service policy (e.g. colouring) -->
+        ${policyHtml}
 
         <!-- Cancel CTA -->
         <tr>

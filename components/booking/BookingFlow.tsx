@@ -16,6 +16,7 @@ import {
   todayInAccra,
 } from "@/lib/booking-time";
 import { cancellationPolicyText } from "@/lib/refunds";
+import type { ServicePolicy } from "@/lib/policies";
 import {
   bookingTotals,
   CUSTOMIZATION_FEES,
@@ -696,16 +697,20 @@ function PhotoUpload({
 function TermsModal({
   depositAmount,
   isRange,
+  balanceDue,
+  policy,
   onAgree,
   onClose,
 }: {
   depositAmount: number;
   isRange: boolean;
+  balanceDue: string;
+  policy?: ServicePolicy;
   onAgree: () => void;
   onClose: () => void;
 }) {
   const paymentLabel = isRange
-    ? `A deposit of ₵${depositAmount} confirms your slot. It is deducted from your total, and you pay the rest when the service is done.`
+    ? `A deposit of ₵${depositAmount} confirms your slot. It is deducted from your total, and you pay the rest ${balanceDue}.`
     : `The full price of ₵${depositAmount} is paid upfront to confirm your booking.`;
 
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -797,6 +802,7 @@ function TermsModal({
               </div>
             ))}
           </div>
+          {policy && <ServicePolicyBlock policy={policy} />}
           <div className="flex flex-col gap-3">
             <button
               onClick={onAgree}
@@ -816,6 +822,48 @@ function TermsModal({
         </div>
       </div>
     </div>
+  );
+}
+
+function ServicePolicyBlock({ policy }: { policy: ServicePolicy }) {
+  const body = "font-sans text-[14px] text-ink/65 leading-relaxed";
+  return (
+    <section aria-labelledby="service-policy-title" className="border-t border-ink/10 pt-6 mb-8">
+      <p id="service-policy-title" className="font-sans text-[11px] tracking-widest2 uppercase text-ink/50 mb-2">
+        {policy.title}
+      </p>
+      <p className={`${body} mb-5`}>{policy.intro}</p>
+      <div className="flex flex-col gap-5">
+        {policy.sections.map((section, i) => (
+          <div key={i} className="flex flex-col gap-3">
+            {section.heading && (
+              <p className="font-sans text-[15px] font-medium text-ink">{section.heading}</p>
+            )}
+            {section.paragraphs?.map((p) => (
+              <p key={p} className={body}>{p}</p>
+            ))}
+            {section.bullets && (
+              <ul className="flex flex-col gap-3 list-disc pl-5 marker:text-ink/40">
+                {section.bullets.map((b) => (
+                  <li key={b} className={body}>{b}</li>
+                ))}
+              </ul>
+            )}
+            {section.numbered && (
+              <ol className="flex flex-col gap-2 list-decimal pl-5 marker:text-ink/40">
+                {section.numbered.map((n) => (
+                  <li key={n} className={body}>{n}</li>
+                ))}
+              </ol>
+            )}
+            {section.after?.map((p) => (
+              <p key={p} className={body}>{p}</p>
+            ))}
+          </div>
+        ))}
+      </div>
+      <p className="font-sans text-[14px] font-medium text-ink leading-relaxed mt-5">{policy.closing}</p>
+    </section>
   );
 }
 
@@ -2583,6 +2631,8 @@ export default function BookingFlow() {
         <TermsModal
           depositAmount={totalDeposit}
           isRange={isRange}
+          balanceDue={rules.balanceDue}
+          policy={rules.servicePolicy}
           onAgree={handlePayNow}
           onClose={() => setShowTerms(false)}
         />
