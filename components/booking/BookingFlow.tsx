@@ -24,6 +24,7 @@ import {
   isPriceRange,
 } from "@/lib/booking-fees";
 import { BOOKING_DRAFT_KEY } from "@/lib/booking-draft";
+import { uploadImage } from "@/lib/upload-image";
 import {
   BUNDLE_OPTIONS,
   bringsHair,
@@ -570,7 +571,8 @@ function MiniCalendar({
 
 // ─── Hair Unit Photo Upload ────────────────────────────────────────────────────
 
-const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
+// Checked before the photo is shrunk in the browser, so it can be generous
+const MAX_PHOTO_BYTES = 30 * 1024 * 1024;
 
 function PhotoUpload({
   photos,
@@ -588,25 +590,14 @@ function PhotoUpload({
   const [error, setError] = useState("");
 
   const uploadOne = async (file: File): Promise<string | null> => {
-    if (!file.type.startsWith("image/"))
-      return `"${file.name}" isn't an image. Please use a JPG or PNG.`;
+    const isImage = file.type.startsWith("image/") || /\.hei[cf]$/i.test(file.name);
+    if (!isImage) return `"${file.name}" isn't an image. Please use a JPG or PNG.`;
     if (file.size > MAX_PHOTO_BYTES)
-      return `"${file.name}" is over 10 MB. Please choose a smaller photo.`;
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/bookings/upload", {
-        method: "POST",
-        body: fd,
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.url)
-        return data.error ?? "That photo couldn't be uploaded. Please try again.";
-      onAdd(data.url);
-      return null;
-    } catch {
-      return "Upload failed. Please check your connection and try again.";
-    }
+      return `"${file.name}" is over ${MAX_PHOTO_BYTES / 1024 / 1024} MB. Please choose a smaller photo.`;
+    const result = await uploadImage("/api/bookings/upload", file);
+    if ("error" in result) return result.error;
+    onAdd(result.url);
+    return null;
   };
 
   // Uploads one at a time, and always releases the "uploading" lock so the
@@ -650,7 +641,7 @@ function PhotoUpload({
               Drop a photo here or <span className="underline">browse</span>
             </p>
             <p className="font-sans text-[12px] text-ink/50 mt-1">
-              JPG, PNG up to 10 MB
+              JPG, PNG or iPhone photos
             </p>
           </>
         )}

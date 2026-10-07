@@ -14,6 +14,7 @@ import {
   ConfirmDialog,
   CloseIcon,
 } from "@/components/admin/ui";
+import { uploadImage } from "@/lib/upload-image";
 
 export default function AdminWorksPage() {
   const [services, setServices] = useState<DbService[]>([]);
@@ -67,15 +68,9 @@ export default function AdminWorksPage() {
 
     let nextOrder = works.length;
     for (const file of files) {
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("folder", "works");
-
-      const uploadRes = await fetch("/api/admin/upload", { method: "POST", body: fd }).catch(() => null);
-      const uploadData = uploadRes ? await uploadRes.json().catch(() => ({})) : {};
-
-      if (!uploadRes?.ok || uploadData.error || !uploadData.url) {
-        setError(uploadData.error ?? "Upload failed. Please try again.");
+      const uploaded = await uploadImage("/api/admin/upload", file, { folder: "works" });
+      if ("error" in uploaded) {
+        setError(uploaded.error);
         continue;
       }
 
@@ -84,7 +79,7 @@ export default function AdminWorksPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           service_id: selectedId,
-          image_url: uploadData.url,
+          image_url: uploaded.url,
           display_order: nextOrder,
         }),
       }).catch(() => null);

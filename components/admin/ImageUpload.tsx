@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { uploadImage } from "@/lib/upload-image";
 
 export default function ImageUpload({
   value,
@@ -24,21 +25,13 @@ export default function ImageUpload({
     setUploading(true);
     setUploadError("");
 
-    const fd = new FormData();
-    fd.append("file", file);
-    fd.append("folder", folder);
+    if (e.target) e.target.value = "";
 
-    const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
-    const data = await res.json();
+    const result = await uploadImage("/api/admin/upload", file, { folder });
     setUploading(false);
 
-    if (data.error) {
-      setUploadError(data.error);
-    } else if (data.url) {
-      onChange(data.url);
-    }
-
-    if (e.target) e.target.value = "";
+    if ("error" in result) setUploadError(result.error);
+    else onChange(result.url);
   };
 
   return (
