@@ -13,6 +13,7 @@ import { bookingConfirmationHtml } from '@/emails/booking-confirmation'
 import { bookingAdminAlertHtml } from '@/emails/booking-admin-alert'
 import { customizationLabel, getServiceRules } from '@/lib/service-rules'
 import { orderConfirmationHtml } from '@/emails/order-confirmation'
+import { sendSmsSafely, bookingConfirmedSms, bookingAdminSms, ADMIN_NOTIFY_PHONE } from '@/lib/sms'
 
 export const ADMIN_NOTIFY_EMAIL = process.env.ADMIN_EMAIL ?? 'essakobea@gmail.com'
 
@@ -189,6 +190,10 @@ async function sendBookingConfirmedEmails(booking: Row) {
       ...sharedFields,
     }),
   })
+
+  const smsBooking = booking as Parameters<typeof bookingConfirmedSms>[0]
+  await sendSmsSafely('booking confirmation SMS', booking.client_phone, bookingConfirmedSms(smsBooking))
+  await sendSmsSafely('admin booking SMS', ADMIN_NOTIFY_PHONE, bookingAdminSms(smsBooking))
 }
 
 export async function settleOrderPayment(

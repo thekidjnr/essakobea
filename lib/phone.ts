@@ -109,10 +109,11 @@ export function formatPhoneDisplay(value: string): string {
   return local ? `${country.dial} ${local}` : value
 }
 
-// Converts a stored phone value into digits-only, ready for a wa.me link.
+// Converts a stored phone value into international digits with no "+"
+// (e.g. "233557205803"), the format wa.me links and the SMS API expect.
 // Handles legacy bookings stored as a raw Ghana local number (e.g. "0557205803")
 // from before the country-code picker existed.
-export function toWhatsAppDigits(phone: string): string {
+export function toInternationalDigits(phone: string): string {
   const cleaned = phone.replace(/[^\d+]/g, "")
   if (cleaned.startsWith("+")) return cleaned.slice(1)
   if (cleaned.startsWith("0")) return `233${cleaned.slice(1)}`
@@ -120,5 +121,5 @@ export function toWhatsAppDigits(phone: string): string {
 }
 
 export function whatsAppLink(phone: string, message: string): string {
-  return `https://wa.me/${toWhatsAppDigits(phone)}?text=${encodeURIComponent(message)}`
+  return `https://wa.me/${toInternationalDigits(phone)}?text=${encodeURIComponent(message)}`
 }

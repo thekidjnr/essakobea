@@ -6,6 +6,7 @@ import { refundPolicy } from '@/lib/refunds'
 import { formatBookingDate } from '@/lib/booking-time'
 import { getAdmin, unauthorized } from '@/lib/admin-auth'
 import { cancellationHtml } from '@/emails/cancellation'
+import { sendSmsSafely, bookingCancelledSms } from '@/lib/sms'
 
 // Admin cancellation: the salon cancelled, so a paid client is owed a full refund.
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -51,6 +52,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       }),
     })
   }
+
+  await sendSmsSafely('admin cancellation SMS', booking.client_phone,
+    bookingCancelledSms(booking, booking.payment_status === 'paid', share))
 
   return NextResponse.json({ success: true, refundAmount: refundPesewas })
 }

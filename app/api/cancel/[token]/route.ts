@@ -5,6 +5,7 @@ import { sendSafely } from '@/lib/payments'
 import { refundPolicy } from '@/lib/refunds'
 import { formatBookingDate } from '@/lib/booking-time'
 import { cancellationHtml } from '@/emails/cancellation'
+import { sendSmsSafely, bookingCancelledSms, clientCancelledAdminSms, ADMIN_NOTIFY_PHONE } from '@/lib/sms'
 
 // GET — lookup booking by token (for the cancel confirmation page)
 export async function GET(_req: Request, { params }: { params: Promise<{ token: string }> }) {
@@ -73,6 +74,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
       }),
     })
   }
+
+  await sendSmsSafely('client cancellation SMS', booking.client_phone,
+    bookingCancelledSms(booking, booking.payment_status === 'paid', share))
+  await sendSmsSafely('admin cancellation SMS', ADMIN_NOTIFY_PHONE, clientCancelledAdminSms(booking, reason))
 
   return NextResponse.json({ success: true, hoursNotice })
 }
