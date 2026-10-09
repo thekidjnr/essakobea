@@ -12,6 +12,7 @@ import { formatPhoneDisplay, isPhoneComplete } from "@/lib/phone";
 import { useLightboxSwipe } from "@/components/works/useLightboxSwipe";
 import {
   EMERGENCY_HOURS,
+  minutesToSlot,
   slotToMinutes,
   todayInAccra,
 } from "@/lib/booking-time";
@@ -297,18 +298,11 @@ function generateTimeSlots(open: string, close: string, interval: number) {
     const [h, m] = t.split(":").map(Number);
     return h * 60 + m;
   };
-  const toLabel = (mins: number) => {
-    const h = Math.floor(mins / 60),
-      m = mins % 60;
-    const period = h < 12 ? "AM" : "PM";
-    const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-    return `${h12}:${String(m).padStart(2, "0")} ${period}`;
-  };
   const slots: string[] = [];
   let cur = toMins(open || "08:00");
   const end = toMins(close || "18:00");
   while (cur < end) {
-    slots.push(toLabel(cur));
+    slots.push(minutesToSlot(cur));
     cur += interval;
   }
   // 12:XX AM = midnight (not shown in a salon context)
@@ -1187,20 +1181,23 @@ export default function BookingFlow() {
       .catch(() => {});
   }, []);
 
-  // ── Fetch slots when date or stylist changes (each stylist has their own slots)
+  // ── Fetch slots when date, stylist or service changes. Each stylist has
+  // their own slots, and the option's duration decides which start times fit.
   useEffect(() => {
     if (!booking.date) return;
     const dateStr = toDateStr(booking.date);
-    const stylistParam = booking.stylistId
-      ? `&stylistId=${booking.stylistId}`
-      : "";
+    const params = new URLSearchParams({ date: dateStr });
+    if (booking.stylistId) params.set("stylistId", booking.stylistId);
+    if (booking.serviceId) params.set("serviceId", booking.serviceId);
+    if (booking.optionId) params.set("optionId", booking.optionId);
+    if (booking.isEmergency) params.set("emergency", "1");
     // Clear the previous day's slots so they never show against the new date,
     // and ignore responses that arrive after the client picked another day.
     let stale = false;
     setBooked([]);
     setDayAvail(null);
     setDayStatus("loading");
-    fetch(`/api/availability?date=${dateStr}${stylistParam}`)
+    fetch(`/api/availability?${params}`)
       .then((r) => {
         if (!r.ok) throw new Error("availability failed");
         return r.json();
@@ -1224,7 +1221,12 @@ export default function BookingFlow() {
     return () => {
       stale = true;
     };
-  }, [booking.date, booking.stylistId, availRetry]);
+  }, [booking.date, booking.stylistId, booking.serviceId, booking.optionId, booking.isEmergency, availRetry]);
+
+  // A different option can make the picked time too long to fit, so drop it
+  useEffect(() => {
+    setBooking((b) => (b.time && bookedSlots.includes(b.time) ? { ...b, time: "" } : b));
+  }, [bookedSlots]);
 
   // ── Phone lookup with debounce
   useEffect(() => {

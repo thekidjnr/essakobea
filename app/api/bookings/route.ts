@@ -3,6 +3,7 @@ import { adminDb } from '@/lib/supabase/admin'
 import { initializePayment, generateReference, verifyPayment } from '@/lib/paystack'
 import { settleBookingPayment, TIMEOUT_CANCEL_REASON } from '@/lib/payments'
 import { dayOfWeek, slotToMinutes, appointmentStart, EMERGENCY_HOURS } from '@/lib/booking-time'
+import { isActiveBooking, optionDuration, peakOccupancy, stylistBusy, type ActiveBooking } from '@/lib/booking-duration'
 import { bookingTotals } from '@/lib/booking-fees'
 import { getServiceRules, bringsHair, BUNDLE_OPTIONS } from '@/lib/service-rules'
 import type { ServiceBookingOption, Stylist } from '@/lib/supabase/types'
@@ -54,6 +55,8 @@ export async function POST(req: Request) {
     if (slotMins < openMins || slotMins >= closeMins || (slotMins - openMins) % interval !== 0) {
       return NextResponse.json({ error: 'That time is outside our opening hours. Please choose another.' }, { status: 409 })
     }
+    // Legacy bookings with no stored duration fill one slot of the day's grid
+    const dayInterval: number = avail?.slot_interval_minutes ?? 60
 
     // ── 1. Look up authoritative price from DB ────────────────────────────────
     const { data: svc } = await adminDb
@@ -72,6 +75,13 @@ export async function POST(req: Request) {
       )
     }
     const baseDepositGHS = Number(option.price_raw)
+    const duration = optionDuration(serviceId, option)
+    if (!emergency && slotMins + duration > closeMins) {
+      return NextResponse.json(
+        { error: 'This appointment would run past closing time. Please choose an earlier time.' },
+        { status: 409 },
+      )
+    }
 
     // ── 1a. Per-service hair rules: drop anything the form didn't offer ───────
     const rules = getServiceRules(serviceId)
@@ -122,25 +132,25 @@ export async function POST(req: Request) {
     }
 
     // ── 2b. Resolve stylist assignment (each stylist holds their own slot) ─────
-    const { data: activeSameDay } = await adminDb
+    const { data: activeSameDay, error: activeError } = await adminDb
       .from('bookings')
-      .select('stylist_id, time_slot, status, payment_status, created_at')
+      .select('stylist_id, time_slot, duration_minutes, status, payment_status, created_at')
       .eq('booking_date', bookingDate)
       .in('status', ['pending', 'confirmed'])
 
-    const staleThresholdMs = Date.now() - SLOT_HOLD_MS
-    const activeBookingsToday = (activeSameDay ?? []).filter((b) => {
-      if (b.status === 'confirmed') return true
-      if (b.status === 'pending' && b.payment_status === 'unpaid') {
-        return new Date(b.created_at).getTime() > staleThresholdMs
-      }
-      return true
-    })
+    if (activeError) {
+      console.error(activeError)
+      return NextResponse.json({ error: 'Could not check availability. Please try again.' }, { status: 500 })
+    }
+    const activeBookingsToday = ((activeSameDay ?? []) as ActiveBooking[])
+      .filter((b) => isActiveBooking(b, SLOT_HOLD_MS))
+    // A stylist is free only if none of their bookings overlap this appointment
+    const busy = (id: string) => stylistBusy(activeBookingsToday, id, slotMins, duration, dayInterval)
 
-    // Salon-wide limits: physical stations per slot, and bookings per day.
+    // Salon-wide limits: physical stations at once, and bookings per day.
     const maxPerSlot = avail?.max_bookings_per_slot ?? 1
     const maxPerDay  = avail?.max_bookings_per_day ?? 0
-    if (activeBookingsToday.filter((b) => b.time_slot === timeSlot).length >= maxPerSlot) {
+    if (peakOccupancy(activeBookingsToday, slotMins, duration, dayInterval) >= maxPerSlot) {
       return NextResponse.json({ error: 'This time slot was just taken. Please go back and choose a different time.' }, { status: 409 })
     }
     if (maxPerDay > 0 && activeBookingsToday.length >= maxPerDay) {
@@ -159,7 +169,7 @@ export async function POST(req: Request) {
       if (stylist.daily_capacity && stylistCountToday >= stylist.daily_capacity) {
         return NextResponse.json({ error: 'This stylist is fully booked for that day. Please choose a different date or stylist.' }, { status: 409 })
       }
-      if (activeBookingsToday.some((b) => b.stylist_id === stylistId && b.time_slot === timeSlot)) {
+      if (busy(stylistId)) {
         return NextResponse.json({ error: 'This time slot was just taken. Please go back and choose a different time.' }, { status: 409 })
       }
       resolvedStylistId = stylist.id
@@ -173,9 +183,9 @@ export async function POST(req: Request) {
         .map((s) => ({
           stylist: s,
           countToday: activeBookingsToday.filter((b) => b.stylist_id === s.id).length,
-          takenThisSlot: activeBookingsToday.some((b) => b.stylist_id === s.id && b.time_slot === timeSlot),
+          busy: busy(s.id),
         }))
-        .filter((e) => !e.takenThisSlot && (!e.stylist.daily_capacity || e.countToday < e.stylist.daily_capacity))
+        .filter((e) => !e.busy && (!e.stylist.daily_capacity || e.countToday < e.stylist.daily_capacity))
         .sort((a, b) => a.countToday - b.countToday)
 
       if (eligible.length === 0) {
@@ -213,6 +223,7 @@ export async function POST(req: Request) {
         treatment: option.name ?? treatment,
         booking_date: bookingDate,
         time_slot: timeSlot,
+        duration_minutes: duration,
         notes: notes || null,
         status: 'pending',
         payment_status: 'unpaid',
@@ -248,6 +259,32 @@ export async function POST(req: Request) {
 
     if (!booking) {
       return NextResponse.json({ error: 'Failed to create booking' }, { status: 500 })
+    }
+
+    // ── 3b. Two clients can pass the checks above at the same moment with
+    // overlapping times. The database only stops identical start times, so
+    // look again now both rows exist: the booking created first keeps the
+    // stylist, and this one steps aside.
+    const { data: sameStylist } = await adminDb
+      .from('bookings')
+      .select('id, stylist_id, time_slot, duration_minutes, status, payment_status, created_at')
+      .eq('booking_date', bookingDate)
+      .eq('stylist_id', resolvedStylistId)
+      .in('status', ['pending', 'confirmed'])
+      .neq('id', booking.id)
+    const earlier = ((sameStylist ?? []) as (ActiveBooking & { id: string })[]).filter(
+      (b) => isActiveBooking(b, SLOT_HOLD_MS) &&
+        (b.created_at < booking.created_at || (b.created_at === booking.created_at && b.id < booking.id)),
+    )
+    if (resolvedStylistId && stylistBusy(earlier, resolvedStylistId, slotMins, duration, dayInterval)) {
+      await adminDb
+        .from('bookings')
+        .update({ status: 'cancelled', cancellation_reason: 'Time taken by another booking', cancelled_at: new Date().toISOString() })
+        .eq('id', booking.id)
+      return NextResponse.json(
+        { error: 'This time slot was just taken. Please go back and choose a different time.' },
+        { status: 409 },
+      )
     }
 
     // ── 4. Initialize Paystack deposit ────────────────────────────────────────

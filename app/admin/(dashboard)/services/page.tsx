@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { DbService } from "@/lib/supabase/types";
+import { formatDuration, optionDuration } from "@/lib/booking-duration";
 import ImageUpload from "@/components/admin/ImageUpload";
 import Toggle from "@/components/admin/Toggle";
 import {
@@ -23,7 +24,7 @@ import {
 
 // ─── Form types ───────────────────────────────────────────────────────────────
 
-type BookOpt = { id?: string; name: string; price: string; price_raw: string; note: string };
+type BookOpt = { id?: string; name: string; price: string; price_raw: string; duration: string; note: string };
 
 type ServiceForm = {
   name: string;
@@ -37,7 +38,10 @@ type ServiceForm = {
   booking_options: BookOpt[];
 };
 
-const EMPTY_OPT: BookOpt = { name: "", price: "", price_raw: "", note: "" };
+const EMPTY_OPT: BookOpt = { name: "", price: "", price_raw: "", duration: "", note: "" };
+
+// Half-hour steps up to 10 hours
+const DURATION_CHOICES = Array.from({ length: 20 }, (_, i) => (i + 1) * 30);
 const EMPTY_FORM: ServiceForm = {
   name: "", description: "",
   image_url: "", image_position: "object-center", flip: false, is_active: true,
@@ -58,6 +62,7 @@ function dbToForm(svc: DbService): ServiceForm {
       name: o.name,
       price: o.price,
       price_raw: String(o.price_raw ?? ""),
+      duration: String(optionDuration(svc.slug, o)),
       note: o.note ?? "",
     })),
   };
@@ -93,6 +98,7 @@ function formToPayload(form: ServiceForm) {
         name: o.name,
         price: o.price,
         price_raw: Number(o.price_raw) || 0,
+        ...(Number(o.duration) > 0 ? { duration_minutes: Number(o.duration) } : {}),
         ...(o.note.trim() ? { note: o.note.trim() } : {}),
       })),
   };
@@ -347,6 +353,7 @@ export default function AdminServicesPage() {
           <FormSection title="Booking options">
             <BookingOptionsBuilder
               options={form.booking_options}
+              defaultDuration={optionDuration(editing?.slug ?? "", null)}
               onChange={(opts) => patchForm({ booking_options: opts })}
             />
           </FormSection>
@@ -369,14 +376,16 @@ export default function AdminServicesPage() {
 
 // ─── Booking Options Builder ──────────────────────────────────────────────────
 
-const OPT_GRID = "sm:grid sm:grid-cols-[minmax(0,1fr)_150px_120px_44px] sm:gap-2 sm:items-center";
+const OPT_GRID = "sm:grid sm:grid-cols-[minmax(0,1fr)_150px_110px_120px_44px] sm:gap-2 sm:items-center";
 
 function BookingOptionsBuilder({
   options,
   onChange,
+  defaultDuration,
 }: {
   options: BookOpt[];
   onChange: (opts: BookOpt[]) => void;
+  defaultDuration: number;
 }) {
   const update = (i: number, field: keyof BookOpt, val: string) =>
     onChange(options.map((o, idx) => (idx === i ? { ...o, [field]: val } : o)));
@@ -392,6 +401,7 @@ function BookingOptionsBuilder({
     <div className="flex flex-col gap-4">
       <p className="font-sans text-[13px] text-muted">
         Clients see the &ldquo;Shown as&rdquo; price. The deposit is charged online to hold the slot.
+        The stylist is booked for the full duration, so set it to the longest the option usually takes.
       </p>
 
       {options.length === 0 && (
@@ -403,6 +413,7 @@ function BookingOptionsBuilder({
           <span>Option</span>
           <span>Shown as</span>
           <span>Deposit (₵)</span>
+          <span>Duration</span>
           <span />
         </div>
       )}
@@ -440,6 +451,21 @@ function BookingOptionsBuilder({
                     aria-label="Deposit (₵)"
                     className={inputClass}
                   />
+                  <span className="relative col-span-2 sm:col-span-1">
+                    <select
+                      value={opt.duration || String(defaultDuration)}
+                      onChange={(e) => update(i, "duration", e.target.value)}
+                      aria-label="Duration"
+                      className={`${inputClass} appearance-none cursor-pointer pr-9`}
+                    >
+                      {DURATION_CHOICES.map((m) => (
+                        <option key={m} value={m}>{formatDuration(m)}</option>
+                      ))}
+                    </select>
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted">
+                      <path d="M3 4.5l3 3 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
                 </div>
                 <IconButton label="Remove option" onClick={() => remove(i)} className="hidden sm:inline-flex">
                   {CloseIcon}
@@ -477,7 +503,7 @@ function BookingOptionsBuilder({
         </ul>
       )}
 
-      <Button variant="secondary" onClick={() => onChange([...options, { ...EMPTY_OPT }])} className="self-start">
+      <Button variant="secondary" onClick={() => onChange([...options, { ...EMPTY_OPT, duration: String(defaultDuration) }])} className="self-start">
         Add option
       </Button>
     </div>

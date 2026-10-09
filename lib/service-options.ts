@@ -11,6 +11,9 @@ export function validateBookingOptions(options: unknown): string | null {
     if (ids.has(o.id)) return `Two booking options share the id "${o.id}"`
     ids.add(o.id)
     if (!(Number(o.price_raw) > 0)) return `"${o.name}" needs an online price above ₵0`
+    if (o.duration_minutes !== undefined && !(Number.isInteger(o.duration_minutes) && o.duration_minutes > 0 && o.duration_minutes <= 720)) {
+      return `"${o.name}" needs a duration between 1 minute and 12 hours`
+    }
   }
   return null
 }

@@ -15,6 +15,25 @@ export function slotToMinutes(slot: string): number | null {
   return h * 60 + min
 }
 
+// Minutes since midnight → "2:00 PM", the label booking slots are stored as
+export function minutesToSlot(mins: number): string {
+  const h = Math.floor(mins / 60)
+  const m = mins % 60
+  const period = h < 12 ? 'AM' : 'PM'
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h
+  return `${h12}:${String(m).padStart(2, '0')} ${period}`
+}
+
+// Start times on a day's grid, in minutes since midnight
+export function slotGrid(open: string, close: string, interval: number): number[] {
+  const start = slotToMinutes(open) ?? 0
+  const end = slotToMinutes(close) ?? 0
+  const step = interval > 0 ? interval : 60
+  const out: number[] = []
+  for (let t = start; t < end; t += step) out.push(t)
+  return out
+}
+
 // The moment an appointment starts, in ms since epoch. Falls back to midnight
 // when the slot can't be parsed, so callers always get a real number.
 export function appointmentStart(bookingDate: string, timeSlot: string): number {

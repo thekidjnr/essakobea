@@ -18,6 +18,7 @@ export interface Booking {
   treatment:           string
   booking_date:        string   // ISO date "YYYY-MM-DD"
   time_slot:           string
+  duration_minutes:    number | null   // null on bookings made before durations
   notes:               string | null
   status:              BookingStatus
   payment_status:      PaymentStatus
@@ -86,6 +87,7 @@ export interface ServiceBookingOption {
   name:      string
   price:     string   // display label e.g. "₵300" or "₵250 – ₵450"
   price_raw: number   // GHS cedis — charged as deposit for online payment
+  duration_minutes?: number  // how long the stylist is busy; see lib/booking-duration
   note?:     string   // optional context shown on services page
 }
 

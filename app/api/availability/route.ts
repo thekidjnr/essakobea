@@ -1,104 +1,104 @@
 import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/supabase/admin'
-import type { Stylist } from '@/lib/supabase/types'
-import { dayOfWeek } from '@/lib/booking-time'
+import type { ServiceBookingOption, Stylist } from '@/lib/supabase/types'
+import { dayOfWeek, minutesToSlot, slotGrid, slotToMinutes, EMERGENCY_HOURS } from '@/lib/booking-time'
+import {
+  isActiveBooking, optionDuration, peakOccupancy, stylistBusy, type ActiveBooking,
+} from '@/lib/booking-duration'
 
 // Matches the hold window in the bookings API
 const SLOT_HOLD_MS = 30 * 60 * 1000
 
-interface ActiveBooking {
-  time_slot:      string
-  stylist_id:     string | null
-  status:         string
-  payment_status: string
-  created_at:     string
-}
-
-// GET /api/availability?date=YYYY-MM-DD&stylistId=optional
+// GET /api/availability?date=YYYY-MM-DD&stylistId=&serviceId=&optionId=&emergency=1
 //
-// Availability is now scoped per stylist: each stylist holds at most one
-// booking per exact time slot, and caps out at their own `daily_capacity`
-// appointments per day. When no stylistId is given ("Any Available"), a slot
-// is only shown as full once every available stylist is either booked at
-// that slot or has hit their daily cap for the day.
+// A booking keeps its stylist busy for the option's full duration, so a start
+// time is only offered when the chosen stylist is free for the whole
+// appointment. With no stylistId ("Any Available"), a time is offered while
+// at least one stylist is. Outside emergency bookings, the appointment must
+// also finish by closing time.
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const date = searchParams.get('date')
   const stylistId = searchParams.get('stylistId') || null
+  const serviceId = searchParams.get('serviceId') || ''
+  const optionId = searchParams.get('optionId') || ''
+  const emergency = searchParams.get('emergency') === '1'
   if (!date) return NextResponse.json({ error: 'date required' }, { status: 400 })
 
   const weekday = dayOfWeek(date)
 
-  const [{ data: avail }, { data: blocked }, { data: bookings }, { data: stylists }] = await Promise.all([
+  const [{ data: avail }, { data: blocked }, { data: bookings, error: bookingsError }, { data: stylists }, { data: svc }] = await Promise.all([
     adminDb.from('availability').select('*').eq('day_of_week', weekday).maybeSingle(),
     adminDb.from('blocked_dates').select('id').eq('date', date).maybeSingle(),
     adminDb
       .from('bookings')
-      .select('time_slot, stylist_id, status, payment_status, created_at')
+      .select('time_slot, stylist_id, duration_minutes, status, payment_status, created_at')
       .eq('booking_date', date)
       .in('status', ['pending', 'confirmed']),
     adminDb.from('stylists').select('*').eq('is_available', true),
+    serviceId
+      ? adminDb.from('services').select('booking_options').eq('slug', serviceId).maybeSingle()
+      : Promise.resolve({ data: null }),
   ])
 
-  const staleThreshold = Date.now() - SLOT_HOLD_MS
+  // Never show a day as free because its bookings couldn't be read
+  if (bookingsError) {
+    console.error(bookingsError)
+    return NextResponse.json({ error: 'Could not load availability' }, { status: 500 })
+  }
+
+  const interval: number = avail?.slot_interval_minutes ?? 60
+  const option = (svc?.booking_options as ServiceBookingOption[] | null)?.find((o) => o.id === optionId)
+  // Without a service the form hasn't picked one yet, so treat it as one slot
+  const duration = serviceId ? optionDuration(serviceId, option) : interval
+
   const maxPerDay: number  = avail?.max_bookings_per_day  ?? 0  // 0 = unlimited, salon-wide
-  // Physical station limit — how many clients the salon can seat at once,
-  // independent of how many stylists are rostered. Still applies on top of
-  // each stylist's own per-slot exclusivity below.
+  // Physical station limit: how many clients the salon can seat at once,
+  // independent of how many stylists are rostered.
   const maxPerSlot: number = avail?.max_bookings_per_slot ?? 1
 
-  // Active bookings = confirmed, OR pending-unpaid within the hold window
-  const activeBookings = ((bookings ?? []) as ActiveBooking[]).filter((b) => {
-    if (b.status === 'confirmed') return true
-    if (b.status === 'pending' && b.payment_status === 'unpaid') {
-      return new Date(b.created_at).getTime() > staleThreshold
-    }
-    return true
-  })
+  const activeBookings = ((bookings ?? []) as ActiveBooking[]).filter((b) => isActiveBooking(b, SLOT_HOLD_MS))
 
   const dayIsOpen = !blocked && (avail?.is_available ?? false)
-  const salonDayFull = maxPerDay > 0 && activeBookings.length >= maxPerDay
+  let dayFull = maxPerDay > 0 && activeBookings.length >= maxPerDay
 
-  // Station limit — a slot is full once total bookings there (any stylist)
-  // reach the salon's physical capacity, regardless of stylist assignment.
-  const slotTotals: Record<string, number> = {}
-  for (const b of activeBookings) slotTotals[b.time_slot] = (slotTotals[b.time_slot] ?? 0) + 1
-  const stationFullSlots = new Set(Object.entries(slotTotals).filter(([, n]) => n >= maxPerSlot).map(([slot]) => slot))
+  const allStylists = (stylists as Stylist[] | null) ?? []
+  const underCap = (s: Stylist) =>
+    !s.daily_capacity || activeBookings.filter((b) => b.stylist_id === s.id).length < s.daily_capacity
 
-  let bookedSlots: string[] = []
-  let dayFull = salonDayFull
-
+  let candidates: Stylist[]
   if (stylistId) {
-    const stylistBookings = activeBookings.filter((b) => b.stylist_id === stylistId)
-    const stylist = (stylists as Stylist[] | null)?.find((s) => s.id === stylistId)
-    const ownSlots = new Set(stylistBookings.map((b) => b.time_slot))
-    bookedSlots = Array.from(new Set([...ownSlots, ...stationFullSlots]))
-    const capacityFull = !!stylist?.daily_capacity && stylistBookings.length >= stylist.daily_capacity
-    dayFull = dayFull || capacityFull || !stylist
+    const stylist = allStylists.find((s) => s.id === stylistId)
+    candidates = stylist && underCap(stylist) ? [stylist] : []
   } else {
-    // "Any Available" — a slot is full only once EVERY eligible stylist is
-    // taken there (or the station limit is reached), and the day is full
-    // once no stylist has capacity left.
-    const eligibleStylists = (stylists as Stylist[] | null ?? []).filter((s) => {
-      const count = activeBookings.filter((b) => b.stylist_id === s.id).length
-      return !s.daily_capacity || count < s.daily_capacity
-    })
-
-    dayFull = dayFull || eligibleStylists.length === 0
-
-    const allActiveSlots = new Set(activeBookings.map((b) => b.time_slot))
-    const stylistExhaustedSlots = Array.from(allActiveSlots).filter((slot) =>
-      eligibleStylists.every((s) => activeBookings.some((b) => b.stylist_id === s.id && b.time_slot === slot))
-    )
-    bookedSlots = Array.from(new Set([...stylistExhaustedSlots, ...stationFullSlots]))
+    // "Any Available": the day is full once no stylist has capacity left
+    candidates = allStylists.filter(underCap)
   }
+  dayFull = dayFull || candidates.length === 0
+
+  // Every start time the form may show: the day's grid, plus the emergency grid
+  const closeMins = emergency ? null : slotToMinutes(avail?.close_time ?? '')
+  const starts = new Set([
+    ...(avail ? slotGrid(avail.open_time, avail.close_time, interval) : []),
+    ...slotGrid(EMERGENCY_HOURS.open, EMERGENCY_HOURS.close, EMERGENCY_HOURS.interval),
+  ])
+
+  const bookedSlots = Array.from(starts)
+    .filter((start) => {
+      if (closeMins !== null && start + duration > closeMins) return true
+      if (peakOccupancy(activeBookings, start, duration, interval) >= maxPerSlot) return true
+      return candidates.every((s) => stylistBusy(activeBookings, s.id, start, duration, interval))
+    })
+    .sort((a, b) => a - b)
+    .map(minutesToSlot)
 
   return NextResponse.json({
     available: dayIsOpen && !dayFull,
     bookedSlots,
     openTime:      avail?.open_time,
     closeTime:     avail?.close_time,
-    slotInterval:  avail?.slot_interval_minutes ?? 60,
+    slotInterval:  interval,
+    duration,
     dayFull,
     bookingsToday: activeBookings.length,
   })
