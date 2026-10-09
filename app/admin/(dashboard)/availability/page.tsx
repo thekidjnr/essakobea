@@ -138,6 +138,7 @@ export default function AdminAvailability() {
   const [saving, setSaving]       = useState(false);
   const [saveOk, setSaveOk]       = useState(false);
   const [newDate, setNewDate]     = useState("");
+  const [newEndDate, setNewEndDate] = useState("");
   const [newReason, setNewReason] = useState("");
   const [blocking, setBlocking]   = useState(false);
   const [loading, setLoading]     = useState(true);
@@ -210,12 +211,12 @@ export default function AdminAvailability() {
     const res = await fetch("/api/availability/blocked", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date: newDate, reason: newReason || null }),
+      body: JSON.stringify({ date: newDate, endDate: newEndDate || null, reason: newReason || null }),
     }).catch(() => null);
     const data = res ? await res.json().catch(() => ({})) : {};
     setBlocking(false);
     if (!res?.ok) { setBlockedError(data.error ?? "Could not block date. Please try again."); return; }
-    setNewDate(""); setNewReason(""); loadBlocked();
+    setNewDate(""); setNewEndDate(""); setNewReason(""); loadBlocked();
   };
 
   const unblockDate = async (date: string) => {
@@ -365,12 +366,24 @@ export default function AdminAvailability() {
             <SectionTitle italic="off">Days</SectionTitle>
             <Card>
               <div className="flex flex-col sm:flex-row sm:items-end gap-3">
-                <Field label="Date" className="sm:w-[44%]">
+                <Field label="Date" className="sm:w-[28%]">
                   <input
                     type="date"
                     value={newDate}
                     min={new Date().toISOString().slice(0, 10)}
-                    onChange={(e) => setNewDate(e.target.value)}
+                    onChange={(e) => {
+                      setNewDate(e.target.value);
+                      if (newEndDate && e.target.value > newEndDate) setNewEndDate("");
+                    }}
+                    className={inputClass}
+                  />
+                </Field>
+                <Field label="Until (optional)" className="sm:w-[28%]">
+                  <input
+                    type="date"
+                    value={newEndDate}
+                    min={newDate || new Date().toISOString().slice(0, 10)}
+                    onChange={(e) => setNewEndDate(e.target.value)}
                     className={inputClass}
                   />
                 </Field>
@@ -386,7 +399,7 @@ export default function AdminAvailability() {
               </div>
               <div className="mt-3 flex justify-end">
                 <Button onClick={blockDate} disabled={!newDate || blocking} className="w-full sm:w-auto">
-                  {blocking ? "Blocking…" : "Block date"}
+                  {blocking ? "Blocking…" : newEndDate && newEndDate !== newDate ? "Block dates" : "Block date"}
                 </Button>
               </div>
 

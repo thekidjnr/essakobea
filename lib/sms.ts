@@ -84,9 +84,10 @@ export function bookingConfirmedSms(
   return `Hi ${firstName(b.client_name)}, your Essakobea booking is confirmed: ${b.service_name}, ${when(b)}${stylist}.${checkEmail}`
 }
 
-export function bookingAdminSms(b: SmsBooking & { amount?: number | null }): string {
+export function bookingAdminSms(b: SmsBooking & { amount?: number | null; stylist_name?: string | null }): string {
   const paid = Math.round((b.amount ?? 0) / 100)
-  return `New booking: ${b.client_name} (${b.client_phone}), ${b.service_name}, ${when(b)}. Paid GHS ${paid.toLocaleString()}.`
+  const stylist = b.stylist_name ?? 'any available stylist'
+  return `New booking: ${b.client_name} (${b.client_phone}), ${b.service_name} with ${stylist}, ${when(b)}. Paid GHS ${paid.toLocaleString()}.`
 }
 
 export function bookingCancelledSms(b: SmsBooking, paid: boolean, refundShare: number): string {
