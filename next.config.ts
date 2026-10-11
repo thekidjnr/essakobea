@@ -25,6 +25,14 @@ const nextConfig: NextConfig = {
     ];
   },
   images: {
+    // Over the Vercel Hobby transformation limit: serve originals until the
+    // billing cycle resets, then flip this back to false
+    unoptimized: true,
+    // Supabase only sends max-age=3600, so without this every image is
+    // re-transformed every few hours. Upload replacements under a new filename.
+    minimumCacheTTL: 2678400,
+    // Fewer widths means fewer transformations per image
+    deviceSizes: [640, 828, 1200, 1920],
     remotePatterns: [
       {
         protocol: "https",

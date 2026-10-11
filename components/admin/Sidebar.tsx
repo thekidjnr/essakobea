@@ -39,7 +39,7 @@ export default function Sidebar() {
     <aside className="w-[252px] flex-shrink-0 bg-ink text-paper h-screen sticky top-0 flex flex-col px-5 pt-10 pb-6">
       <Link href="/admin" className="block px-3.5">
         <span className="relative block h-[11px] w-[138px]">
-          <Image src={logo.light} alt="Essakobea" fill sizes="138px" className="object-contain object-left" />
+          <Image src={logo.light} alt="Essakobea" fill sizes="138px" unoptimized className="object-contain object-left" />
         </span>
       </Link>
 

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/supabase/admin'
 import { getAdmin } from '@/lib/admin-auth'
-import { imageExtension, MAX_UPLOAD_BYTES } from '@/lib/uploads'
+import { compressImage, imageExtension, MAX_UPLOAD_BYTES } from '@/lib/uploads'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,13 +19,12 @@ export async function POST(req: Request) {
 
   const rawFolder = (formData.get('folder') as string | null) ?? 'uploads'
   const folder = rawFolder.replace(/[^a-z0-9-]/gi, '') || 'uploads'
-  const filename = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-
-  const buffer = Buffer.from(await file.arrayBuffer())
+  const image = await compressImage(file, ext)
+  const filename = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${image.ext}`
 
   const { error } = await adminDb.storage
     .from('media')
-    .upload(filename, buffer, { contentType: file.type, upsert: false })
+    .upload(filename, image.buffer, { contentType: image.contentType, upsert: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

@@ -47,7 +47,7 @@ function LoginForm() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/25 to-transparent" />
         <div className="absolute top-8 left-6 md:top-10 md:left-12">
-          <Image src={logo.light} alt="Essakobea" width={417} height={30} className="h-auto w-[170px] md:w-[200px]" priority />
+          <Image src={logo.light} alt="Essakobea" width={417} height={30} unoptimized className="h-auto w-[170px] md:w-[200px]" priority />
         </div>
       </div>
 

@@ -38,6 +38,7 @@ export default function Nav() {
               alt="Essakobea"
               fill
               priority
+              unoptimized
               className="object-contain object-left"
             />
           </Link>

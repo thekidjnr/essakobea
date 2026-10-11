@@ -3,11 +3,13 @@
 // photos are often bigger than that, and iPhone HEIC files don't display in
 // most browsers.
 
-const MAX_EDGE = 2400
-const JPEG_QUALITY = 0.85
+// Matches the server-side limits in lib/uploads.ts. Images are served
+// unoptimized, so what's stored is what visitors download.
+const MAX_EDGE = 1600
+const JPEG_QUALITY = 0.8
 // Web-friendly files at or under this size are uploaded untouched, so small
 // PNGs keep their transparency.
-const PASSTHROUGH_BYTES = 1.5 * 1024 * 1024
+const PASSTHROUGH_BYTES = 400 * 1024
 const WEB_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif']
 
 function isHeic(file: File) {

@@ -10,7 +10,7 @@ export default function Footer() {
         {/* Brand */}
         <div>
           <div className="relative h-4 w-[150px] mb-4">
-            <Image src={logo.light} alt="Essakobea" fill className="object-contain object-left" />
+            <Image src={logo.light} alt="Essakobea" fill unoptimized className="object-contain object-left" />
           </div>
           <p className="font-serif text-[1.5rem] font-light text-paper/80 leading-snug italic">
             Premium Beauty,<br />Elevated.
