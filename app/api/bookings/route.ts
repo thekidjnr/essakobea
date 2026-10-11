@@ -241,6 +241,8 @@ export async function POST(req: Request) {
         customization_fee: customizationFeeGHS * 100,
         emergency_fee: emergencyFeeGHS * 100,
         service_charge: serviceChargeGHS * 100,
+        // Only sent when set, so bookings without a stylist fee still insert before migration 023 runs
+        ...(stylistAdj !== 0 && { stylist_fee: stylistAdj * 100 }),
       })
       .select()
       .single()

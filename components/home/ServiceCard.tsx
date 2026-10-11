@@ -26,6 +26,22 @@ export default function ServiceCard({
   return (
     <div className="group cursor-pointer">
       <div className="relative">
+        {images.length === 0 ? (
+          // No photos yet: a plain tile so the service still shows
+          <button
+            type="button"
+            onClick={() => router.push(`/book?service=${slug}`)}
+            aria-label={`Book ${name}`}
+            className="relative block w-full aspect-[3/4] bg-mist border border-ink/[0.08] overflow-hidden"
+          >
+            <span className="absolute top-5 left-5 font-sans text-[10px] tracking-widest text-ink/50 bg-ink/[0.06] px-2.5 py-1">
+              {number}
+            </span>
+            <span className="absolute inset-0 flex items-center justify-center px-6 font-serif italic text-[clamp(1.25rem,2vw,1.75rem)] text-ink/30 text-center leading-tight">
+              {name.toLowerCase()}
+            </span>
+          </button>
+        ) : (
         <ImageCarousel
           images={images}
           alt={`${name} | Essakobea`}
@@ -37,6 +53,7 @@ export default function ServiceCard({
           onDraggingChange={setDragging}
           imageClassName={`transition-transform duration-700 ${dragging ? "" : "group-hover:scale-105"}`}
         />
+        )}
         <div className="absolute inset-0 bg-ink/0 group-hover:bg-ink/15 transition-colors duration-500 pointer-events-none" />
       </div>
 

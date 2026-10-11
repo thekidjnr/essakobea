@@ -11,7 +11,7 @@ interface BookingData {
   client_name: string; service_id: string; service_name: string; treatment: string;
   booking_date: string; time_slot: string; status: string;
   customization_type: string | null; is_emergency: boolean;
-  amount: number; customization_fee: number; emergency_fee: number; service_charge: number;
+  amount: number; stylist_fee?: number; customization_fee: number; emergency_fee: number; service_charge: number;
 }
 
 // "not_paid": Paystack says abandoned or failed, the slot has been released.
@@ -122,6 +122,16 @@ function BookingSuccess() {
             ))}
             {/* Fee breakdown */}
             <div className="mt-4 pt-4 border-t border-ink/[0.07] flex flex-col gap-1.5">
+              {!!booking.stylist_fee && (
+                <div className="flex justify-between">
+                  <span className="font-sans text-[10px] tracking-widest uppercase text-ink/35">
+                    {booking.stylist_fee > 0 ? "Stylist fee" : "Stylist discount"}
+                  </span>
+                  <span className="font-sans text-[12px] text-ink/60">
+                    {booking.stylist_fee > 0 ? "+" : "−"}{ghs(Math.abs(booking.stylist_fee))}
+                  </span>
+                </div>
+              )}
               {booking.customization_fee > 0 && (
                 <div className="flex justify-between">
                   <span className="font-sans text-[10px] tracking-widest uppercase text-ink/35">Customization</span>

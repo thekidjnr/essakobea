@@ -12,6 +12,7 @@ export interface AdminBooking {
   refund_amount: number; refunded_at: string | null; cancellation_reason: string | null;
   customization_type: string | null; is_emergency: boolean;
   customization_fee: number; emergency_fee: number; service_charge: number;
+  stylist_fee?: number;
   stylist_name: string | null;
   hair_unit_type: "own_new" | "own_existing" | "own_extensions" | "none" | null;
   unit_photos: string[];

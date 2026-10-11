@@ -17,6 +17,8 @@ export function bookingConfirmationHtml(opts: {
   /** Worded for the service, from customizationLabel() in lib/service-rules */
   customizationLabel?: string | null
   isEmergency?:       boolean
+  /** Chosen stylist's fee (negative for a discount), charged on top of the service price */
+  stylistFee?:        number
   customizationFee?:  number
   emergencyFee?:      number
   serviceCharge?:     number
@@ -46,11 +48,13 @@ export function bookingConfirmationHtml(opts: {
   ].filter(Boolean) as [string, string][]
 
   // Fee breakdown lines (only shown when there are add-ons)
-  const hasAddOns = (opts.customizationFee ?? 0) > 0 || (opts.emergencyFee ?? 0) > 0 || (opts.serviceCharge ?? 0) > 0
-  const baseAmount = opts.depositGHS - (opts.customizationFee ?? 0) - (opts.emergencyFee ?? 0) - (opts.serviceCharge ?? 0)
+  const stylistFee = opts.stylistFee ?? 0
+  const hasAddOns = stylistFee !== 0 || (opts.customizationFee ?? 0) > 0 || (opts.emergencyFee ?? 0) > 0 || (opts.serviceCharge ?? 0) > 0
+  const baseAmount = opts.depositGHS - stylistFee - (opts.customizationFee ?? 0) - (opts.emergencyFee ?? 0) - (opts.serviceCharge ?? 0)
 
   const feeRows: [string, string][] = hasAddOns ? [
     ['Service / Deposit', `₵${baseAmount}`] as [string, string],
+    ...(stylistFee ? [[stylistFee > 0 ? 'Stylist fee' : 'Stylist discount', `${stylistFee > 0 ? '+' : '−'}₵${Math.abs(stylistFee)}`] as [string, string]] : []),
     ...(opts.customizationFee ? [[`Customization (${opts.customizationType})`, `+₵${opts.customizationFee}`] as [string, string]] : []),
     ...(opts.emergencyFee ? [['Emergency fee', `+₵${opts.emergencyFee}`] as [string, string]] : []),
     ...(opts.serviceCharge ? [['Service charge (5%)', `+₵${opts.serviceCharge}`] as [string, string]] : []),
@@ -70,7 +74,7 @@ export function bookingConfirmationHtml(opts: {
 
   const depositNote = opts.isDeposit
     ? `<p style="font-size:12px;color:#6B6560;font-family:'Inter',Arial,sans-serif;line-height:1.6;margin:0 0 0">
-        The remaining balance is due on the day of your appointment.
+        The remaining balance is due on the day of your appointment.${stylistFee > 0 ? ` The ₵${stylistFee} stylist fee is added on top of your service price and is not deducted from your balance.` : ''}
        </p>`
     : ''
 

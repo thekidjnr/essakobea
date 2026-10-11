@@ -158,6 +158,7 @@ async function sendBookingConfirmedEmails(booking: Row) {
     customizationType: booking.customization_type ?? null,
     customizationLabel: customizationLabel(booking.service_id, booking.customization_type),
     isEmergency:       booking.is_emergency ?? false,
+    stylistFee:        Math.round((booking.stylist_fee ?? 0) / 100),
     customizationFee:  Math.round((booking.customization_fee ?? 0) / 100),
     emergencyFee:      Math.round((booking.emergency_fee ?? 0) / 100),
     serviceCharge:     Math.round((booking.service_charge ?? 0) / 100),

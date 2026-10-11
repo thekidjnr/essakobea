@@ -8,8 +8,6 @@ import {
   SectionTitle,
   Card,
   Button,
-  IconButton,
-  Segmented,
   inputClass,
   Field,
   ErrorNote,
@@ -24,9 +22,6 @@ interface AvailDay {
   is_available: boolean;
   open_time: string;
   close_time: string;
-  slot_interval_minutes: number;
-  max_bookings_per_slot: number;
-  max_bookings_per_day: number;
 }
 interface BlockedDate { id: string; date: string; reason: string | null; }
 
@@ -76,62 +71,6 @@ function TimeSelect({
   );
 }
 
-const MinusIcon = (
-  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-    <path d="M3 7h8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-  </svg>
-);
-const PlusIcon = (
-  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-    <path d="M3 7h8M7 3v8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-  </svg>
-);
-
-function Stepper({
-  label,
-  hint,
-  value,
-  display,
-  min,
-  onChange,
-}: {
-  label: string;
-  hint: string;
-  value: number;
-  display?: string;
-  min: number;
-  onChange: (n: number) => void;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-4 py-4">
-      <div className="min-w-0">
-        <p className="font-sans text-[15px] text-ink">{label}</p>
-        <p className="font-sans text-[13px] text-muted mt-0.5">{hint}</p>
-      </div>
-      <div className="flex items-center gap-1 flex-shrink-0">
-        <IconButton
-          label={`Decrease ${label.toLowerCase()}`}
-          onClick={() => onChange(value - 1)}
-          disabled={value <= min}
-          className="border border-line disabled:opacity-40 disabled:pointer-events-none"
-        >
-          {MinusIcon}
-        </IconButton>
-        <span className="font-serif text-[26px] leading-none text-ink w-10 text-center tabular-nums">
-          {display ?? value}
-        </span>
-        <IconButton
-          label={`Increase ${label.toLowerCase()}`}
-          onClick={() => onChange(value + 1)}
-          className="border border-line"
-        >
-          {PlusIcon}
-        </IconButton>
-      </div>
-    </div>
-  );
-}
-
 export default function AdminAvailability() {
   const [schedule, setSchedule]   = useState<AvailDay[]>([]);
   const [blocked, setBlocked]     = useState<BlockedDate[]>([]);
@@ -175,19 +114,6 @@ export default function AdminAvailability() {
 
   const updateTime = (dow: number, field: "open_time" | "close_time", value: string) =>
     setSchedule((prev) => prev.map((d) => d.day_of_week === dow ? { ...d, [field]: value } : d));
-
-  // These are global settings, the same for all days; read from first row
-  const slotInterval = schedule[0]?.slot_interval_minutes ?? 60;
-  const setSlotInterval = (mins: number) =>
-    setSchedule((prev) => prev.map((d) => ({ ...d, slot_interval_minutes: mins })));
-
-  const maxPerSlot = schedule[0]?.max_bookings_per_slot ?? 1;
-  const setMaxPerSlot = (n: number) =>
-    setSchedule((prev) => prev.map((d) => ({ ...d, max_bookings_per_slot: Math.max(1, n) })));
-
-  const maxPerDay = schedule[0]?.max_bookings_per_day ?? 0;
-  const setMaxPerDay = (n: number) =>
-    setSchedule((prev) => prev.map((d) => ({ ...d, max_bookings_per_day: Math.max(0, n) })));
 
   const saveSchedule = async () => {
     setSaving(true);
@@ -323,44 +249,6 @@ export default function AdminAvailability() {
         </section>
 
         <div className="flex flex-col gap-6 lg:gap-8">
-          {/* Booking rules */}
-          <section>
-            <SectionTitle italic="rules">Booking</SectionTitle>
-            <Card>
-              <div className="flex items-center justify-between gap-4 pb-4">
-                <p className="font-sans text-[15px] text-ink">Slot length</p>
-                <Segmented
-                  options={[
-                    { value: "30", label: "30 min" },
-                    { value: "60", label: "1 hr" },
-                  ]}
-                  value={slotInterval === 30 ? "30" : "60"}
-                  onChange={(v) => setSlotInterval(Number(v))}
-                />
-              </div>
-              <div className="divide-y divide-line border-t border-line">
-                <Stepper
-                  label="Stations per slot"
-                  hint="Chairs in use at the same time"
-                  value={maxPerSlot}
-                  min={1}
-                  onChange={setMaxPerSlot}
-                />
-                <Stepper
-                  label="Daily booking cap"
-                  hint="Most bookings per day · 0 means no limit"
-                  value={maxPerDay}
-                  display={maxPerDay === 0 ? "∞" : undefined}
-                  min={0}
-                  onChange={setMaxPerDay}
-                />
-              </div>
-              <p className="pt-4 border-t border-line font-sans text-[13px] text-muted">
-                Saved with opening hours.
-              </p>
-            </Card>
-          </section>
-
           {/* Days off */}
           <section>
             <SectionTitle italic="off">Days</SectionTitle>

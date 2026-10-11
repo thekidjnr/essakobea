@@ -10,8 +10,7 @@ export default async function Services() {
     .from("services")
     .select("id,slug,number,name,description,image_url,image_position")
     .eq("is_active", true)
-    .order("display_order", { ascending: true })
-    .limit(4);
+    .order("display_order", { ascending: true });
 
   const services = (data as Pick<DbService, "id" | "slug" | "number" | "name" | "description" | "image_url" | "image_position">[] | null) ?? [];
 
@@ -46,10 +45,10 @@ export default async function Services() {
       <div className="px-6 md:px-16 max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-10 md:gap-x-4 md:gap-y-12">
         {services.map((service, i) => {
           const extraWorks = (worksByService.get(service.id) ?? []).filter((url) => url !== service.image_url);
-          const images = [service.image_url, ...extraWorks].slice(0, MAX_CAROUSEL_IMAGES);
+          const images = [service.image_url, ...extraWorks].filter(Boolean).slice(0, MAX_CAROUSEL_IMAGES);
 
           return (
-            <Reveal key={service.slug} delay={i * 80}>
+            <Reveal key={service.slug} delay={(i % 4) * 80}>
               <ServiceCard
                 slug={service.slug}
                 number={service.number}

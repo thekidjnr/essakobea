@@ -681,6 +681,7 @@ function PhotoUpload({
 
 function TermsModal({
   depositAmount,
+  stylistFee,
   isRange,
   balanceDue,
   policy,
@@ -688,6 +689,7 @@ function TermsModal({
   onClose,
 }: {
   depositAmount: number;
+  stylistFee: number;
   isRange: boolean;
   balanceDue: string;
   policy?: ServicePolicy;
@@ -695,7 +697,9 @@ function TermsModal({
   onClose: () => void;
 }) {
   const paymentLabel = isRange
-    ? `A deposit of ₵${depositAmount} confirms your slot. It is deducted from your total, and you pay the rest ${balanceDue}.`
+    ? stylistFee > 0
+      ? `You pay ₵${depositAmount} now to confirm your slot. Your deposit is deducted from your total, and you pay the rest ${balanceDue}. The ₵${stylistFee} stylist fee is added on top of your service price, so it is not deducted.`
+      : `A deposit of ₵${depositAmount} confirms your slot. It is deducted from your total, and you pay the rest ${balanceDue}.`
     : `The full price of ₵${depositAmount} is paid upfront to confirm your booking.`;
 
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -2230,7 +2234,7 @@ export default function BookingFlow() {
                       {s.fee_adjustment > 0
                         ? `+₵${s.fee_adjustment}`
                         : `−₵${Math.abs(s.fee_adjustment)}`}{" "}
-                      deposit
+                      stylist fee
                     </p>
                   )}
                   </div>
@@ -2264,6 +2268,11 @@ export default function BookingFlow() {
                 {isRange && (
                   <p className="font-sans text-[13px] text-ink/75 font-medium mt-3">
                     Balance Depends on Styling
+                  </p>
+                )}
+                {isRange && booking.stylistFeeAdj > 0 && (
+                  <p className="font-sans text-[13px] text-ink/60 max-w-xs leading-relaxed mt-2">
+                    The stylist fee is added to your service price. It is not deducted from your balance.
                   </p>
                 )}
               </div>
@@ -2518,9 +2527,26 @@ export default function BookingFlow() {
                     {isRange ? "Deposit" : "Full Price"}
                   </p>
                   <p className="font-sans text-[14px] text-ink tabular-nums">
-                    ₵{baseDeposit + booking.stylistFeeAdj}
+                    ₵{baseDeposit}
                   </p>
                 </div>
+                {booking.stylistFeeAdj !== 0 && (
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <p className="font-sans text-[14px] text-ink/60">
+                        {booking.stylistFeeAdj > 0 ? "Stylist fee" : "Stylist discount"} ({displayName(booking.stylistName)})
+                      </p>
+                      <p className="font-sans text-[14px] text-ink tabular-nums">
+                        {booking.stylistFeeAdj > 0 ? "+" : "−"}₵{Math.abs(booking.stylistFeeAdj)}
+                      </p>
+                    </div>
+                    {isRange && booking.stylistFeeAdj > 0 && (
+                      <p className="font-sans text-[13px] text-ink/50 mt-1">
+                        Added to your service price. Not deducted from your balance.
+                      </p>
+                    )}
+                  </div>
+                )}
                 {customizationFee > 0 && (
                   <div className="flex items-center justify-between">
                     <p className="font-sans text-[14px] text-ink/60">
@@ -2623,6 +2649,7 @@ export default function BookingFlow() {
       {showTerms && (
         <TermsModal
           depositAmount={totalDeposit}
+          stylistFee={booking.stylistFeeAdj}
           isRange={isRange}
           balanceDue={rules.balanceDue}
           policy={rules.servicePolicy}

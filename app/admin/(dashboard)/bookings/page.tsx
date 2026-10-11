@@ -43,8 +43,12 @@ function whatsAppUrlFor(b: Booking, services: DbService[]): string {
   const amountGHS = (b.amount / 100).toLocaleString();
   const isDeposit = isDepositFor(b, services);
   const stylistLine = b.stylist_name ? `\nStylist: ${b.stylist_name}` : "";
+  const stylistFee = (b.stylist_fee ?? 0) / 100;
+  const stylistFeeNote = stylistFee > 0
+    ? ` This includes the ₵${stylistFee.toLocaleString()} stylist fee, which is added on top of your service price and not deducted from your balance.`
+    : "";
   const paymentLine = isDeposit
-    ? `*Payment:* ₵${amountGHS} deposit paid. The remaining balance depends on your styling and is settled on the day.`
+    ? `*Payment:* ₵${amountGHS} deposit paid.${stylistFeeNote} The remaining balance depends on your styling and is settled on the day.`
     : `*Payment:* ₵${amountGHS} paid in full.`;
 
   const custLabel = customizationLabel(b.service_id, b.customization_type);
@@ -76,7 +80,8 @@ function BookingDetail({
 }) {
   const s = bookingStatus(b);
   const isDeposit = isDepositFor(b, services);
-  const extras = b.customization_fee + b.emergency_fee + b.service_charge;
+  const stylistFee = b.stylist_fee ?? 0;
+  const extras = stylistFee + b.customization_fee + b.emergency_fee + b.service_charge;
   const base = Math.max(0, b.amount - extras);
   const when = new Date(`${b.booking_date}T00:00:00Z`).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
   const unitLabel = b.hair_unit_type && b.hair_unit_type !== "none" ? HAIR_UNIT_LABELS[b.hair_unit_type] ?? b.hair_unit_type : null;
@@ -87,6 +92,7 @@ function BookingDetail({
   ].filter(Boolean).join(", ");
 
   const lines: [string, number][] = [[isDeposit ? "Deposit" : "Service", base]];
+  if (stylistFee !== 0)        lines.push([stylistFee > 0 ? "Stylist fee (on top of service price)" : "Stylist discount", stylistFee]);
   if (b.customization_fee > 0) lines.push(["Customisation", b.customization_fee]);
   if (b.emergency_fee > 0)     lines.push(["Emergency", b.emergency_fee]);
   if (b.service_charge > 0)    lines.push(["Service charge", b.service_charge]);
