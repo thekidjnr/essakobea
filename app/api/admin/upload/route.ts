@@ -24,7 +24,7 @@ export async function POST(req: Request) {
 
   const { error } = await adminDb.storage
     .from('media')
-    .upload(filename, image.buffer, { contentType: image.contentType, upsert: false })
+    .upload(filename, image.buffer, { contentType: image.contentType, cacheControl: '31536000', upsert: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

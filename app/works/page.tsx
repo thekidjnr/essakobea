@@ -5,7 +5,8 @@ import Footer from "@/components/layout/Footer";
 import WorksIndexClient from "@/components/works/WorksIndexClient";
 import { adminDb } from "@/lib/supabase/admin";
 
-export const dynamic = "force-dynamic";
+// Cached for 5 minutes; admin edits refresh it immediately via revalidatePath
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Our Work | Essakobea",

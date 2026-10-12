@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { adminDb } from '@/lib/supabase/admin'
 import { getAdmin as requireAdmin } from '@/lib/admin-auth'
 
@@ -11,6 +12,8 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   const { id } = await params
   const { error } = await adminDb.from('service_works').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  // Public pages are cached; show the change right away
+  revalidatePath('/', 'layout')
   return NextResponse.json({ ok: true })
 }
 
@@ -29,5 +32,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  // Public pages are cached; show the change right away
+  revalidatePath('/', 'layout')
   return NextResponse.json(data)
 }

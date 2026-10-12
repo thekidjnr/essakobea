@@ -1,9 +1,18 @@
 import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/supabase/admin'
 import { compressImage, imageExtension, MAX_UPLOAD_BYTES } from '@/lib/uploads'
+import { allowRequest, clientIp } from '@/lib/rate-limit'
+
+// A booking needs a handful of photos at most; this stops scripts filling Storage
+const UPLOAD_LIMIT = 20
+const UPLOAD_WINDOW_MS = 60 * 60 * 1000
 
 // Public endpoint: clients upload hair unit photos during booking
 export async function POST(req: Request) {
+  if (!allowRequest(`booking-upload:${clientIp(req)}`, UPLOAD_LIMIT, UPLOAD_WINDOW_MS)) {
+    return NextResponse.json({ error: 'Too many uploads. Please try again later.' }, { status: 429 })
+  }
+
   const formData = await req.formData()
   const file = formData.get('file') as File | null
   if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
@@ -22,7 +31,7 @@ export async function POST(req: Request) {
 
   const { error } = await adminDb.storage
     .from('media')
-    .upload(filename, image.buffer, { contentType: image.contentType, upsert: false })
+    .upload(filename, image.buffer, { contentType: image.contentType, cacheControl: '31536000', upsert: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

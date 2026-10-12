@@ -3,7 +3,14 @@ import { notFound } from "next/navigation";
 import { adminDb } from "@/lib/supabase/admin";
 import WorksGallery from "@/components/works/WorksGallery";
 
-export const dynamic = "force-dynamic";
+// Cached for 5 minutes; admin edits refresh it immediately via revalidatePath
+export const revalidate = 300;
+
+// Pre-render each service's gallery; new services are rendered and cached on first visit
+export async function generateStaticParams() {
+  const { data } = await adminDb.from("services").select("slug").eq("is_active", true);
+  return (data ?? []).map(({ slug }) => ({ slug }));
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

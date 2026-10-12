@@ -7,7 +7,8 @@ import type { DbService } from "@/lib/supabase/types";
 import Reveal from "@/components/common/Reveal";
 import ImageCarousel from "@/components/common/ImageCarousel";
 
-export const dynamic = "force-dynamic";
+// Cached for 5 minutes; admin edits refresh it immediately via revalidatePath
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Services | Essakobea",

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { adminDb } from '@/lib/supabase/admin'
 import { getAdmin as requireAdmin } from '@/lib/admin-auth'
 import { validateBookingOptions, pickServiceFields } from '@/lib/service-options'
@@ -22,6 +23,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  // Public pages are cached; show the change right away
+  revalidatePath('/', 'layout')
   return NextResponse.json(data)
 }
 
@@ -33,5 +36,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   const { error } = await adminDb.from('services').delete().eq('id', id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  // Public pages are cached; show the change right away
+  revalidatePath('/', 'layout')
   return NextResponse.json({ success: true })
 }
