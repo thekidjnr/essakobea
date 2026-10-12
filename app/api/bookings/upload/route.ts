@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { adminDb } from '@/lib/supabase/admin'
-import { compressImage, imageExtension, MAX_UPLOAD_BYTES } from '@/lib/uploads'
+import { imageExtension, MAX_UPLOAD_BYTES, storeImage } from '@/lib/uploads'
 import { allowRequest, clientIp } from '@/lib/rate-limit'
 
 // A booking needs a handful of photos at most; this stops scripts filling Storage
@@ -26,16 +25,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'File too large (max 10 MB)' }, { status: 400 })
   }
 
-  const image = await compressImage(file, ext)
-  const filename = `booking-units/${Date.now()}-${Math.random().toString(36).slice(2)}.${image.ext}`
+  const result = await storeImage(file, ext, 'booking-units')
+  if ('error' in result) return NextResponse.json({ error: result.error }, { status: 500 })
 
-  const { error } = await adminDb.storage
-    .from('media')
-    .upload(filename, image.buffer, { contentType: image.contentType, cacheControl: '31536000', upsert: false })
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  const { data: { publicUrl } } = adminDb.storage.from('media').getPublicUrl(filename)
-
-  return NextResponse.json({ url: publicUrl })
+  return NextResponse.json({ url: result.url })
 }

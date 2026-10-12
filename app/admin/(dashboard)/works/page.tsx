@@ -15,6 +15,7 @@ import {
   CloseIcon,
 } from "@/components/admin/ui";
 import { uploadImage } from "@/lib/upload-image";
+import { thumbUrl } from "@/lib/media";
 
 export default function AdminWorksPage() {
   const [services, setServices] = useState<DbService[]>([]);
@@ -169,7 +170,7 @@ export default function AdminWorksPage() {
                   <div key={work.id} className="group relative overflow-hidden rounded-[20px] bg-soft">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={work.image_url}
+                      src={thumbUrl(work.image_url)}
                       alt=""
                       className="w-full aspect-[3/4] object-cover"
                     />

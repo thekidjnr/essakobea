@@ -8,6 +8,7 @@ import { Page, SectionTitle, Card, Pill, Skeleton, Button, ErrorNote, Empty, but
 import {
   type AdminBooking, bookingStatus, formatSlot, startOf, todayISO, countdown, useServices, serviceFor,
 } from "@/components/admin/bookingDisplay";
+import { thumbUrl } from "@/lib/media";
 
 interface Stats {
   todayBookings:     number;
@@ -67,7 +68,7 @@ export default function AdminDashboard() {
   );
 
   const next = today.find((b) => b.status === "confirmed" && startOf(b) > now);
-  const nextImage = next ? serviceFor(services, next)?.image_url : undefined;
+  const nextImage = thumbUrl(next ? serviceFor(services, next)?.image_url : undefined);
   const dateLine = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
   const month = new Date().toLocaleDateString("en-GB", { month: "long" });
 
@@ -184,7 +185,7 @@ export default function AdminDashboard() {
                 {today.map((b) => {
                   const s = bookingStatus(b);
                   const isNext = next?.id === b.id;
-                  const img = serviceFor(services, b)?.image_url;
+                  const img = thumbUrl(serviceFor(services, b)?.image_url);
                   return (
                     <li key={b.id}>
                       <Link href={`/admin/bookings?open=${b.id}`} className="grid grid-cols-[48px_44px_minmax(0,1fr)_auto] md:grid-cols-[60px_48px_minmax(0,1fr)_auto] items-center gap-3 md:gap-4 py-3.5">

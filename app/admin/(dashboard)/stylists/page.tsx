@@ -17,6 +17,7 @@ import {
   Modal,
   ConfirmDialog,
 } from "@/components/admin/ui";
+import { thumbUrl } from "@/lib/media";
 
 const EMPTY: Omit<Stylist, "id" | "created_at"> = {
   name: "",
@@ -173,7 +174,7 @@ export default function AdminStylistsPage() {
                   {s.photo_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={s.photo_url}
+                      src={thumbUrl(s.photo_url)}
                       alt={s.name}
                       className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03] ${s.is_available ? "" : "grayscale-[60%]"}`}
                     />

@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
+import { thumbUrl } from "@/lib/media";
 
 const AXIS_LOCK_PX        = 10;   // movement needed before we decide horizontal drag vs. vertical scroll (and below which a release counts as a tap)
 const SWIPE_DISTANCE_FRAC = 0.2;  // drag past 20% of the card width commits to the next slide
@@ -146,7 +147,7 @@ export default function ImageCarousel({
         {images.map((src, i) => (
           <div key={src + i} className="relative h-full" style={{ width: `${100 / images.length}%` }}>
             <Image
-              src={src}
+              src={thumbUrl(src)}
               alt={alt}
               fill
               draggable={false}

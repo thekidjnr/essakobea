@@ -21,6 +21,7 @@ import {
   ConfirmDialog,
   CloseIcon,
 } from "@/components/admin/ui";
+import { thumbUrl } from "@/lib/media";
 
 // ─── Form types ───────────────────────────────────────────────────────────────
 
@@ -251,7 +252,7 @@ export default function AdminServicesPage() {
                       {svc.image_url && (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={svc.image_url}
+                          src={thumbUrl(svc.image_url)}
                           alt=""
                           className={`w-full h-full object-cover ${svc.image_position} transition-transform duration-300 group-hover:scale-105`}
                         />

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useLightboxSwipe } from "./useLightboxSwipe";
+import { thumbUrl } from "@/lib/media";
 
 type WorkPhoto = {
   id: string;
@@ -80,7 +81,7 @@ export default function WorksIndexClient({
               className="break-inside-avoid group relative overflow-hidden bg-mist w-full block cursor-pointer"
             >
               <Image
-                src={photo.image_url}
+                src={thumbUrl(photo.image_url)}
                 alt={photo.caption ?? `${photo.service_name} | Essakobea`}
                 width={800}
                 height={1000}

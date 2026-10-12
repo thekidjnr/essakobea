@@ -15,6 +15,7 @@ import {
   type AdminBooking, bookingStatus, refundOwed, cedis, formatSlot, startOf, dayLabel, useServices, serviceFor,
 } from "@/components/admin/bookingDisplay";
 import { useRefundsOwed, notifyRefundsChanged } from "@/components/admin/useRefundsOwed";
+import { thumbUrl } from "@/lib/media";
 
 type Booking = AdminBooking;
 type Tab = "upcoming" | "past" | "attention";
@@ -145,7 +146,7 @@ function BookingDetail({
                       className="w-14 h-14 rounded-[14px] overflow-hidden bg-soft cursor-zoom-in"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={url} alt="" className="w-full h-full object-cover" />
+                      <img src={thumbUrl(url)} alt="" className="w-full h-full object-cover" />
                     </button>
                   ))}
                 </span>
@@ -167,7 +168,7 @@ function BookingDetail({
                     className="w-14 h-14 rounded-[14px] overflow-hidden bg-soft cursor-zoom-in"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={url} alt="" className="w-full h-full object-cover" />
+                    <img src={thumbUrl(url)} alt="" className="w-full h-full object-cover" />
                   </button>
                 ))}
               </span>
@@ -376,7 +377,7 @@ export default function AdminBookings() {
                     <ul className="divide-y divide-line border-y border-line md:border-y-0">
                       {rows.map((b) => {
                         const s = bookingStatus(b);
-                        const img = serviceFor(services, b)?.image_url;
+                        const img = thumbUrl(serviceFor(services, b)?.image_url);
                         const active = b.id === selectedId;
                         const tone = s.faded ? "text-muted" : "text-ink";
                         return (

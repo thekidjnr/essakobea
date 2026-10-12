@@ -33,6 +33,7 @@ import {
   type HairOption,
   type HairUnitType,
 } from "@/lib/service-rules";
+import { thumbUrl } from "@/lib/media";
 
 // ─── Step icons ─────────────────────────────────────────────────────────────────
 
@@ -661,7 +662,7 @@ function PhotoUpload({
           {photos.map((url, i) => (
             <div key={i} className="relative group w-20 h-20">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={url} alt="" className="w-full h-full object-cover" />
+              <img src={thumbUrl(url)} alt="" className="w-full h-full object-cover" />
               <button
                 onClick={() => onRemove(i)}
                 aria-label="Remove photo"
@@ -1517,7 +1518,7 @@ export default function BookingFlow() {
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={preselectedService.image_url}
+                        src={thumbUrl(preselectedService.image_url)}
                         alt={preselectedService.name}
                         className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                       />
@@ -1590,7 +1591,7 @@ export default function BookingFlow() {
                           >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
-                              src={svc.image_url}
+                              src={thumbUrl(svc.image_url)}
                               alt=""
                               className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                             />
@@ -2200,7 +2201,7 @@ export default function BookingFlow() {
                     {s.photo_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={s.photo_url}
+                        src={thumbUrl(s.photo_url)}
                         alt={s.name}
                         className="w-full h-full object-cover"
                       />
