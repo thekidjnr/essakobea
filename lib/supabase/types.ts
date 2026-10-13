@@ -33,6 +33,13 @@ export interface Booking {
   unit_photos:         string[]
   inspo_photos?:       string[]
   bundle_count?:       number | null
+  // Migration 024: manual bookings and home service (see lib/manual-bookings)
+  source?:             'online' | 'manual'
+  payment_method?:     string | null
+  location_type?:      'salon' | 'home'
+  home_address?:       string | null
+  travel_fee?:         number   // pesewas
+  total_price?:        number | null   // pesewas, manual bookings only
 }
 
 export interface OrderItem {

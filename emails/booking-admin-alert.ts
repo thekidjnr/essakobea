@@ -22,6 +22,8 @@ export function bookingAdminAlertHtml(opts: {
   emergencyFee?:      number
   serviceCharge?:     number
   bundleCount?:       number | null
+  /** When a dropped-off unit should be ready, from formatReadyEstimate() in lib/service-rules */
+  readyEstimate?:     string | null
 }): string {
   const bookingsUrl = `${opts.appUrl}/admin/bookings`
   const ref         = opts.bookingId.slice(0, 8).toUpperCase()
@@ -38,8 +40,9 @@ export function bookingAdminAlertHtml(opts: {
     ['Service',   opts.serviceName],
     ['Treatment', opts.treatment],
     opts.stylistName ? ['Stylist', opts.stylistName] : ['Stylist', 'Any Available'],
-    ['Date',      opts.bookingDate],
-    ['Time',      opts.timeSlot],
+    [opts.readyEstimate ? 'Drop-off Date' : 'Date', opts.bookingDate],
+    [opts.readyEstimate ? 'Drop-off Time' : 'Time', opts.timeSlot],
+    opts.readyEstimate ? ['Estimated Ready', opts.readyEstimate] : null,
     opts.isEmergency ? ['Booking Type', '⚡ Emergency (Priority Handling)'] : null,
     custLabel ? ['Customization', custLabel] : null,
     opts.bundleCount ? ['Extensions', `Bringing ${opts.bundleCount} bundle${opts.bundleCount > 1 ? 's' : ''}`] : null,

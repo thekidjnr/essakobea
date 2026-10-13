@@ -1,6 +1,9 @@
 import { cancellationPolicyText } from '@/lib/refunds'
 import type { ServicePolicy } from '@/lib/policies'
 
+const escapeHtml = (v: string) =>
+  v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+
 export function bookingConfirmationHtml(opts: {
   clientName:         string
   serviceName:        string
@@ -23,6 +26,12 @@ export function bookingConfirmationHtml(opts: {
   emergencyFee?:      number
   serviceCharge?:     number
   bundleCount?:       number | null
+  /** When a dropped-off unit should be ready, from formatReadyEstimate() in lib/service-rules */
+  readyEstimate?:     string | null
+  /** Home service address; null for salon appointments */
+  homeAddress?:       string | null
+  /** Manual bookings (added in the admin) know their full price and may be part paid or unpaid */
+  manualPayment?:     { totalGHS: number; paidGHS: number; travelGHS: number; method: string | null } | null
   /** Extra terms the client agreed to when booking, e.g. the colouring policy */
   servicePolicy?:     ServicePolicy | null
 }): string {
@@ -38,12 +47,13 @@ export function bookingConfirmationHtml(opts: {
     ['Service',   opts.serviceName],
     ['Treatment', opts.treatment],
     opts.stylistName ? ['Stylist', opts.stylistName] : null,
-    ['Date',      opts.bookingDate],
-    ['Time',      opts.timeSlot],
+    [opts.readyEstimate ? 'Drop-off Date' : 'Date', opts.bookingDate],
+    [opts.readyEstimate ? 'Drop-off Time' : 'Time', opts.timeSlot],
+    opts.readyEstimate ? ['Estimated Ready', opts.readyEstimate] : null,
     opts.isEmergency ? ['Booking Type', '⚡ Emergency (Priority Handling)'] : null,
     custLabel ? ['Customization', custLabel] : null,
     opts.bundleCount ? ['Extensions', `Bringing ${opts.bundleCount} bundle${opts.bundleCount > 1 ? 's' : ''}`] : null,
-    ['Location',  'East Legon, Accra'],
+    ['Location',  opts.homeAddress != null ? `Home service${opts.homeAddress ? `: ${escapeHtml(opts.homeAddress)}` : ''}` : 'East Legon, Accra'],
     ['Booking Ref', ref],
   ].filter(Boolean) as [string, string][]
 
@@ -52,7 +62,15 @@ export function bookingConfirmationHtml(opts: {
   const hasAddOns = stylistFee !== 0 || (opts.customizationFee ?? 0) > 0 || (opts.emergencyFee ?? 0) > 0 || (opts.serviceCharge ?? 0) > 0
   const baseAmount = opts.depositGHS - stylistFee - (opts.customizationFee ?? 0) - (opts.emergencyFee ?? 0) - (opts.serviceCharge ?? 0)
 
-  const feeRows: [string, string][] = hasAddOns ? [
+  const manual = opts.manualPayment ?? null
+  const balanceGHS = manual ? Math.max(0, manual.totalGHS - manual.paidGHS) : 0
+  const feeRows: [string, string][] = manual ? ([
+    manual.travelGHS > 0 ? ['Service', `₵${manual.totalGHS - manual.travelGHS}`] : null,
+    manual.travelGHS > 0 ? ['Travel fee', `+₵${manual.travelGHS}`] : null,
+    ['Total', `₵${manual.totalGHS}`],
+    manual.paidGHS > 0 ? [`Paid${manual.method ? ` (${manual.method})` : ''}`, `₵${manual.paidGHS}`] : null,
+    balanceGHS > 0 ? ['Balance Due', `₵${balanceGHS}`] : null,
+  ].filter(Boolean) as [string, string][]) : hasAddOns ? [
     ['Service / Deposit', `₵${baseAmount}`] as [string, string],
     ...(stylistFee ? [[stylistFee > 0 ? 'Stylist fee' : 'Stylist discount', `${stylistFee > 0 ? '+' : '−'}₵${Math.abs(stylistFee)}`] as [string, string]] : []),
     ...(opts.customizationFee ? [[`Customization (${opts.customizationType})`, `+₵${opts.customizationFee}`] as [string, string]] : []),
@@ -72,7 +90,13 @@ export function bookingConfirmationHtml(opts: {
   const rowHtml    = rows.map(makeRow).join('')
   const feeRowHtml = feeRows.map(makeRow).join('')
 
-  const depositNote = opts.isDeposit
+  const depositNote = manual
+    ? (balanceGHS > 0
+        ? `<p style="font-size:12px;color:#6B6560;font-family:'Inter',Arial,sans-serif;line-height:1.6;margin:0 0 0">
+        ${manual.paidGHS > 0 ? `The balance of ₵${balanceGHS} is` : `Payment of ₵${balanceGHS} is`} due on the day of your appointment.
+       </p>`
+        : '')
+    : opts.isDeposit
     ? `<p style="font-size:12px;color:#6B6560;font-family:'Inter',Arial,sans-serif;line-height:1.6;margin:0 0 0">
         The remaining balance is due on the day of your appointment.${stylistFee > 0 ? ` The ₵${stylistFee} stylist fee is added on top of your service price and is not deducted from your balance.` : ''}
        </p>`
@@ -172,7 +196,9 @@ export function bookingConfirmationHtml(opts: {
                   <span style="font-size:14px;color:#1A212B">·</span>
                 </td>
                 <td style="padding:10px 0 10px 10px;border-bottom:1px solid #f8f6f3;font-size:13px;color:#55504a;font-family:'Inter',Arial,sans-serif;line-height:1.6">
-                  <strong style="color:#1A212B;font-weight:500">Please arrive 5 minutes early.</strong> Late arrivals beyond 15 minutes may result in a shortened session or rescheduling.
+                  ${opts.homeAddress != null
+                    ? `<strong style="color:#1A212B;font-weight:500">Please be ready when your stylist arrives.</strong> Message us on WhatsApp if your address or directions change.`
+                    : `<strong style="color:#1A212B;font-weight:500">Please arrive 5 minutes early.</strong> Late arrivals beyond 15 minutes may result in a shortened session or rescheduling.`}
                 </td>
               </tr>
               <tr>

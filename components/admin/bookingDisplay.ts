@@ -18,6 +18,14 @@ export interface AdminBooking {
   unit_photos: string[];
   inspo_photos?: string[];
   bundle_count?: number | null;
+  duration_minutes?: number | null;
+  payment_reference?: string | null;
+  source?: "online" | "manual";
+  payment_method?: string | null;
+  location_type?: "salon" | "home";
+  home_address?: string | null;
+  travel_fee?: number;
+  total_price?: number | null;
 }
 
 export function refundOwed(b: Pick<AdminBooking, "status" | "payment_status" | "refund_amount">) {

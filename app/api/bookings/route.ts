@@ -88,6 +88,13 @@ export async function POST(req: Request) {
     const hairType: string | null =
       rules.hairOptions.some((o) => o.id === hairUnitType) ? hairUnitType : null
     const bringing = bringsHair(hairType)
+    // Wig making and coloring are done on the client's own unit
+    if (!rules.hairOptions.some((o) => o.id === 'none') && !bringing) {
+      return NextResponse.json(
+        { error: 'This service is done on your own unit. Please choose the unit you are bringing.' },
+        { status: 400 },
+      )
+    }
     const customization: string | null =
       bringing && rules.customization ? customizationType || null : null
     const bundles: number | null =
@@ -134,7 +141,8 @@ export async function POST(req: Request) {
     // ── 2b. Resolve stylist assignment (each stylist holds their own slot) ─────
     const { data: activeSameDay, error: activeError } = await adminDb
       .from('bookings')
-      .select('stylist_id, time_slot, duration_minutes, status, payment_status, created_at')
+      // '*' so location_type is read once migration 024 has run, and nothing breaks before
+      .select('*')
       .eq('booking_date', bookingDate)
       .in('status', ['pending', 'confirmed'])
 
@@ -142,18 +150,20 @@ export async function POST(req: Request) {
       console.error(activeError)
       return NextResponse.json({ error: 'Could not check availability. Please try again.' }, { status: 500 })
     }
-    const activeBookingsToday = ((activeSameDay ?? []) as ActiveBooking[])
+    const activeBookingsToday = ((activeSameDay ?? []) as (ActiveBooking & { location_type?: string })[])
       .filter((b) => isActiveBooking(b, SLOT_HOLD_MS))
+    // Home service visits keep their stylist busy but don't take a seat in the salon
+    const inSalonToday = activeBookingsToday.filter((b) => b.location_type !== 'home')
     // A stylist is free only if none of their bookings overlap this appointment
     const busy = (id: string) => stylistBusy(activeBookingsToday, id, slotMins, duration, dayInterval)
 
     // Salon-wide limits: physical stations at once, and bookings per day.
     const maxPerSlot = avail?.max_bookings_per_slot ?? 1
     const maxPerDay  = avail?.max_bookings_per_day ?? 0
-    if (peakOccupancy(activeBookingsToday, slotMins, duration, dayInterval) >= maxPerSlot) {
+    if (peakOccupancy(inSalonToday, slotMins, duration, dayInterval) >= maxPerSlot) {
       return NextResponse.json({ error: 'This time slot was just taken. Please go back and choose a different time.' }, { status: 409 })
     }
-    if (maxPerDay > 0 && activeBookingsToday.length >= maxPerDay) {
+    if (maxPerDay > 0 && inSalonToday.length >= maxPerDay) {
       return NextResponse.json({ error: 'That day is fully booked. Please choose a different date.' }, { status: 409 })
     }
 

@@ -29,8 +29,10 @@ body {
   overflow-x: hidden;
 }
 
-/* Prevent iOS Safari from auto-zooming on input focus */
-input, textarea, select {
+/* Prevent iOS Safari from auto-zooming on input focus. The admin stops the
+   zoom through its viewport instead (app/admin/layout.tsx), so its forms can
+   use smaller text. */
+input:not(.admin-ui *), textarea:not(.admin-ui *), select:not(.admin-ui *) {
   font-size: 16px !important;
 }
 

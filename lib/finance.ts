@@ -27,4 +27,8 @@ export interface FinanceEntry {
   fee:         number
   net:         number
   reference:   string | null
+  /** "Paystack", "Cash", "MoMo"... (see lib/manual-bookings) */
+  method:      string
+  /** Added by hand in the admin */
+  manual:      boolean
 }

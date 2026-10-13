@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { FinanceEntry, FinanceState } from "@/lib/finance";
+import { DateRangePicker, formatRange, type DateRange } from "@/components/admin/DateRangePicker";
 import {
   Page,
   PageHeader,
@@ -17,16 +18,16 @@ import {
   Empty,
   Skeleton,
   SkeletonRows,
+  Modal,
 } from "@/components/admin/ui";
 
-type Period = "month" | "last_month" | "quarter" | "year" | "all";
+// "custom" is a range picked in the calendar; it has no tab of its own
+type Period = "month" | "last_month" | "year" | "custom";
 
 const PERIODS: { value: Period; label: string }[] = [
   { value: "month",      label: "This month" },
   { value: "last_month", label: "Last month" },
-  { value: "quarter",    label: "3 months" },
   { value: "year",       label: "This year" },
-  { value: "all",        label: "All time" },
 ];
 
 const STATE: Record<FinanceState, { label: string; tone: PillTone }> = {
@@ -46,11 +47,6 @@ function cedis(pesewas: number) {
   return `₵${ghs.toLocaleString("en-GB", { minimumFractionDigits: Number.isInteger(ghs) ? 0 : 2, maximumFractionDigits: 2 })}`;
 }
 
-// Accra is UTC+0, so month boundaries are plain UTC dates.
-function monthKey(iso: string) {
-  return iso.slice(0, 7);
-}
-
 function periodStart(period: Period, now = new Date()): string | null {
   const y = now.getUTCFullYear();
   const m = now.getUTCMonth();
@@ -58,9 +54,8 @@ function periodStart(period: Period, now = new Date()): string | null {
   switch (period) {
     case "month":      return iso(y, m);
     case "last_month": return iso(y, m - 1);
-    case "quarter":    return iso(y, m - 2);
     case "year":       return iso(y, 0);
-    case "all":        return null;
+    case "custom":     return null;
   }
 }
 
@@ -72,12 +67,8 @@ function sum(list: FinanceEntry[], key: "gross" | "refund" | "fee" | "net") {
   return list.reduce((s, e) => s + e[key], 0);
 }
 
-function shortDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
-}
-
-function downloadCsv(rows: FinanceEntry[], period: Period) {
-  const header = ["Date", "Type", "Client", "Description", "Stylist", "Status", "Collected (GHS)", "Refund (GHS)", "Service fee (GHS)", "Net (GHS)", "Reference"];
+function downloadCsv(rows: FinanceEntry[], period: string) {
+  const header = ["Date", "Type", "Client", "Description", "Stylist", "Status", "Collected (GHS)", "Refund (GHS)", "Service fee (GHS)", "Net (GHS)", "Paid by", "Reference"];
   const cell = (v: string | number | null) => {
     const s = v === null ? "" : String(v);
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
@@ -93,6 +84,7 @@ function downloadCsv(rows: FinanceEntry[], period: Period) {
     (e.refund / 100).toFixed(2),
     (e.fee / 100).toFixed(2),
     (e.net / 100).toFixed(2),
+    e.method,
     e.reference,
   ].map(cell).join(","));
   const blob = new Blob([[header.join(","), ...lines].join("\n")], { type: "text/csv;charset=utf-8" });
@@ -154,8 +146,10 @@ export default function AdminFinancePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState("");
   const [period, setPeriod]   = useState<Period>("month");
+  const [range, setRange]     = useState<DateRange | null>(null);
   const [query, setQuery]     = useState("");
   const [shown, setShown]     = useState(PAGE_SIZE);
+  const [showLedger, setShowLedger] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -171,13 +165,17 @@ export default function AdminFinancePage() {
   };
 
   useEffect(() => { load(); }, []);
-  useEffect(() => { setShown(PAGE_SIZE); }, [period, query]);
+  useEffect(() => { setShown(PAGE_SIZE); }, [period, range, query]);
 
   const inPeriod = useMemo(() => {
+    if (period === "custom" && range) {
+      // Whole days: from the start of `from` to the end of `to`
+      return entries.filter((e) => e.date.slice(0, 10) >= range.from && e.date.slice(0, 10) <= range.to);
+    }
     const start = periodStart(period);
     const end = periodEnd(period);
     return entries.filter((e) => (!start || e.date >= start) && (!end || e.date < end));
-  }, [entries, period]);
+  }, [entries, period, range]);
 
   const totals = useMemo(() => {
     const earned   = inPeriod.filter((e) => e.state === "completed" || e.state === "kept");
@@ -194,40 +192,24 @@ export default function AdminFinancePage() {
       owed:       sum(owed, "refund"),
       owedCount:  owed.length,
       shop:       sum(shop, "net"),
-      payments:   inPeriod.length,
     };
   }, [inPeriod]);
 
-  // The last 12 months, always, so the trend doesn't jump with the period tabs.
-  const trend = useMemo(() => {
-    const now = new Date();
-    const months = Array.from({ length: 12 }, (_, i) => {
-      const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11 + i, 1));
-      return { key: d.toISOString().slice(0, 7), label: d.toLocaleDateString("en-GB", { month: "short", timeZone: "UTC" }), net: 0 };
-    });
-    const index = new Map(months.map((m, i) => [m.key, i]));
-    for (const e of entries) {
-      const i = index.get(monthKey(e.date));
-      if (i !== undefined) months[i].net += e.net;
-    }
-    return months;
-  }, [entries]);
-  const trendMax = Math.max(1, ...trend.map((m) => m.net));
-  const currentKey = trend[trend.length - 1]?.key;
-
   const byService = useMemo(() => rank(inPeriod.filter((e) => e.kind === "booking"), (e) => e.description), [inPeriod]);
   const byStylist = useMemo(() => rank(inPeriod, (e) => e.stylist), [inPeriod]);
+  const byMethod = useMemo(() => rank(inPeriod, (e) => e.method, 10), [inPeriod]);
 
   const ledger = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return inPeriod;
     return inPeriod.filter((e) =>
-      [e.client, e.description, e.stylist, e.reference].some((v) => v?.toLowerCase().includes(q)));
+      [e.client, e.description, e.stylist, e.reference, e.method].some((v) => v?.toLowerCase().includes(q)));
   }, [inPeriod, query]);
 
-  const periodLabel = PERIODS.find((p) => p.value === period)!.label.toLowerCase();
-  const keptBookings = inPeriod.filter((e) => e.kind === "booking" && e.state !== "refunded");
-  const avgBooking = keptBookings.length ? Math.round(sum(keptBookings, "net") / keptBookings.length) : 0;
+  const csvName = period === "custom" && range ? `${range.from}-to-${range.to}` : period;
+  const periodLabel = period === "custom" && range
+    ? formatRange(range)
+    : (PERIODS.find((p) => p.value === period)?.label ?? "").toLowerCase();
 
   if (loading && entries.length === 0) return (
     <Page>
@@ -256,41 +238,43 @@ export default function AdminFinancePage() {
     <Page>
       <PageHeader
         title="Finance"
-        subtitle="Money in, money out, money kept"
         actions={
-          <Button variant="secondary" onClick={() => downloadCsv(inPeriod, period)} disabled={inPeriod.length === 0}>
-            Export CSV
+          <Button variant="secondary" onClick={() => setShowLedger(true)}>
+            Transactions
           </Button>
         }
       />
 
-      <Segmented<Period> options={PERIODS} value={period} onChange={setPeriod} className="mb-8 fade-up" />
+      <div className="relative z-20 flex items-center gap-2 mb-8 fade-up">
+        <Segmented<Period>
+          options={PERIODS}
+          value={period}
+          onChange={(p) => { setPeriod(p); setRange(null); }}
+          className="min-w-0"
+        />
+        <DateRangePicker
+          value={period === "custom" ? range : null}
+          onChange={(r) => { setRange(r); setPeriod(r ? "custom" : "month"); }}
+        />
+      </div>
 
       {/* Headline */}
       <section className="bg-ink text-paper rounded-[28px] p-6 md:p-10 fade-up">
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8">
           <div>
-            <p className="font-sans text-[13px] text-paper/60">Net revenue, {periodLabel}</p>
+            <p className="font-sans text-[13px] text-paper/60">Yours to keep, {periodLabel}</p>
             <p className={`mt-2 font-serif font-light text-[48px] md:text-[60px] leading-none ${NUM}`}>{cedis(totals.net)}</p>
-            <p className={`mt-3 font-sans text-[13px] text-paper/50 ${NUM}`}>
-              {cedis(totals.gross)} collected across {totals.payments} {totals.payments === 1 ? "payment" : "payments"}
-            </p>
           </div>
 
-          <div className="flex gap-6 md:gap-8 pt-6 lg:pt-0 border-t lg:border-t-0 border-paper/15">
+          <div className="grid grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)] gap-4 md:gap-8 pt-6 lg:pt-0 border-t lg:border-t-0 border-paper/15 lg:max-w-[400px]">
             <div>
-              <p className="font-sans text-[13px] text-paper/60">Earned</p>
+              <p className="font-sans text-[13px] leading-snug text-paper/60">From finished appointments</p>
               <p className={`mt-1 font-serif text-[26px] md:text-[28px] font-light leading-tight ${NUM}`}>{cedis(totals.earned)}</p>
             </div>
             <div className="w-px bg-paper/15" aria-hidden="true" />
             <div>
-              <p className="font-sans text-[13px] text-paper/60">Booked ahead</p>
+              <p className="font-sans text-[13px] leading-snug text-paper/60">Paid for upcoming</p>
               <p className={`mt-1 font-serif text-[26px] md:text-[28px] font-light leading-tight ${NUM}`}>{cedis(totals.upcoming)}</p>
-            </div>
-            <div className="w-px bg-paper/15" aria-hidden="true" />
-            <div>
-              <p className="font-sans text-[13px] text-paper/60">Per booking</p>
-              <p className={`mt-1 font-serif text-[26px] md:text-[28px] font-light leading-tight ${NUM}`}>{cedis(avgBooking)}</p>
             </div>
           </div>
         </div>
@@ -319,10 +303,10 @@ export default function AdminFinancePage() {
         </Link>
       )}
 
-      <div className="mt-10 md:mt-12 grid gap-10 lg:gap-7 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] fade-up">
+      <div className="mt-10 md:mt-12 grid gap-10 lg:gap-7 lg:grid-cols-3 fade-up">
         {/* Statement */}
         <section>
-          <SectionTitle italic="down">Breakdown</SectionTitle>
+          <SectionTitle italic="breakdown">The</SectionTitle>
           <Card>
             <dl className={`flex flex-col gap-3.5 font-sans text-[14px] ${NUM}`}>
               <div className="flex justify-between gap-4">
@@ -350,39 +334,16 @@ export default function AdminFinancePage() {
                   <dd>{cedis(totals.shop)}</dd>
                 </div>
               )}
+              {byMethod.length > 1 && byMethod.map((m) => (
+                <div key={m.label} className="flex justify-between gap-4 text-[13px] text-muted">
+                  <dt>Paid by {m.label === "Paystack" ? "Paystack (online)" : m.label}</dt>
+                  <dd>{cedis(m.net)}</dd>
+                </div>
+              ))}
             </dl>
           </Card>
         </section>
 
-        {/* Trend */}
-        <section>
-          <SectionTitle italic="months">Last 12</SectionTitle>
-          <Card>
-            <div className="h-[184px] flex items-end gap-1.5 md:gap-2.5" role="img" aria-label="Net revenue for each of the last 12 months">
-              {trend.map((m) => {
-                const h = m.net > 0 ? Math.max(3, (m.net / trendMax) * 100) : 0;
-                const current = m.key === currentKey;
-                return (
-                  <div key={m.key} className="group relative flex-1 h-full flex flex-col justify-end items-center gap-2" title={`${m.label}: ${cedis(m.net)}`}>
-                    <span className={`pointer-events-none absolute -top-1 font-sans text-[11px] text-ink whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity ${NUM}`}>
-                      {cedis(m.net)}
-                    </span>
-                    <span className="w-full flex-1 flex items-end">
-                      <span
-                        className={`w-full rounded-t-[6px] rounded-b-[2px] transition-colors ${current ? "bg-ink" : "bg-ink/20 group-hover:bg-ink/40"}`}
-                        style={{ height: `${h}%`, minHeight: m.net > 0 ? 3 : 1 }}
-                      />
-                    </span>
-                    <span className={`font-sans text-[10px] md:text-[11px] ${current ? "text-ink" : "text-muted"}`}>{m.label}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </Card>
-        </section>
-      </div>
-
-      <div className="mt-10 md:mt-12 grid gap-10 lg:gap-7 lg:grid-cols-2 fade-up">
         <section>
           <SectionTitle italic="services">Top</SectionTitle>
           <Card><Ranking rows={byService} empty="No bookings in this period" /></Card>
@@ -393,34 +354,39 @@ export default function AdminFinancePage() {
         </section>
       </div>
 
-      {/* Ledger */}
-      <section className="mt-10 md:mt-12 fade-up">
-        <SectionTitle>Transactions</SectionTitle>
-        <SearchInput value={query} onChange={setQuery} placeholder="Search client, service or reference" className="mb-4" />
+      {/* Transactions: opened from the header so they're one tap away */}
+      <Modal
+        open={showLedger}
+        onClose={() => setShowLedger(false)}
+        title="Transactions"
+        size="lg"
+        footer={
+          <Button variant="secondary" onClick={() => downloadCsv(inPeriod, csvName)} disabled={inPeriod.length === 0}>
+            Export CSV
+          </Button>
+        }
+      >
+        <SearchInput value={query} onChange={setQuery} placeholder="Search client, service or reference" className="mb-2" />
         {ledger.length === 0 ? (
-          <Card>
-            <Empty title={query ? "Nothing matches that search" : "No payments in this period"} />
-          </Card>
+          <Empty title={query ? "Nothing matches that search" : "No payments in this period"} />
         ) : (
-          <Card padded={false}>
+          <>
             <ul className="divide-y divide-line">
               {ledger.slice(0, shown).map((e) => {
-                const s = STATE[e.state];
+                const st = STATE[e.state];
                 const adjusted = e.net !== e.gross;
                 return (
                   <li key={`${e.kind}-${e.id}`}>
                     <Link
                       href={e.kind === "booking" ? `/admin/bookings?open=${e.id}` : "/admin/orders"}
-                      className="px-5 md:px-7 py-4 grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1 items-center hover:bg-soft/60 transition-colors"
+                      className="py-4 grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1 items-center hover:bg-soft/60 -mx-3 px-3 rounded-[14px] transition-colors"
                     >
                       <span className="min-w-0">
                         <span className="block font-sans text-[15px] font-medium text-ink truncate">{e.client}</span>
-                        <span className="block font-sans text-[13px] text-muted truncate">
-                          {shortDate(e.date)} · {e.description}{e.stylist ? ` · ${e.stylist}` : ""}
-                        </span>
+                        <span className="block font-sans text-[13px] text-muted truncate">{e.description}</span>
                       </span>
                       <span className="flex items-center gap-3">
-                        <Pill tone={s.tone} className="hidden sm:inline-flex">{s.label}</Pill>
+                        <Pill tone={st.tone} className="hidden sm:inline-flex">{st.label}</Pill>
                         <span className="text-right">
                           <span className={`block font-serif text-[20px] leading-tight ${e.net > 0 ? "text-ink" : "text-muted"} ${NUM}`}>{cedis(e.net)}</span>
                           {adjusted && (
@@ -428,22 +394,22 @@ export default function AdminFinancePage() {
                           )}
                         </span>
                       </span>
-                      <Pill tone={s.tone} className="sm:hidden justify-self-start">{s.label}</Pill>
+                      <Pill tone={st.tone} className="sm:hidden justify-self-start">{st.label}</Pill>
                     </Link>
                   </li>
                 );
               })}
             </ul>
             {ledger.length > shown && (
-              <div className="px-5 md:px-7 py-4 border-t border-line flex justify-center">
+              <div className="pt-3 flex justify-center">
                 <Button variant="ghost" onClick={() => setShown((n) => n + PAGE_SIZE)}>
                   Show more ({ledger.length - shown} left)
                 </Button>
               </div>
             )}
-          </Card>
+          </>
         )}
-      </section>
+      </Modal>
     </Page>
   );
 }

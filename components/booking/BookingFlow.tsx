@@ -29,7 +29,9 @@ import { uploadImage } from "@/lib/upload-image";
 import {
   BUNDLE_OPTIONS,
   bringsHair,
+  formatReadyEstimate,
   getServiceRules,
+  readyEstimate,
   type HairOption,
   type HairUnitType,
 } from "@/lib/service-rules";
@@ -1057,6 +1059,12 @@ export default function BookingFlow() {
   const customizationType = rules.customization ? booking.customizationType : "";
   const bundleCount = rules.askBundles ? booking.bundleCount : null;
   const showUnitStep = bringsHair(hairUnitType);
+  // Drop-off services: when the unit should be ready, from the picked date
+  const ready = readyEstimate(
+    booking.serviceId,
+    customizationType,
+    booking.date ? toDateStr(booking.date) : null,
+  );
   const {
     customizationFee,
     emergencyFee,
@@ -2036,8 +2044,21 @@ export default function BookingFlow() {
                 />
                 {booking.date && (
                   <p className="font-sans text-[14px] font-medium text-ink mt-4">
+                    {ready && (
+                      <span className="text-ink/55 font-normal">Drop-off day: </span>
+                    )}
                     {formatDate(booking.date)}
                   </p>
+                )}
+                {ready && (
+                  <div className="mt-4 rounded-2xl bg-mist px-5 py-4 flex gap-3 fade-up">
+                    <span className="text-[0.95rem] flex-shrink-0 text-ink/60">◉</span>
+                    <p className="font-sans text-[14px] text-ink/80 leading-relaxed">
+                      <span className="font-medium text-ink">Estimated ready: </span>
+                      {formatReadyEstimate(ready)}. We&apos;ll message you on
+                      WhatsApp as soon as your unit is ready for pickup.
+                    </p>
+                  </div>
                 )}
               </div>
 
@@ -2487,8 +2508,13 @@ export default function BookingFlow() {
                   )}
                 </div>
                 <p className="font-sans text-[14px] text-ink/60">
-                  {booking.time}
+                  {ready ? `Drop-off at ${booking.time}` : booking.time}
                 </p>
+                {ready && (
+                  <p className="font-sans text-[14px] text-ink/60">
+                    Estimated ready: {formatReadyEstimate(ready)}
+                  </p>
+                )}
               </ReviewRow>
 
               <ReviewRow label="Details" onEdit={() => goTo(5)}>

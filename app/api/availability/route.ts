@@ -32,7 +32,8 @@ export async function GET(req: Request) {
     adminDb.from('blocked_dates').select('id').eq('date', date).maybeSingle(),
     adminDb
       .from('bookings')
-      .select('time_slot, stylist_id, duration_minutes, status, payment_status, created_at')
+      // '*' so location_type is read once migration 024 has run, and nothing breaks before
+      .select('*')
       .eq('booking_date', date)
       .in('status', ['pending', 'confirmed']),
     adminDb.from('stylists').select('*').eq('is_available', true),
@@ -57,10 +58,13 @@ export async function GET(req: Request) {
   // independent of how many stylists are rostered.
   const maxPerSlot: number = avail?.max_bookings_per_slot ?? 1
 
-  const activeBookings = ((bookings ?? []) as ActiveBooking[]).filter((b) => isActiveBooking(b, SLOT_HOLD_MS))
+  const activeBookings = ((bookings ?? []) as (ActiveBooking & { location_type?: string })[])
+    .filter((b) => isActiveBooking(b, SLOT_HOLD_MS))
+  // Home service visits keep their stylist busy but don't take a seat in the salon
+  const inSalon = activeBookings.filter((b) => b.location_type !== 'home')
 
   const dayIsOpen = !blocked && (avail?.is_available ?? false)
-  let dayFull = maxPerDay > 0 && activeBookings.length >= maxPerDay
+  let dayFull = maxPerDay > 0 && inSalon.length >= maxPerDay
 
   const allStylists = (stylists as Stylist[] | null) ?? []
   const underCap = (s: Stylist) =>
@@ -86,7 +90,7 @@ export async function GET(req: Request) {
   const bookedSlots = Array.from(starts)
     .filter((start) => {
       if (closeMins !== null && start + duration > closeMins) return true
-      if (peakOccupancy(activeBookings, start, duration, interval) >= maxPerSlot) return true
+      if (peakOccupancy(inSalon, start, duration, interval) >= maxPerSlot) return true
       return candidates.every((s) => stylistBusy(activeBookings, s.id, start, duration, interval))
     })
     .sort((a, b) => a - b)
@@ -100,6 +104,6 @@ export async function GET(req: Request) {
     slotInterval:  interval,
     duration,
     dayFull,
-    bookingsToday: activeBookings.length,
+    bookingsToday: inSalon.length,
   })
 }

@@ -4,7 +4,7 @@
 // look stays consistent: warm blue (ink), white, graphite and soft neutrals,
 // serif headings, pill-shaped controls and large rounded surfaces.
 
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 // ─── Layout ──────────────────────────────────────────────────────────────────
 
@@ -26,7 +26,7 @@ export function PageHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-5 mb-8 md:mb-10 fade-up">
+    <header className={`flex flex-wrap justify-between gap-x-6 gap-y-5 mb-8 md:mb-10 fade-up ${subtitle ? "items-end" : "items-center"}`}>
       <div className="min-w-0">
         <h1 className="font-serif text-[2.75rem] md:text-[3.5rem] font-light leading-none tracking-[-0.01em] text-ink">
           {title}
@@ -168,8 +168,52 @@ export function Segmented<T extends string>({
   onChange: (v: T) => void;
   className?: string;
 }) {
+  const listRef = useRef<HTMLDivElement>(null);
+  const [pill, setPill] = useState<{ left: number; width: number } | null>(null);
+  // The first measurement places the pill without animating; after that it glides.
+  const [ready, setReady] = useState(false);
+
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+    const measure = () => {
+      const active = list.querySelector<HTMLElement>('[aria-selected="true"]');
+      setPill(active ? { left: active.offsetLeft, width: active.offsetWidth } : null);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(list);
+    list.querySelectorAll("button").forEach((b) => ro.observe(b));
+    return () => ro.disconnect();
+  }, [value, options]);
+
+  useEffect(() => {
+    if (!pill || ready) return;
+    const id = requestAnimationFrame(() => setReady(true));
+    return () => cancelAnimationFrame(id);
+  }, [pill, ready]);
+
+  useEffect(() => {
+    listRef.current
+      ?.querySelector<HTMLElement>('[aria-selected="true"]')
+      ?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+  }, [value]);
+
   return (
-    <div role="tablist" className={`inline-flex gap-1 p-1 rounded-full bg-soft max-w-full overflow-x-auto hide-scrollbar ${className}`}>
+    <div
+      ref={listRef}
+      role="tablist"
+      className={`relative inline-flex gap-1 p-1 rounded-full bg-soft max-w-full overflow-x-auto hide-scrollbar ${className}`}
+    >
+      {pill && (
+        <span
+          aria-hidden
+          className={`absolute top-1 bottom-1 left-0 rounded-full bg-ink ${
+            ready ? "transition-[transform,width] duration-[400ms] ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none" : ""
+          }`}
+          style={{ width: pill.width, transform: `translateX(${pill.left}px)` }}
+        />
+      )}
       {options.map((o) => {
         const on = o.value === value;
         return (
@@ -179,8 +223,8 @@ export function Segmented<T extends string>({
             role="tab"
             aria-selected={on}
             onClick={() => onChange(o.value)}
-            className={`h-9 px-4 inline-flex items-center gap-2 rounded-full font-sans text-[13px] whitespace-nowrap transition-colors ${
-              on ? "bg-ink text-paper" : "text-graphite hover:text-ink"
+            className={`relative h-9 px-4 inline-flex items-center gap-2 rounded-full font-sans text-[13px] whitespace-nowrap transition-colors duration-300 ${
+              on ? (pill ? "text-paper" : "bg-ink text-paper") : "text-graphite hover:text-ink"
             }`}
           >
             {o.label}
@@ -195,10 +239,24 @@ export function Segmented<T extends string>({
 // ─── Forms ───────────────────────────────────────────────────────────────────
 
 export const inputClass =
-  "w-full h-12 px-4 rounded-2xl bg-soft border border-transparent font-sans text-[14px] text-ink placeholder:text-muted/70 focus:outline-none focus:bg-paper focus:border-ink/30 transition-colors";
+  "w-full h-12 px-4 rounded-2xl bg-soft border border-transparent font-sans text-[13px] text-ink placeholder:text-muted/70 focus:outline-none focus:bg-paper focus:border-ink/30 transition-colors";
+
+const SELECT_CHEVRON = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236B6E75' stroke-width='1.2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E\")";
+
+// A dropdown styled like the other fields, with our own chevron instead of
+// the browser's white, bordered default.
+export function Select({ className = "", style, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
+  return (
+    <select
+      {...props}
+      className={`${inputClass} appearance-none cursor-pointer pr-10 disabled:cursor-default disabled:opacity-60 ${className}`}
+      style={{ backgroundImage: SELECT_CHEVRON, backgroundRepeat: "no-repeat", backgroundPosition: "right 16px center", ...style }}
+    />
+  );
+}
 
 export const textareaClass =
-  "w-full px-4 py-3 rounded-2xl bg-soft border border-transparent font-sans text-[14px] text-ink placeholder:text-muted/70 focus:outline-none focus:bg-paper focus:border-ink/30 transition-colors resize-none";
+  "w-full px-4 py-3 rounded-2xl bg-soft border border-transparent font-sans text-[13px] text-ink placeholder:text-muted/70 focus:outline-none focus:bg-paper focus:border-ink/30 transition-colors resize-none";
 
 export function Field({
   label,
@@ -243,7 +301,7 @@ export function SearchInput({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         aria-label={placeholder}
-        className="flex-1 min-w-0 bg-transparent border-0 outline-none font-sans text-[14px] text-ink placeholder:text-muted"
+        className="flex-1 min-w-0 bg-transparent border-0 outline-none font-sans text-[13px] text-ink placeholder:text-muted"
       />
     </label>
   );

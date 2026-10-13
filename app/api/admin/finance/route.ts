@@ -3,6 +3,7 @@ import { adminDb } from '@/lib/supabase/admin'
 import { getAdmin } from '@/lib/admin-auth'
 import { autoCompletePastBookings } from '@/lib/bookings-maintenance'
 import { bookingSplit, type FinanceEntry, type FinanceState } from '@/lib/finance'
+import { paymentMethodLabel } from '@/lib/manual-bookings'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,6 +24,7 @@ type BookingRow = {
   id: string; created_at: string; client_name: string; service_name: string; treatment: string | null
   stylist_name: string | null; status: string; payment_status: string; payment_reference: string | null
   amount: number; service_charge: number | null; refund_amount: number | null
+  source?: string; payment_method?: string | null
 }
 type OrderRow = {
   id: string; created_at: string; client_name: string; items: { name: string; quantity: number }[] | null
@@ -46,7 +48,8 @@ export async function GET() {
     [bookings, orders] = await Promise.all([
       fetchAll<BookingRow>((from, to) => adminDb
         .from('bookings')
-        .select('id, created_at, client_name, service_name, treatment, stylist_name, status, payment_status, payment_reference, amount, service_charge, refund_amount')
+        // '*' so source and payment_method are read once migration 024 has run
+        .select('*')
         .in('payment_status', ['paid', 'refunded'])
         .order('created_at', { ascending: false })
         .range(from, to)),
@@ -76,6 +79,8 @@ export async function GET() {
         state:       bookingState(b, split.refund),
         ...split,
         reference:   b.payment_reference,
+        method:      paymentMethodLabel(b) ?? 'Paystack',
+        manual:      b.source === 'manual',
       }
     }),
     // Shop orders carry no platform fee or refund tracking yet.
@@ -92,6 +97,8 @@ export async function GET() {
       fee:         0,
       net:         o.total,
       reference:   o.payment_reference,
+      method:      'Paystack',
+      manual:      false,
     })),
   ].sort((a, b) => b.date.localeCompare(a.date))
 

@@ -11,8 +11,9 @@ import { formatBookingDate } from '@/lib/booking-time'
 import { isPriceRange } from '@/lib/booking-fees'
 import { bookingConfirmationHtml } from '@/emails/booking-confirmation'
 import { bookingAdminAlertHtml } from '@/emails/booking-admin-alert'
-import { customizationLabel, getServiceRules } from '@/lib/service-rules'
+import { customizationLabel, formatReadyEstimate, getServiceRules, readyEstimate } from '@/lib/service-rules'
 import { orderConfirmationHtml } from '@/emails/order-confirmation'
+import { balanceDue, paymentMethodLabel } from '@/lib/manual-bookings'
 import { sendSmsSafely, bookingConfirmedSms, bookingAdminSms, ADMIN_NOTIFY_PHONE } from '@/lib/sms'
 
 export const ADMIN_NOTIFY_EMAIL = process.env.ADMIN_EMAIL ?? 'essakobea@gmail.com'
@@ -133,18 +134,25 @@ export async function releaseUnpaidBooking(bookingId: string) {
     .eq('payment_status', 'unpaid')
 }
 
-async function sendBookingConfirmedEmails(booking: Row) {
+// Manual bookings (added in the admin) pass notifyAdmin: false, since the
+// salon made them.
+export async function sendBookingConfirmedEmails(booking: Row, { notifyAdmin = true } = {}) {
   const formattedDate = formatBookingDate(booking.booking_date)
+  const manual = booking.source === 'manual'
 
   // A range-priced option ("₵250 – ₵450") means what they paid is a deposit.
+  // Manual bookings know their full price, so a deposit is anything short of it.
   let isDeposit = false
-  if (booking.service_id && booking.treatment) {
+  if (manual) {
+    isDeposit = booking.amount > 0 && balanceDue(booking as { source: string; amount: number; total_price: number | null }) > 0
+  } else if (booking.service_id && booking.treatment) {
     const { data: svc } = await adminDb.from('services').select('booking_options').eq('slug', booking.service_id).single()
     const options = svc?.booking_options as { name?: string; price?: string }[] | null
     const opt = options?.find((o) => o.name === booking.treatment)
     if (isPriceRange(opt?.price)) isDeposit = true
   }
 
+  const ready = readyEstimate(booking.service_id, booking.customization_type, booking.booking_date)
   const sharedFields = {
     serviceName:       booking.service_name,
     treatment:         booking.treatment,
@@ -157,12 +165,22 @@ async function sendBookingConfirmedEmails(booking: Row) {
     appUrl:            process.env.NEXT_PUBLIC_APP_URL ?? '',
     customizationType: booking.customization_type ?? null,
     customizationLabel: customizationLabel(booking.service_id, booking.customization_type),
+    readyEstimate:      ready ? formatReadyEstimate(ready) : null,
     isEmergency:       booking.is_emergency ?? false,
     stylistFee:        Math.round((booking.stylist_fee ?? 0) / 100),
     customizationFee:  Math.round((booking.customization_fee ?? 0) / 100),
     emergencyFee:      Math.round((booking.emergency_fee ?? 0) / 100),
     serviceCharge:     Math.round((booking.service_charge ?? 0) / 100),
     bundleCount:       booking.bundle_count ?? null,
+    homeAddress:       booking.location_type === 'home' ? booking.home_address ?? '' : null,
+    manualPayment:     manual
+      ? {
+          totalGHS:   (booking.total_price ?? booking.amount ?? 0) / 100,
+          paidGHS:    (booking.amount ?? 0) / 100,
+          travelGHS:  (booking.travel_fee ?? 0) / 100,
+          method:     paymentMethodLabel(booking as { source: string; payment_method: string | null; payment_status: string }),
+        }
+      : null,
   }
 
   if (booking.client_email) {
@@ -179,7 +197,7 @@ async function sendBookingConfirmedEmails(booking: Row) {
     })
   }
 
-  await sendSafely('admin booking alert', {
+  if (notifyAdmin) await sendSafely('admin booking alert', {
     from: FROM_ADMIN,
     to: ADMIN_NOTIFY_EMAIL,
     subject: `New booking: ${booking.client_name} · ${booking.service_name} on ${formattedDate}`,
@@ -194,7 +212,7 @@ async function sendBookingConfirmedEmails(booking: Row) {
 
   const smsBooking = booking as Parameters<typeof bookingConfirmedSms>[0]
   await sendSmsSafely('booking confirmation SMS', booking.client_phone, bookingConfirmedSms(smsBooking))
-  await sendSmsSafely('admin booking SMS', ADMIN_NOTIFY_PHONE, bookingAdminSms(smsBooking))
+  if (notifyAdmin) await sendSmsSafely('admin booking SMS', ADMIN_NOTIFY_PHONE, bookingAdminSms(smsBooking))
 }
 
 export async function settleOrderPayment(

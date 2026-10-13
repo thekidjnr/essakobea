@@ -142,8 +142,8 @@ export default function AdminDashboard() {
                 {formatSlot(next.time_slot)} · {countdown(startOf(next), now)}
               </span>
               <div className="absolute inset-x-6 bottom-6">
-                <p className="font-serif text-[34px] leading-none">{next.client_name}</p>
-                <p className="mt-2 font-sans text-[13px] text-paper/75">
+                <p className="font-serif text-[28px] leading-[1.05]">{next.client_name}</p>
+                <p className="mt-2.5 font-sans text-[15px] text-paper/80">
                   {next.treatment || next.service_name}{next.stylist_name ? ` · with ${next.stylist_name}` : ""}
                 </p>
                 <div className="mt-5 flex gap-2">
@@ -184,7 +184,6 @@ export default function AdminDashboard() {
               <ul className="divide-y divide-line">
                 {today.map((b) => {
                   const s = bookingStatus(b);
-                  const isNext = next?.id === b.id;
                   const img = thumbUrl(serviceFor(services, b)?.image_url);
                   return (
                     <li key={b.id}>
@@ -201,7 +200,8 @@ export default function AdminDashboard() {
                             {b.treatment || b.service_name}{b.stylist_name ? ` · ${b.stylist_name}` : ""}
                           </span>
                         </span>
-                        {isNext ? <Pill tone="solid">Next</Pill> : <Pill tone={s.tone} className={s.tone === "outline" ? "hidden sm:inline-flex" : ""}>{s.label}</Pill>}
+                        {/* "Booked" is the default, so only statuses worth noticing show */}
+                        {s.tone !== "outline" && <Pill tone={s.tone}>{s.label}</Pill>}
                       </Link>
                     </li>
                   );

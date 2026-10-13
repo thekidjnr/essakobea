@@ -219,13 +219,11 @@ export default function AdminServicesPage() {
     load();
   };
 
-  const liveCount = services.filter((s) => s.is_active).length;
 
   return (
     <Page>
       <PageHeader
         title="Services"
-        subtitle={loading ? undefined : `${services.length} ${services.length === 1 ? "service" : "services"} · ${liveCount} live`}
         actions={<Button onClick={openAdd}>Add service</Button>}
       />
 
@@ -260,15 +258,9 @@ export default function AdminServicesPage() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-sans text-[15px] font-medium text-ink truncate">{svc.name}</p>
-                      <p className="font-sans text-[13px] text-muted truncate">
-                        <span className="md:hidden">{optLabel}{svc.description ? " · " : ""}</span>
-                        {svc.description}
-                      </p>
+                      <p className="font-sans text-[13px] text-muted">{optLabel}</p>
                     </div>
                   </button>
-                  <span className="hidden md:block flex-shrink-0 font-sans text-[13px] text-muted w-20 text-right">
-                    {optLabel}
-                  </span>
                   <label className="flex-shrink-0 flex items-center gap-2.5 h-11 px-1 cursor-pointer">
                     <span className="hidden md:inline font-sans text-[13px] text-muted w-12 text-right">
                       {svc.is_active ? "Live" : "Hidden"}

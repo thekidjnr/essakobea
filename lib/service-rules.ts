@@ -57,6 +57,15 @@ export interface ServiceRules {
   balanceDue: string
   /** Extra terms shown in the booking popup and the confirmation email */
   servicePolicy?: ServicePolicy
+  /** Working days from drop-off until the unit is ready, when the booked date is a drop-off */
+  turnaround?: Record<CustomizationType, Turnaround>
+}
+
+export interface Turnaround {
+  min: number
+  max: number
+  /** Can run longer than `max` */
+  orMore?: boolean
 }
 
 export const BUNDLE_OPTIONS = [1, 2, 3, 4, 5, 6] as const
@@ -123,7 +132,33 @@ const SEW_IN: Partial<ServiceRules> = {
   photoHelp: 'Add at least one photo of the hair you are bringing so your stylist can prepare.',
 }
 
-// The booked date is the drop-off day, and coloring takes days, not hours.
+// The booked date is the drop-off day for wig making and coloring: both work
+// on the client's own unit and take days, not hours.
+const DROP_OFF_NOTE = "This is the day you drop off your unit. We'll start on it from then."
+
+const WIG_MAKING: Partial<ServiceRules> = {
+  hairQuestion: 'Wig making is done on your own unit. Which are you bringing?',
+  hairOptions: DEFAULT_RULES.hairOptions.filter((o) => o.id !== 'none'),
+  hairNote: 'Need help getting a unit?',
+  customizationCopy: {
+    standard: {
+      sub: 'Ready in 5 to 7 working days',
+      info: "Drop off your unit on your booking date. Standard takes 5 to 7 working days (Tuesday to Saturday), and we'll message you on WhatsApp when it's ready.",
+      short: 'Ready in 5 to 7 working days',
+    },
+    express: {
+      sub: 'Ready in 2 to 3 working days',
+      info: "Drop off your unit on your booking date. Express takes 2 to 3 working days (Tuesday to Saturday), and we'll message you on WhatsApp when it's ready.",
+      short: 'Ready in 2 to 3 working days',
+    },
+  },
+  scheduleNote: DROP_OFF_NOTE,
+  turnaround: {
+    standard: { min: 5, max: 7 },
+    express: { min: 2, max: 3 },
+  },
+}
+
 // Standard and Express cost nothing online; the salon agrees any extra cost
 // with the client on WhatsApp.
 const COLORING: Partial<ServiceRules> = {
@@ -133,9 +168,9 @@ const COLORING: Partial<ServiceRules> = {
   customizationFees: false,
   customizationCopy: {
     standard: {
-      sub: 'Ready in 14 or more working days',
-      info: "Drop off your unit on your booking date. Coloring takes 14 working days or more (Tuesday to Saturday), and we'll message you on WhatsApp when it's ready.",
-      short: 'Ready in 14+ working days',
+      sub: 'Ready in 10 to 14 working days or more',
+      info: "Drop off your unit on your booking date. Coloring takes 10 to 14 working days or more (Tuesday to Saturday), and we'll message you on WhatsApp when it's ready.",
+      short: 'Ready in 10 to 14+ working days',
     },
     express: {
       sub: 'Usually ready in 3 to 5 working days',
@@ -143,18 +178,23 @@ const COLORING: Partial<ServiceRules> = {
       short: 'Ready in 3 to 5 working days, extra cost confirmed on WhatsApp',
     },
   },
+  turnaround: {
+    standard: { min: 10, max: 14, orMore: true },
+    express: { min: 3, max: 5 },
+  },
   unitStepLabel: 'Color',
   unitStepTitle: { lead: 'Your', italic: 'color.' },
   unitStepIntro: 'Choose how soon you need it, then add your photos.',
   photoLabel: 'Your unit',
   photoHelp: "A photo of the unit you're dropping off.",
   inspoPhoto: { label: 'Color inspo', help: "A photo of the color you'd like." },
-  scheduleNote: "This is the day you drop off your unit. We'll start on it from then.",
+  scheduleNote: DROP_OFF_NOTE,
   balanceDue: 'when you drop off your unit, before colouring begins',
   servicePolicy: COLORING_POLICY,
 }
 
 const OVERRIDES: Record<string, Partial<ServiceRules>> = {
+  'wig-making': WIG_MAKING,
   coloring: COLORING,
   // Clients bring extensions; the photo shows whether they're new or used,
   // so there's no new/existing split and no Standard/Express step.
@@ -181,4 +221,51 @@ export function customizationLabel(slug: string | null | undefined, type: string
 /** True when the chosen hair option means the client is bringing hair */
 export function bringsHair(type: string | null | undefined): boolean {
   return !!type && type !== 'none'
+}
+
+// The salon works Tuesday to Saturday
+const WORKING_DAYS = new Set([2, 3, 4, 5, 6])
+
+function addWorkingDays(date: Date, days: number): Date {
+  const d = new Date(date)
+  let left = days
+  while (left > 0) {
+    d.setUTCDate(d.getUTCDate() + 1)
+    if (WORKING_DAYS.has(d.getUTCDay())) left--
+  }
+  return d
+}
+
+export interface ReadyEstimate {
+  /** YYYY-MM-DD */
+  from: string
+  to: string
+  orMore: boolean
+}
+
+/** When a dropped-off unit should be ready, counted in working days from the drop-off date (YYYY-MM-DD) */
+export function readyEstimate(
+  slug: string | null | undefined,
+  type: string | null | undefined,
+  dropOffDate: string | null | undefined,
+): ReadyEstimate | null {
+  if (type !== 'standard' && type !== 'express') return null
+  const t = getServiceRules(slug).turnaround?.[type]
+  if (!t || !dropOffDate || !/^\d{4}-\d{2}-\d{2}$/.test(dropOffDate)) return null
+  const start = new Date(`${dropOffDate}T00:00:00Z`)
+  const iso = (d: Date) => d.toISOString().slice(0, 10)
+  return {
+    from: iso(addWorkingDays(start, t.min)),
+    to: iso(addWorkingDays(start, t.max)),
+    orMore: !!t.orMore,
+  }
+}
+
+/** "Sat 18 Oct to Tue 21 Oct", with ", or later" when it can run longer */
+export function formatReadyEstimate(est: ReadyEstimate): string {
+  const fmt = (s: string) =>
+    new Date(`${s}T00:00:00Z`).toLocaleDateString('en-GB', {
+      weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC',
+    })
+  return `${fmt(est.from)} to ${fmt(est.to)}${est.orMore ? ', or later' : ''}`
 }
