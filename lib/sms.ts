@@ -102,3 +102,12 @@ export function bookingCancelledSms(b: SmsBooking, paid: boolean, refundShare: n
 export function clientCancelledAdminSms(b: SmsBooking, reason: string): string {
   return `Cancelled by client: ${b.client_name} (${b.client_phone}), ${b.service_name}, ${when(b)}.${reason ? ` Reason: ${reason}` : ''}`
 }
+
+export function bookingRescheduledSms(b: SmsBooking, by: 'client' | 'salon'): string {
+  const lead = by === 'salon' ? 'we have moved your Essakobea appointment' : 'your Essakobea appointment has been moved'
+  return `Hi ${firstName(b.client_name)}, ${lead}. ${b.service_name} is now on ${when(b)}.`
+}
+
+export function clientRescheduledAdminSms(b: SmsBooking, previous: { booking_date: string; time_slot: string }): string {
+  return `Rescheduled by client: ${b.client_name} (${b.client_phone}), ${b.service_name}, moved from ${when(previous as SmsBooking)} to ${when(b)}.`
+}

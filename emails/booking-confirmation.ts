@@ -1,4 +1,5 @@
 import { cancellationPolicyText } from '@/lib/refunds'
+import { reschedulePolicyText } from '@/lib/reschedule-rules'
 import type { ServicePolicy } from '@/lib/policies'
 
 const escapeHtml = (v: string) =>
@@ -35,7 +36,7 @@ export function bookingConfirmationHtml(opts: {
   /** Extra terms the client agreed to when booking, e.g. the colouring policy */
   servicePolicy?:     ServicePolicy | null
 }): string {
-  const cancelUrl  = `${opts.appUrl}/cancel/${opts.cancelToken}`
+  const manageUrl  = `${opts.appUrl}/manage/${opts.cancelToken}`
   const ref        = opts.bookingId.slice(0, 8).toUpperCase()
   const amountLine = opts.isDeposit
     ? `₵${opts.depositGHS} deposit paid`
@@ -206,7 +207,7 @@ export function bookingConfirmationHtml(opts: {
                   <span style="font-size:14px;color:#1A212B">·</span>
                 </td>
                 <td style="padding:10px 0 10px 10px;border-bottom:1px solid #f8f6f3;font-size:13px;color:#55504a;font-family:'Inter',Arial,sans-serif;line-height:1.6">
-                  <strong style="color:#1A212B;font-weight:500">Rescheduling</strong> is available up to 48 hours before your appointment, just reach out on WhatsApp.
+                  <strong style="color:#1A212B;font-weight:500">Rescheduling.</strong> ${reschedulePolicyText()} Use the link at the bottom of this email.
                 </td>
               </tr>
               <tr>
@@ -224,12 +225,12 @@ export function bookingConfirmationHtml(opts: {
         <!-- Service policy (e.g. colouring) -->
         ${policyHtml}
 
-        <!-- Cancel CTA -->
+        <!-- Manage CTA -->
         <tr>
           <td style="padding:0 48px 48px">
             <p style="margin:0;font-size:11px;color:#B0ABA5;font-family:'Inter',Arial,sans-serif;line-height:1.8">
-              Need to cancel?
-              <a href="${cancelUrl}" style="color:#1A212B;text-decoration:underline">Cancel this appointment →</a>
+              Need to change your plans?
+              <a href="${manageUrl}" style="color:#1A212B;text-decoration:underline">Reschedule or cancel →</a>
             </p>
           </td>
         </tr>

@@ -40,6 +40,12 @@ export interface Booking {
   home_address?:       string | null
   travel_fee?:         number   // pesewas
   total_price?:        number | null   // pesewas, manual bookings only
+  // Migration 025: rescheduling (see lib/reschedule)
+  reschedule_count?:      number   // client's own online moves
+  rescheduled_at?:        string | null
+  rescheduled_by?:        'client' | 'salon' | null
+  previous_booking_date?: string | null
+  previous_time_slot?:    string | null
 }
 
 export interface OrderItem {

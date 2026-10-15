@@ -18,6 +18,7 @@ import { useRefundsOwed, notifyRefundsChanged } from "@/components/admin/useRefu
 import { thumbUrl } from "@/lib/media";
 import { balanceDue, isHomeService, paymentMethodLabel, PAYMENT_METHODS, type ManualPaymentMethod } from "@/lib/manual-bookings";
 import { ManualBookingForm } from "@/components/admin/ManualBookingForm";
+import { RescheduleDialog } from "@/components/admin/RescheduleDialog";
 
 type Booking = AdminBooking;
 type Tab = "upcoming" | "past" | "attention";
@@ -148,12 +149,13 @@ const TAB_QUERY: Record<Tab, string> = {
 // ─── Booking detail ──────────────────────────────────────────────────────────
 
 function BookingDetail({
-  b, services, onClose, onAction, onPhoto,
+  b, services, onClose, onAction, onReschedule, onPhoto,
 }: {
   b: Booking;
   services: DbService[];
   onClose: () => void;
   onAction: (action: BookingAction) => void;
+  onReschedule: () => void;
   onPhoto: (url: string) => void;
 }) {
   const s = bookingStatus(b);
@@ -165,6 +167,10 @@ function BookingDetail({
   const travel = b.travel_fee ?? 0;
   const base = manual ? Math.max(0, (b.total_price ?? b.amount) - travel) : Math.max(0, b.amount - extras);
   const when = new Date(`${b.booking_date}T00:00:00Z`).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+  // "Tue 3 Nov, 10:00 AM, by the client"
+  const movedFrom = b.previous_booking_date && b.previous_time_slot
+    ? `${new Date(`${b.previous_booking_date}T00:00:00Z`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }).replace(",", "")}, ${formatSlot(b.previous_time_slot)}${b.rescheduled_by ? `, by ${b.rescheduled_by === "client" ? "the client" : "the salon"}` : ""}`
+    : "";
   const unitLabel = b.hair_unit_type && b.hair_unit_type !== "none" ? HAIR_UNIT_LABELS[b.hair_unit_type] ?? b.hair_unit_type : null;
   const unit = unitLabel && b.bundle_count ? `${unitLabel}, ${b.bundle_count} bundle${b.bundle_count > 1 ? "s" : ""}` : unitLabel;
   const extrasList = [
@@ -196,6 +202,7 @@ function BookingDetail({
     ["Stylist", b.stylist_name ?? ""],
     ["Date", when],
     ["Time", formatSlot(b.time_slot)],
+    ["Moved from", movedFrom],
     ["Where", isHomeService(b) ? `Home service${b.home_address ? `: ${b.home_address}` : ""}` : ""],
     ["Extras", extrasList],
   ].filter(([, v]) => v) as [string, string][];
@@ -318,7 +325,10 @@ function BookingDetail({
           {refundOwed(b) && <Button className="h-12" onClick={() => onAction("refund")}>Mark refund as sent</Button>}
           {due > 0 && <Button className="h-12" onClick={() => onAction("payment")}>Record payment</Button>}
           {(b.status === "pending" || b.status === "confirmed") && (
-            <Button variant="ghost" onClick={() => onAction("cancel")}>Cancel booking</Button>
+            <>
+              <Button variant="secondary" className="h-12" onClick={onReschedule}>Reschedule</Button>
+              <Button variant="ghost" onClick={() => onAction("cancel")}>Cancel booking</Button>
+            </>
           )}
         </div>
       </div>
@@ -344,6 +354,7 @@ export default function AdminBookings() {
   const [actionError, setActionError] = useState("");
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [moving, setMoving] = useState<Booking | null>(null);
   const [source, setSource] = useState<Source>("all");
   const [payAmount, setPayAmount] = useState("");
   const [payMethod, setPayMethod] = useState<"" | ManualPaymentMethod>("");
@@ -577,6 +588,7 @@ export default function AdminBookings() {
               services={services}
               onClose={() => setSelectedId(null)}
               onAction={(action) => openAction(selected, action)}
+              onReschedule={() => setMoving(selected)}
               onPhoto={setLightboxUrl}
             />
           </div>
@@ -588,6 +600,17 @@ export default function AdminBookings() {
         onClose={() => setCreating(false)}
         services={services}
         onCreated={handleCreated}
+      />
+
+      <RescheduleDialog
+        booking={moving}
+        onClose={() => setMoving(null)}
+        onMoved={(b) => {
+          setMoving(null);
+          setTab(b.booking_date >= todayISO() ? "upcoming" : "past");
+          setSelectedId(b.id);
+          load();
+        }}
       />
 
       <ConfirmDialog

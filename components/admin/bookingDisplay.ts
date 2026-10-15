@@ -13,6 +13,7 @@ export interface AdminBooking {
   customization_type: string | null; is_emergency: boolean;
   customization_fee: number; emergency_fee: number; service_charge: number;
   stylist_fee?: number;
+  stylist_id?: string | null;
   stylist_name: string | null;
   hair_unit_type: "own_new" | "own_existing" | "own_extensions" | "none" | null;
   unit_photos: string[];
@@ -26,6 +27,12 @@ export interface AdminBooking {
   home_address?: string | null;
   travel_fee?: number;
   total_price?: number | null;
+  // Migration 025: rescheduling (see lib/reschedule)
+  reschedule_count?: number;
+  rescheduled_at?: string | null;
+  rescheduled_by?: "client" | "salon" | null;
+  previous_booking_date?: string | null;
+  previous_time_slot?: string | null;
 }
 
 export function refundOwed(b: Pick<AdminBooking, "status" | "payment_status" | "refund_amount">) {

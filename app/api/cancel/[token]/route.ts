@@ -3,30 +3,40 @@ import { adminDb } from '@/lib/supabase/admin'
 import { FROM } from '@/lib/resend'
 import { sendSafely } from '@/lib/payments'
 import { refundPolicy } from '@/lib/refunds'
+import { clientRescheduleBlock } from '@/lib/reschedule-rules'
 import { formatBookingDate } from '@/lib/booking-time'
 import { cancellationHtml } from '@/emails/cancellation'
 import { sendSmsSafely, bookingCancelledSms, clientCancelledAdminSms, ADMIN_NOTIFY_PHONE } from '@/lib/sms'
 
-// GET — lookup booking by token (for the cancel confirmation page)
+// GET — lookup booking by token (for the manage booking page)
 export async function GET(_req: Request, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params
+  // '*' so reschedule_count is read once migration 025 has run, and nothing breaks before
   const { data: booking } = await adminDb
     .from('bookings')
-    .select('id,client_name,service_name,treatment,booking_date,time_slot,status,amount,payment_status')
+    .select('*')
     .eq('cancel_token', token)
     .single()
 
-  if (!booking) return NextResponse.json({ error: 'Invalid cancellation link' }, { status: 404 })
+  if (!booking) return NextResponse.json({ error: 'Invalid booking link' }, { status: 404 })
 
   // What the client would get back if they cancelled right now
   const { share, refundPesewas } = refundPolicy(booking, 'client')
-  const { amount, payment_status, ...rest } = booking
+  const paid = booking.payment_status === 'paid'
   return NextResponse.json({
-    ...rest,
-    paid: payment_status === 'paid',
-    paidPesewas: payment_status === 'paid' ? amount : 0,
+    id:           booking.id,
+    client_name:  booking.client_name,
+    service_name: booking.service_name,
+    treatment:    booking.treatment,
+    stylist_name: booking.stylist_name,
+    booking_date: booking.booking_date,
+    time_slot:    booking.time_slot,
+    status:       booking.status,
+    paid,
+    paidPesewas: paid ? booking.amount : 0,
     refundShare: share,
     refundPesewas,
+    rescheduleBlock: clientRescheduleBlock(booking),
   })
 }
 

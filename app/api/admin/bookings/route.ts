@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/supabase/admin'
 import { getAdmin } from '@/lib/admin-auth'
-import { appointmentStart, dayOfWeek, minutesToSlot, slotToMinutes, todayInAccra } from '@/lib/booking-time'
+import { minutesToSlot, slotToMinutes, todayInAccra } from '@/lib/booking-time'
 import { autoCompletePastBookings } from '@/lib/bookings-maintenance'
-import { isActiveBooking, optionDuration, peakOccupancy, stylistBusy, type ActiveBooking } from '@/lib/booking-duration'
+import { optionDuration } from '@/lib/booking-duration'
+import { availabilityWarnings } from '@/lib/booking-slots'
 import { getServiceRules } from '@/lib/service-rules'
 import { isManualPaymentMethod } from '@/lib/manual-bookings'
 import { sendBookingConfirmedEmails } from '@/lib/payments'
@@ -55,9 +56,6 @@ export async function GET(req: Request) {
   }
   return NextResponse.json(data ?? [])
 }
-
-// Matches the hold window in the bookings API
-const SLOT_HOLD_MS = 30 * 60 * 1000
 
 const toPesewas = (ghs: unknown) => Math.round((Number(ghs) || 0) * 100)
 
@@ -194,55 +192,4 @@ export async function POST(req: Request) {
   if (notify) await sendBookingConfirmedEmails(booking, { notifyAdmin: false })
 
   return NextResponse.json(booking)
-}
-
-async function availabilityWarnings({ date, start, duration, stylist, home }: {
-  date: string
-  start: number
-  duration: number
-  stylist: { id: string; name: string; daily_capacity: number | null } | null
-  home: boolean
-}): Promise<string[]> {
-  const [{ data: avail }, { data: blocked }, { data: sameDay }] = await Promise.all([
-    adminDb.from('availability').select('*').eq('day_of_week', dayOfWeek(date)).maybeSingle(),
-    adminDb.from('blocked_dates').select('id').eq('date', date).maybeSingle(),
-    adminDb.from('bookings').select('*').eq('booking_date', date).in('status', ['pending', 'confirmed']),
-  ])
-  const interval: number = avail?.slot_interval_minutes ?? 60
-  const active = ((sameDay ?? []) as (ActiveBooking & { location_type?: string })[])
-    .filter((b) => isActiveBooking(b, SLOT_HOLD_MS))
-  const inSalon = active.filter((b) => b.location_type !== 'home')
-  const warnings: string[] = []
-
-  if (appointmentStart(date, minutesToSlot(start)) <= Date.now()) warnings.push('This date and time have already passed.')
-  if (blocked || !avail?.is_available) {
-    warnings.push('The salon is closed that day.')
-  } else {
-    const open = slotToMinutes(avail.open_time) ?? 0
-    const close = slotToMinutes(avail.close_time) ?? 0
-    if (start < open || start + duration > close) {
-      warnings.push(`It runs outside opening hours (${minutesToSlot(open)} to ${minutesToSlot(close)}).`)
-    }
-  }
-  if (stylist) {
-    if (stylistBusy(active, stylist.id, start, duration, interval)) {
-      warnings.push(`${stylist.name} already has a booking at that time.`)
-    }
-    const count = active.filter((b) => b.stylist_id === stylist.id).length
-    if (stylist.daily_capacity && count >= stylist.daily_capacity) {
-      warnings.push(`${stylist.name} is already at their limit of ${stylist.daily_capacity} bookings that day.`)
-    }
-  }
-  // Home visits don't take a seat in the salon
-  if (!home) {
-    const maxPerSlot = avail?.max_bookings_per_slot ?? 1
-    const maxPerDay = avail?.max_bookings_per_day ?? 0
-    if (peakOccupancy(inSalon, start, duration, interval) >= maxPerSlot) {
-      warnings.push('The salon is already full at that time.')
-    }
-    if (maxPerDay > 0 && inSalon.length >= maxPerDay) {
-      warnings.push(`The salon already has its limit of ${maxPerDay} bookings that day.`)
-    }
-  }
-  return warnings
 }
