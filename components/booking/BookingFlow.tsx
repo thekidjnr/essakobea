@@ -20,7 +20,6 @@ import { cancellationPolicyText } from "@/lib/refunds";
 import type { ServicePolicy } from "@/lib/policies";
 import {
   bookingTotals,
-  CUSTOMIZATION_FEES,
   EMERGENCY_FEE,
   isPriceRange,
 } from "@/lib/booking-fees";
@@ -1672,13 +1671,11 @@ export default function BookingFlow() {
                 >
                   {rules.customizationCopy.standard.sub}
                 </p>
-                {rules.customizationFees && (
-                  <p
-                    className={`mt-auto font-sans text-[15px] font-medium tabular-nums ${customizationType === "standard" ? "text-paper" : "text-ink"}`}
-                  >
-                    +₵{CUSTOMIZATION_FEES.standard}
-                  </p>
-                )}
+                <p
+                  className={`mt-auto font-sans text-[15px] font-medium ${customizationType === "standard" ? "text-paper" : "text-ink"}`}
+                >
+                  No extra charge
+                </p>
               </button>
 
               <button
@@ -1704,11 +1701,18 @@ export default function BookingFlow() {
                   {rules.customizationCopy.express.sub}
                 </p>
                 <p
-                  className={`mt-auto font-sans text-[15px] font-medium tabular-nums ${customizationType === "express" ? "text-paper" : "text-ink"}`}
+                  className={`mt-auto font-sans text-[15px] font-medium ${customizationType === "express" ? "text-paper" : "text-ink"}`}
                 >
-                  {rules.customizationFees
-                    ? `+₵${CUSTOMIZATION_FEES.express}`
-                    : "Extra cost applies"}
+                  Double the price
+                </p>
+                <p
+                  className={`font-sans text-[13px] tabular-nums mt-0.5 ${customizationType === "express" ? "text-paper/60" : "text-ink/50"}`}
+                >
+                  {!rules.customizationFees
+                    ? "Paid with your balance"
+                    : isRange
+                      ? `+₵${baseDeposit} now, balance doubled on the day`
+                      : `+₵${baseDeposit}`}
                 </p>
               </button>
             </div>
@@ -1722,6 +1726,11 @@ export default function BookingFlow() {
                 </span>
                 <p className="font-sans text-[14px] text-ink/70 leading-relaxed">
                   {rules.customizationCopy[customizationType].info}
+                  {customizationType === "express" && rules.customizationFees && (
+                    isRange
+                      ? ` Express doubles your service price: ₵${baseDeposit} is added to your deposit now, and the balance you pay ${rules.balanceDue} is doubled too.`
+                      : ` Express doubles your service price, so ₵${baseDeposit} is added to what you pay now.`
+                  )}
                 </p>
               </div>
             )}

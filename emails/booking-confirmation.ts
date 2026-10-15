@@ -99,7 +99,7 @@ export function bookingConfirmationHtml(opts: {
         : '')
     : opts.isDeposit
     ? `<p style="font-size:12px;color:#6B6560;font-family:'Inter',Arial,sans-serif;line-height:1.6;margin:0 0 0">
-        The remaining balance is due on the day of your appointment.${stylistFee > 0 ? ` The ₵${stylistFee} stylist fee is added on top of your service price and is not deducted from your balance.` : ''}
+        The remaining balance is due on the day of your appointment.${(opts.customizationFee ?? 0) > 0 && opts.customizationType === 'express' ? ' Express doubles your service price, so your balance is doubled too.' : ''}${stylistFee > 0 ? ` The ₵${stylistFee} stylist fee is added on top of your service price and is not deducted from your balance.` : ''}
        </p>`
     : ''
 

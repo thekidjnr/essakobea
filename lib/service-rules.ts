@@ -38,7 +38,7 @@ export interface ServiceRules {
   hairNote?: string
   /** Standard / Express choice when the client brings hair */
   customization: boolean
-  /** Charge the Standard / Express fee online. Off means it's settled with the salon. */
+  /** Charge the Express fee online. Off means it's settled with the salon. */
   customizationFees: boolean
   customizationCopy: Record<CustomizationType, CustomizationCopy>
   /** Ask how many bundles the client is bringing (info only, no price impact) */
@@ -147,20 +147,21 @@ const WIG_MAKING: Partial<ServiceRules> = {
       short: 'Ready in 5 to 7 working days',
     },
     express: {
-      sub: 'Ready in 2 to 3 working days',
-      info: "Drop off your unit on your booking date. Express takes 2 to 3 working days (Tuesday to Saturday), and we'll message you on WhatsApp when it's ready.",
-      short: 'Ready in 2 to 3 working days',
+      sub: 'Ready in 24 to 72 hours',
+      info: "Drop off your unit on your booking date. Express takes 24 to 72 hours (Tuesday to Saturday), and we'll message you on WhatsApp when it's ready.",
+      short: 'Ready in 24 to 72 hours',
     },
   },
   scheduleNote: DROP_OFF_NOTE,
   turnaround: {
     standard: { min: 5, max: 7 },
-    express: { min: 2, max: 3 },
+    // 24 to 72 hours
+    express: { min: 1, max: 3 },
   },
 }
 
-// Standard and Express cost nothing online; the salon agrees any extra cost
-// with the client on WhatsApp.
+// Standard and Express cost nothing online. Express still doubles the price,
+// settled with the balance when the client drops off their unit.
 const COLORING: Partial<ServiceRules> = {
   hairQuestion: 'Coloring is done on your own unit. Which are you bringing?',
   hairOptions: DEFAULT_RULES.hairOptions.filter((o) => o.id !== 'none'),
@@ -174,8 +175,8 @@ const COLORING: Partial<ServiceRules> = {
     },
     express: {
       sub: 'Usually ready in 3 to 5 working days',
-      info: "Drop off your unit on your booking date. Express usually takes 3 to 5 working days (Tuesday to Saturday). We'll confirm the timing and the extra cost on WhatsApp.",
-      short: 'Ready in 3 to 5 working days, extra cost confirmed on WhatsApp',
+      info: "Drop off your unit on your booking date. Express usually takes 3 to 5 working days (Tuesday to Saturday), and we'll confirm the timing on WhatsApp. Express doubles the price, paid with your balance when you drop off your unit.",
+      short: 'Ready in 3 to 5 working days, double the price',
     },
   },
   turnaround: {
