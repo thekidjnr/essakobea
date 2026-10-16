@@ -7,11 +7,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { DbService, Stylist } from "@/lib/supabase/types";
-import { minutesToSlot } from "@/lib/booking-time";
 import { formatReadyEstimate, getServiceRules, readyEstimate } from "@/lib/service-rules";
 import { PAYMENT_METHODS, type ManualPaymentMethod } from "@/lib/manual-bookings";
 import { Modal, Field, Select, Segmented, Button, ErrorNote, inputClass, textareaClass } from "@/components/admin/ui";
 import { type AdminBooking, cedis, todayISO } from "@/components/admin/bookingDisplay";
+import { DateTimePicker } from "@/components/admin/DateTimePicker";
 
 type Location = "salon" | "home";
 type Payment = "paid" | "deposit" | "unpaid";
@@ -25,9 +25,6 @@ const PAYMENTS: { value: Payment; label: string }[] = [
   { value: "deposit", label: "Part paid" },
   { value: "unpaid",  label: "Not paid yet" },
 ];
-// Start times every 30 minutes, 6:00 AM to 9:00 PM, like the public booking
-// page. Wider than opening hours so early or late visits can still be added.
-const TIMES = Array.from({ length: 31 }, (_, i) => minutesToSlot(6 * 60 + i * 30));
 
 const EMPTY = {
   clientName: "", clientPhone: "", clientEmail: "", notes: "",
@@ -206,28 +203,43 @@ export function ManualBookingForm({
         {/* The rest appears once a style is chosen, so the form starts short */}
         {f.optionId && (
           <div className="flex flex-col gap-8 fade-up">
+            {/* Where: before the date, since home visits don't take a salon seat */}
+            <section className="flex flex-col gap-4">
+              <Segmented<Location> options={LOCATIONS} value={f.location} onChange={(v) => set("location", v)} className="self-start" />
+              {f.location === "home" && (
+                <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_180px]">
+                  <Field label="Address">
+                    <textarea rows={2} value={f.homeAddress} onChange={(e) => set("homeAddress", e.target.value)} placeholder="House number, street, area, landmark" className={textareaClass} />
+                  </Field>
+                  <Field label="Travel fee (₵)">
+                    <input type="number" inputMode="decimal" min={0} value={f.travelFee} onChange={(e) => set("travelFee", e.target.value)} placeholder="0" className={inputClass} />
+                  </Field>
+                </div>
+              )}
+            </section>
+
             {/* Who and when */}
-            <section className="grid gap-4 grid-cols-2">
-              <Field label="Stylist" className="col-span-2">
+            <section className="flex flex-col gap-6">
+              <Field label="Stylist">
                 <Select value={f.stylistId} onChange={(e) => set("stylistId", e.target.value)}>
                   <option value="">Not assigned yet</option>
                   {stylists.map((s) => <option key={s.id} value={s.id}>{s.name}{s.is_available ? "" : " (unavailable)"}</option>)}
                 </Select>
               </Field>
-              <Field label={ready ? "Drop-off date" : "Date"}>
-                <input type="date" value={f.date} onChange={(e) => set("date", e.target.value)} className={inputClass} />
-              </Field>
-              <Field label="Time">
-                <Select value={f.time} onChange={(e) => set("time", e.target.value)}>
-                  <option value="">Choose</option>
-                  {TIMES.map((t) => <option key={t} value={t}>{t}</option>)}
-                </Select>
-              </Field>
-              {ready && (
-                <p className="col-span-2 font-sans text-[13px] text-graphite">
-                  Estimated ready: {formatReadyEstimate(ready)}
-                </p>
-              )}
+              <DateTimePicker
+                date={f.date}
+                time={f.time}
+                onDate={(v) => set("date", v)}
+                onTime={(v) => set("time", v)}
+                dateLabel={ready ? "Drop-off date" : "Date"}
+                dateNote={ready && (
+                  <p className="font-sans text-[13px] text-graphite">Estimated ready: {formatReadyEstimate(ready)}</p>
+                )}
+                stylistId={f.stylistId}
+                serviceId={f.serviceId}
+                optionId={f.optionId}
+                home={f.location === "home"}
+              />
             </section>
 
             {/* Client */}
@@ -241,21 +253,6 @@ export function ManualBookingForm({
               <Field label="Email (optional)">
                 <input type="email" value={f.clientEmail} onChange={(e) => set("clientEmail", e.target.value)} className={inputClass} autoComplete="off" />
               </Field>
-            </section>
-
-            {/* Where */}
-            <section className="flex flex-col gap-4">
-              <Segmented<Location> options={LOCATIONS} value={f.location} onChange={(v) => set("location", v)} className="self-start" />
-              {f.location === "home" && (
-                <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_180px]">
-                  <Field label="Address">
-                    <textarea rows={2} value={f.homeAddress} onChange={(e) => set("homeAddress", e.target.value)} placeholder="House number, street, area, landmark" className={textareaClass} />
-                  </Field>
-                  <Field label="Travel fee (₵)">
-                    <input type="number" inputMode="decimal" min={0} value={f.travelFee} onChange={(e) => set("travelFee", e.target.value)} placeholder="0" className={inputClass} />
-                  </Field>
-                </div>
-              )}
             </section>
 
             {/* Payment */}

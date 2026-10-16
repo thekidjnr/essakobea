@@ -111,3 +111,7 @@ export function bookingRescheduledSms(b: SmsBooking, by: 'client' | 'salon'): st
 export function clientRescheduledAdminSms(b: SmsBooking, previous: { booking_date: string; time_slot: string }): string {
   return `Rescheduled by client: ${b.client_name} (${b.client_phone}), ${b.service_name}, moved from ${when(previous as SmsBooking)} to ${when(b)}.`
 }
+
+export function clientUpdatedAdminSms(b: SmsBooking, changed: string[]): string {
+  return `Booking updated by client: ${b.client_name}, ${b.service_name}, ${when(b)}. Changed: ${changed.join(', ')}.`
+}

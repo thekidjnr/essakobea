@@ -3,21 +3,25 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import MiniCalendar from "@/components/booking/MiniCalendar";
-import { formatBookingDate, slotToMinutes } from "@/lib/booking-time";
+import TimeSlots, { groupByPeriod } from "@/components/booking/TimeSlots";
+import { formatBookingDate } from "@/lib/booking-time";
 import { cancellationPolicyText } from "@/lib/refunds";
 import { reschedulePolicyText } from "@/lib/reschedule-rules";
+import UpdateDetails, { type EditableDetails } from "@/components/booking/UpdateDetails";
 
 // The link in every confirmation email. The client can see their booking,
-// move it once (rules in lib/reschedule) or cancel it.
+// move it once (rules in lib/reschedule), update their contact details, notes
+// and photos (lib/booking-edits) or cancel it.
 
-interface BookingPreview {
+interface BookingPreview extends EditableDetails {
   id: string; client_name: string; service_name: string; treatment: string; stylist_name: string | null;
   booking_date: string; time_slot: string; status: string;
   paid: boolean; paidPesewas: number; refundShare: number; refundPesewas: number;
   rescheduleBlock: string | null;
+  editBlock: string | null;
 }
 
-type View = "overview" | "reschedule" | "cancel" | "rescheduled" | "cancelled";
+type View = "overview" | "reschedule" | "details" | "cancel" | "rescheduled" | "cancelled";
 type DayState =
   | { status: "idle" } | { status: "loading" } | { status: "error" }
   | { status: "ready"; closed: boolean; full: boolean; times: string[] };
@@ -33,17 +37,6 @@ const toDateStr = (d: Date) =>
 // "Fri 23 Oct"
 const shortDate = (iso: string) =>
   new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }).replace(",", "");
-
-function groupTimes(times: string[]) {
-  const groups = [
-    { period: "Morning", test: (m: number) => m < 12 * 60 },
-    { period: "Afternoon", test: (m: number) => m >= 12 * 60 && m < 17 * 60 },
-    { period: "Evening", test: (m: number) => m >= 17 * 60 },
-  ];
-  return groups
-    .map(({ period, test }) => ({ period, times: times.filter((t) => test(slotToMinutes(t) ?? 0)) }))
-    .filter((g) => g.times.length > 0);
-}
 
 const label = "font-sans text-[10px] tracking-widest2 uppercase text-ink/40";
 const primaryBtn = "bg-ink text-paper font-sans text-[11px] tracking-widest uppercase py-4 px-8 text-center hover:bg-ink/80 transition-colors disabled:opacity-40 disabled:cursor-not-allowed";
@@ -71,6 +64,7 @@ export default function ManageBookingPage({ params, searchParams }: {
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
   const [errorMsg, setErrorMsg] = useState("");
   const [view, setView] = useState<View>("overview");
+  const [savedNote, setSavedNote] = useState("");
 
   // Reschedule
   const [blockedDates, setBlockedDates] = useState<string[]>([]);
@@ -197,7 +191,7 @@ export default function ManageBookingPage({ params, searchParams }: {
     }
   };
 
-  const go = (v: View) => { setSubmitError(""); setView(v); window.scrollTo({ top: 0 }); };
+  const go = (v: View) => { setSubmitError(""); setSavedNote(""); setView(v); window.scrollTo({ top: 0 }); };
 
   if (loadState === "loading") return (
     <div className="min-h-screen bg-paper flex items-center justify-center">
@@ -324,27 +318,11 @@ export default function ManageBookingPage({ params, searchParams }: {
                   {booking.stylist_name ? `${booking.stylist_name} is fully booked on this day.` : "This day is fully booked."} Please choose another date.
                 </p>
               ) : (
-                <div className="flex flex-col gap-5">
-                  {groupTimes(day.times).map(g => (
-                    <div key={g.period}>
-                      <p className="font-sans text-[11px] tracking-widest uppercase text-ink/50 mb-3">{g.period}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {g.times.map(t => (
-                          <button
-                            key={t}
-                            onClick={() => { setTime(t); setSubmitError(""); }}
-                            aria-pressed={time === t}
-                            className={`font-sans text-[14px] tabular-nums px-4 py-2.5 border transition-colors duration-150 ${
-                              time === t ? "bg-ink text-paper border-ink" : "border-ink/20 text-ink hover:border-ink/60 hover:bg-mist"
-                            }`}
-                          >
-                            {t}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <TimeSlots
+                  groups={groupByPeriod(day.times)}
+                  selected={time}
+                  onSelect={(t) => { setTime(t); setSubmitError(""); }}
+                />
               )}
             </div>
           </div>
@@ -436,8 +414,25 @@ export default function ManageBookingPage({ params, searchParams }: {
     );
   }
 
+  // ── Update details ─────────────────────────────────────────────────────────
+  if (view === "details" && token) return (
+    <div className="min-h-screen bg-paper flex justify-center px-6 py-24">
+      <UpdateDetails
+        token={token}
+        initial={booking}
+        onBack={() => go("overview")}
+        onSaved={(saved, changed) => {
+          setBooking(b => b && { ...b, ...saved });
+          go("overview");
+          setSavedNote(changed.length ? "Your details have been updated. We've let the salon know." : "Nothing to update.");
+        }}
+      />
+    </div>
+  );
+
   // ── Overview ───────────────────────────────────────────────────────────────
   const canMove = !booking.rescheduleBlock;
+  const canEdit = !booking.editBlock;
   return (
     <div className="min-h-screen bg-paper flex items-center justify-center px-6 py-24">
       <div className="max-w-[480px] w-full">
@@ -448,13 +443,22 @@ export default function ManageBookingPage({ params, searchParams }: {
 
         <div className="mb-8"><Summary rows={summaryRows} /></div>
 
+        {savedNote && (
+          <p role="status" className="font-sans text-[13px] text-ink border border-ink/10 px-4 py-3 mb-6">{savedNote}</p>
+        )}
+
         <div className="flex flex-col gap-3">
           <button onClick={() => go("reschedule")} disabled={!canMove} className={primaryBtn}>
             Reschedule
           </button>
-          <button onClick={() => go("cancel")} className={outlineBtn}>
-            Cancel Appointment
-          </button>
+          <div className="grid grid-cols-2 gap-3">
+            <button onClick={() => go("details")} disabled={!canEdit} className={`${outlineBtn} px-2 disabled:opacity-40 disabled:cursor-not-allowed`}>
+              Update Details
+            </button>
+            <button onClick={() => go("cancel")} className={`${outlineBtn} px-2`}>
+              Cancel
+            </button>
+          </div>
         </div>
 
         <p className="font-sans text-[11px] text-ink/45 leading-relaxed mt-6">

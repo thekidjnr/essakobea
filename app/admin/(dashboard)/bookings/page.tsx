@@ -19,6 +19,7 @@ import { thumbUrl } from "@/lib/media";
 import { balanceDue, isHomeService, paymentMethodLabel, PAYMENT_METHODS, type ManualPaymentMethod } from "@/lib/manual-bookings";
 import { ManualBookingForm } from "@/components/admin/ManualBookingForm";
 import { RescheduleDialog } from "@/components/admin/RescheduleDialog";
+import { EditBookingDialog } from "@/components/admin/EditBookingDialog";
 
 type Booking = AdminBooking;
 type Tab = "upcoming" | "past" | "attention";
@@ -149,13 +150,14 @@ const TAB_QUERY: Record<Tab, string> = {
 // ─── Booking detail ──────────────────────────────────────────────────────────
 
 function BookingDetail({
-  b, services, onClose, onAction, onReschedule, onPhoto,
+  b, services, onClose, onAction, onReschedule, onEdit, onPhoto,
 }: {
   b: Booking;
   services: DbService[];
   onClose: () => void;
   onAction: (action: BookingAction) => void;
   onReschedule: () => void;
+  onEdit: () => void;
   onPhoto: (url: string) => void;
 }) {
   const s = bookingStatus(b);
@@ -324,11 +326,16 @@ function BookingDetail({
         <div className="mt-auto pt-6 flex flex-col gap-1">
           {refundOwed(b) && <Button className="h-12" onClick={() => onAction("refund")}>Mark refund as sent</Button>}
           {due > 0 && <Button className="h-12" onClick={() => onAction("payment")}>Record payment</Button>}
-          {(b.status === "pending" || b.status === "confirmed") && (
+          {(b.status === "pending" || b.status === "confirmed") ? (
             <>
-              <Button variant="secondary" className="h-12" onClick={onReschedule}>Reschedule</Button>
+              <div className="grid grid-cols-2 gap-2">
+                <Button variant="secondary" className="h-12" onClick={onReschedule}>Reschedule</Button>
+                <Button variant="secondary" className="h-12" onClick={onEdit}>Edit</Button>
+              </div>
               <Button variant="ghost" onClick={() => onAction("cancel")}>Cancel booking</Button>
             </>
+          ) : b.status !== "cancelled" && (
+            <Button variant="secondary" className="h-12" onClick={onEdit}>Edit details</Button>
           )}
         </div>
       </div>
@@ -355,6 +362,7 @@ export default function AdminBookings() {
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [moving, setMoving] = useState<Booking | null>(null);
+  const [editing, setEditing] = useState<Booking | null>(null);
   const [source, setSource] = useState<Source>("all");
   const [payAmount, setPayAmount] = useState("");
   const [payMethod, setPayMethod] = useState<"" | ManualPaymentMethod>("");
@@ -589,6 +597,7 @@ export default function AdminBookings() {
               onClose={() => setSelectedId(null)}
               onAction={(action) => openAction(selected, action)}
               onReschedule={() => setMoving(selected)}
+              onEdit={() => setEditing(selected)}
               onPhoto={setLightboxUrl}
             />
           </div>
@@ -610,6 +619,16 @@ export default function AdminBookings() {
           setTab(b.booking_date >= todayISO() ? "upcoming" : "past");
           setSelectedId(b.id);
           load();
+        }}
+      />
+
+      <EditBookingDialog
+        booking={editing}
+        services={services}
+        onClose={() => setEditing(null)}
+        onSaved={(b) => {
+          setEditing(null);
+          setBookings((list) => list.map((x) => (x.id === b.id ? b : x)));
         }}
       />
 

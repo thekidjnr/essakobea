@@ -4,6 +4,7 @@ import { FROM } from '@/lib/resend'
 import { sendSafely } from '@/lib/payments'
 import { refundPolicy } from '@/lib/refunds'
 import { clientRescheduleBlock } from '@/lib/reschedule-rules'
+import { clientEditBlock, editablePhotos } from '@/lib/booking-edits'
 import { formatBookingDate } from '@/lib/booking-time'
 import { cancellationHtml } from '@/emails/cancellation'
 import { sendSmsSafely, bookingCancelledSms, clientCancelledAdminSms, ADMIN_NOTIFY_PHONE } from '@/lib/sms'
@@ -37,6 +38,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
     refundShare: share,
     refundPesewas,
     rescheduleBlock: clientRescheduleBlock(booking),
+    // For "Update details"
+    client_phone: booking.client_phone,
+    client_email: booking.client_email ?? '',
+    notes:        booking.notes ?? '',
+    unit_photos:  booking.unit_photos ?? [],
+    inspo_photos: booking.inspo_photos ?? [],
+    photos:       editablePhotos(booking),
+    editBlock:    clientEditBlock(booking),
   })
 }
 

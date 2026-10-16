@@ -24,7 +24,6 @@ import {
   isPriceRange,
 } from "@/lib/booking-fees";
 import { BOOKING_DRAFT_KEY } from "@/lib/booking-draft";
-import { uploadImage } from "@/lib/upload-image";
 import {
   BUNDLE_OPTIONS,
   bringsHair,
@@ -36,6 +35,8 @@ import {
 } from "@/lib/service-rules";
 import { thumbUrl } from "@/lib/media";
 import MiniCalendar from "@/components/booking/MiniCalendar";
+import PhotoUpload from "@/components/booking/PhotoUpload";
+import TimeSlots, { groupByPeriod } from "@/components/booking/TimeSlots";
 
 // ─── Step icons ─────────────────────────────────────────────────────────────────
 
@@ -308,42 +309,7 @@ function generateTimeSlots(open: string, close: string, interval: number) {
     slots.push(minutesToSlot(cur));
     cur += interval;
   }
-  // 12:XX AM = midnight (not shown in a salon context)
-  // 12:XX PM = noon → Afternoon
-  // 1–4 PM   → Afternoon
-  // 5–11 PM  → Evening
-  const toHour24 = (s: string) => {
-    const [time, period] = s.split(" ");
-    const [h] = time.split(":").map(Number);
-    if (period === "AM") return h === 12 ? 0 : h;
-    return h === 12 ? 12 : h + 12;
-  };
-  const groups = [
-    {
-      period: "Morning",
-      test: (s: string) => {
-        const h = toHour24(s);
-        return h >= 0 && h < 12;
-      },
-    },
-    {
-      period: "Afternoon",
-      test: (s: string) => {
-        const h = toHour24(s);
-        return h >= 12 && h < 17;
-      },
-    },
-    {
-      period: "Evening",
-      test: (s: string) => {
-        const h = toHour24(s);
-        return h >= 17;
-      },
-    },
-  ];
-  return groups
-    .map(({ period, test }) => ({ period, slots: slots.filter(test) }))
-    .filter((g) => g.slots.length > 0);
+  return groupByPeriod(slots);
 }
 
 const DEFAULT_SLOTS = generateTimeSlots(
@@ -432,120 +398,6 @@ function loadDraft(): { booking: BookingState; step: number } | null {
   } catch {
     return null;
   }
-}
-
-// ─── Hair Unit Photo Upload ────────────────────────────────────────────────────
-
-// Checked before the photo is shrunk in the browser, so it can be generous
-const MAX_PHOTO_BYTES = 30 * 1024 * 1024;
-
-function PhotoUpload({
-  photos,
-  onAdd,
-  onRemove,
-  onUploadingChange,
-}: {
-  photos: string[];
-  onAdd: (url: string) => void;
-  onRemove: (index: number) => void;
-  onUploadingChange?: (uploading: boolean) => void;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState("");
-
-  const uploadOne = async (file: File): Promise<string | null> => {
-    const isImage = file.type.startsWith("image/") || /\.hei[cf]$/i.test(file.name);
-    if (!isImage) return `"${file.name}" isn't an image. Please use a JPG or PNG.`;
-    if (file.size > MAX_PHOTO_BYTES)
-      return `"${file.name}" is over ${MAX_PHOTO_BYTES / 1024 / 1024} MB. Please choose a smaller photo.`;
-    const result = await uploadImage("/api/bookings/upload", file);
-    if ("error" in result) return result.error;
-    onAdd(result.url);
-    return null;
-  };
-
-  // Uploads one at a time, and always releases the "uploading" lock so the
-  // client is never stuck on this step.
-  const handleFiles = async (files: File[]) => {
-    if (uploading || files.length === 0) return;
-    setError("");
-    setUploading(true);
-    onUploadingChange?.(true);
-    try {
-      for (const file of files) {
-        const err = await uploadOne(file);
-        if (err) setError(err);
-      }
-    } finally {
-      setUploading(false);
-      onUploadingChange?.(false);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    handleFiles(Array.from(e.dataTransfer.files));
-  };
-
-  return (
-    <div className="flex flex-col gap-3">
-      <div
-        onDrop={handleDrop}
-        onDragOver={(e) => e.preventDefault()}
-        onClick={() => !uploading && inputRef.current?.click()}
-        className={`border border-dashed border-ink/20 py-8 px-4 text-center transition-colors ${
-          uploading ? "cursor-wait" : "cursor-pointer hover:border-ink/40"
-        }`}
-      >
-        {uploading ? (
-          <p className="font-sans text-[13px] text-ink/55">Uploading…</p>
-        ) : (
-          <>
-            <p className="font-sans text-[14px] text-ink/70">
-              Drop a photo here or <span className="underline">browse</span>
-            </p>
-            <p className="font-sans text-[12px] text-ink/50 mt-1">
-              JPG, PNG or iPhone photos
-            </p>
-          </>
-        )}
-      </div>
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        multiple
-        className="hidden"
-        onChange={(e) => {
-          handleFiles(Array.from(e.target.files ?? []));
-          e.target.value = "";
-        }}
-      />
-      {error && (
-        <p className="font-sans text-[13px] text-red-500" role="alert">
-          {error}
-        </p>
-      )}
-      {photos.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {photos.map((url, i) => (
-            <div key={i} className="relative group w-20 h-20">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={thumbUrl(url)} alt="" className="w-full h-full object-cover" />
-              <button
-                onClick={() => onRemove(i)}
-                aria-label="Remove photo"
-                className="absolute top-0.5 right-0.5 w-5 h-5 bg-ink text-paper text-[10px] flex items-center justify-center md:opacity-0 md:group-hover:opacity-100 transition-opacity"
-              >
-                ×
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
 }
 
 // ─── Terms Modal ──────────────────────────────────────────────────────────────
@@ -1979,37 +1831,12 @@ export default function BookingFlow() {
                     No times left today. Please choose another date.
                   </p>
                 ) : (
-                  <div className="flex flex-col gap-5">
-                    {timeSlots.map((group) => (
-                      <div key={group.period}>
-                        <p className="font-sans text-[11px] tracking-widest uppercase text-ink/50 mb-3">
-                          {group.period}
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {group.slots.map((slot) => {
-                            const taken = bookedSlots.includes(slot);
-                            return (
-                              <button
-                                key={slot}
-                                disabled={taken}
-                                onClick={() => set("time", slot)}
-                                aria-pressed={booking.time === slot}
-                                className={`font-sans text-[14px] tabular-nums px-4 py-2.5 border transition-colors duration-150 ${
-                                  booking.time === slot
-                                    ? "bg-ink text-paper border-ink"
-                                    : taken
-                                      ? "text-ink/25 border-ink/[0.08] cursor-not-allowed line-through"
-                                      : "border-ink/20 text-ink hover:border-ink/60 hover:bg-mist"
-                                }`}
-                              >
-                                {slot}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <TimeSlots
+                    groups={timeSlots}
+                    selected={booking.time}
+                    onSelect={(slot) => set("time", slot)}
+                    stateOf={(slot) => (bookedSlots.includes(slot) ? "taken" : "free")}
+                  />
                 )}
               </div>
             </div>

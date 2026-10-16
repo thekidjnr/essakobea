@@ -4,6 +4,7 @@ import { getAdmin } from '@/lib/admin-auth'
 import { minutesToSlot, slotToMinutes, todayInAccra } from '@/lib/booking-time'
 import { autoCompletePastBookings } from '@/lib/bookings-maintenance'
 import { optionDuration } from '@/lib/booking-duration'
+import { normalizePhone } from '@/lib/phone'
 import { availabilityWarnings } from '@/lib/booking-slots'
 import { getServiceRules } from '@/lib/service-rules'
 import { isManualPaymentMethod } from '@/lib/manual-bookings'
@@ -58,17 +59,6 @@ export async function GET(req: Request) {
 }
 
 const toPesewas = (ghs: unknown) => Math.round((Number(ghs) || 0) * 100)
-
-// Stored the way the booking form stores them: "+233557205803". A local
-// Ghana number ("055 720 5803") gets the +233 prefix.
-function normalizePhone(raw: string): string {
-  const cleaned = raw.replace(/[^\d+]/g, '')
-  if (!cleaned) return ''
-  if (cleaned.startsWith('+')) return cleaned
-  if (cleaned.startsWith('00')) return `+${cleaned.slice(2)}`
-  if (cleaned.startsWith('233')) return `+${cleaned}`
-  return `+233${cleaned.replace(/^0+/, '')}`
-}
 
 // POST /api/admin/bookings: a booking the salon adds by hand (walk-in,
 // WhatsApp, home service, cash / MoMo / bank transfer). It goes straight to

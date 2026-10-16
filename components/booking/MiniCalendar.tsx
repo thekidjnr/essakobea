@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { todayInAccra } from "@/lib/booking-time";
 
-// Month calendar for picking an appointment day. Shared by the booking form
-// and the reschedule page. Past days, closed weekdays and blocked dates are
-// greyed out.
+// Month calendar for picking an appointment day. Shared by the booking form,
+// the reschedule page and the admin. Past days, closed weekdays and blocked
+// dates are greyed out. With `staff`, the admin can still pick them (the salon
+// may log a walk-in that already happened, or open on a closed day), so they
+// are only marked, and earlier months can be browsed.
 
 function formatDate(d: Date) {
   return d.toLocaleDateString("en-GB", {
@@ -37,11 +39,13 @@ export default function MiniCalendar({
   onSelect,
   blocked,
   disabledDays,
+  staff = false,
 }: {
   selected: Date | null;
   onSelect: (d: Date) => void;
   blocked: string[];
   disabledDays: number[];
+  staff?: boolean;
 }) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -65,8 +69,8 @@ export default function MiniCalendar({
     return blocked.includes(dateStr(day)) || disabledDays.includes(dow);
   };
   const isPast = (day: number) => dateStr(day) < salonToday;
-  // No browsing back before the current month
-  const atFirstMonth = `${year}-${String(month + 1).padStart(2, "0")}` <= salonToday.slice(0, 7);
+  // Clients can't browse back before the current month
+  const atFirstMonth = !staff && `${year}-${String(month + 1).padStart(2, "0")}` <= salonToday.slice(0, 7);
   const isSelected = (day: number) => {
     if (!selected) return false;
     return (
@@ -89,6 +93,7 @@ export default function MiniCalendar({
     <div className="select-none">
       <div className="flex items-center justify-between mb-4">
         <button
+          type="button"
           onClick={prev}
           disabled={atFirstMonth}
           aria-label="Previous month"
@@ -100,6 +105,7 @@ export default function MiniCalendar({
           {MONTHS[month]} {year}
         </span>
         <button
+          type="button"
           onClick={next}
           aria-label="Next month"
           className="w-9 h-9 flex items-center justify-center text-[18px] text-ink/55 hover:text-ink hover:bg-mist rounded-full transition-colors"
@@ -120,24 +126,35 @@ export default function MiniCalendar({
       <div className="grid grid-cols-7 gap-0">
         {cells.map((day, i) => {
           if (!day) return <div key={`e-${i}`} />;
-          const disabled = isPast(day) || isBlocked(day);
+          const closed = isBlocked(day);
+          const unavailable = isPast(day) || closed;
           const sel = isSelected(day);
+          const isToday = dateStr(day) === salonToday;
           return (
             <button
               key={day}
-              disabled={disabled}
+              type="button"
+              disabled={unavailable && !staff}
               onClick={() => onSelect(new Date(year, month, day))}
               aria-pressed={sel}
-              aria-label={formatDate(new Date(year, month, day))}
-              className={`aspect-square flex items-center justify-center font-sans text-[14px] tabular-nums transition-colors duration-150 ${
+              aria-label={`${formatDate(new Date(year, month, day))}${isToday ? ", today" : ""}${staff && closed ? ", closed" : ""}`}
+              className={`relative aspect-square flex items-center justify-center font-sans text-[14px] tabular-nums transition-colors duration-150 ${
                 sel
                   ? "bg-ink text-paper font-medium"
-                  : disabled
-                    ? "text-ink/20 cursor-not-allowed"
-                    : "text-ink hover:bg-mist"
+                  : !unavailable
+                    ? "text-ink hover:bg-mist"
+                    : staff
+                      ? `text-ink/35 hover:bg-mist hover:text-ink/60 ${closed ? "line-through decoration-ink/30" : ""}`
+                      : "text-ink/20 cursor-not-allowed"
               }`}
             >
               {day}
+              {isToday && (
+                <span
+                  aria-hidden
+                  className={`absolute bottom-[18%] left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${sel ? "bg-paper" : "bg-ink/60"}`}
+                />
+              )}
             </button>
           );
         })}

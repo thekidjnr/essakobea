@@ -123,3 +123,14 @@ export function toInternationalDigits(phone: string): string {
 export function whatsAppLink(phone: string, message: string): string {
   return `https://wa.me/${toInternationalDigits(phone)}?text=${encodeURIComponent(message)}`
 }
+
+// Stored the way the booking form stores them: "+233557205803". A local
+// Ghana number ("055 720 5803") gets the +233 prefix.
+export function normalizePhone(raw: string): string {
+  const cleaned = raw.replace(/[^\d+]/g, "")
+  if (!cleaned) return ""
+  if (cleaned.startsWith("+")) return cleaned
+  if (cleaned.startsWith("00")) return `+${cleaned.slice(2)}`
+  if (cleaned.startsWith("233")) return `+${cleaned}`
+  return `+233${cleaned.replace(/^0+/, "")}`
+}

@@ -7,12 +7,9 @@
 
 import { useEffect, useState } from "react";
 import type { Stylist } from "@/lib/supabase/types";
-import { minutesToSlot } from "@/lib/booking-time";
-import { Modal, Field, Select, Button, ErrorNote, inputClass } from "@/components/admin/ui";
+import { Modal, Field, Select, Button, ErrorNote } from "@/components/admin/ui";
 import type { AdminBooking } from "@/components/admin/bookingDisplay";
-
-// Same range as manual bookings: wider than opening hours on purpose
-const TIMES = Array.from({ length: 31 }, (_, i) => minutesToSlot(6 * 60 + i * 30));
+import { DateTimePicker } from "@/components/admin/DateTimePicker";
 
 export function RescheduleDialog({
   booking, onClose, onMoved,
@@ -33,7 +30,7 @@ export function RescheduleDialog({
   useEffect(() => {
     if (!booking) return;
     setDate(booking.booking_date);
-    setTime(TIMES.includes(booking.time_slot) ? booking.time_slot : "");
+    setTime(booking.time_slot);
     setStylistId(booking.stylist_id ?? "");
     setNotify(true);
     setWarnings([]);
@@ -82,7 +79,7 @@ export function RescheduleDialog({
       open={!!booking}
       onClose={onClose}
       title="Reschedule"
-      size="sm"
+      size="lg"
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>Go back</Button>
@@ -97,23 +94,21 @@ export function RescheduleDialog({
           <p className="font-sans text-[14px] leading-relaxed text-graphite">
             {booking.client_name}, {booking.treatment || booking.service_name}. Payment stays with the booking.
           </p>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Date">
-              <input type="date" value={date} onChange={(e) => change(setDate)(e.target.value)} className={inputClass} />
-            </Field>
-            <Field label="Time">
-              <Select value={time} onChange={(e) => change(setTime)(e.target.value)}>
-                <option value="">Choose</option>
-                {TIMES.map((t) => <option key={t} value={t}>{t}</option>)}
-              </Select>
-            </Field>
-            <Field label="Stylist" className="col-span-2">
-              <Select value={stylistId} onChange={(e) => change(setStylistId)(e.target.value)}>
-                {!booking.stylist_id && <option value="">Not assigned yet</option>}
-                {stylists.map((s) => <option key={s.id} value={s.id}>{s.name}{s.is_available ? "" : " (unavailable)"}</option>)}
-              </Select>
-            </Field>
-          </div>
+          <Field label="Stylist">
+            <Select value={stylistId} onChange={(e) => change(setStylistId)(e.target.value)}>
+              {!booking.stylist_id && <option value="">Not assigned yet</option>}
+              {stylists.map((s) => <option key={s.id} value={s.id}>{s.name}{s.is_available ? "" : " (unavailable)"}</option>)}
+            </Select>
+          </Field>
+          <DateTimePicker
+            date={date}
+            time={time}
+            onDate={change(setDate)}
+            onTime={change(setTime)}
+            stylistId={stylistId}
+            excludeId={booking.id}
+            home={booking.location_type === "home"}
+          />
 
           <label className="flex items-start gap-3 font-sans text-[14px] text-ink cursor-pointer">
             <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[#1a212b]" />
