@@ -35,6 +35,8 @@ export function bookingConfirmationHtml(opts: {
   manualPayment?:     { totalGHS: number; paidGHS: number; travelGHS: number; method: string | null } | null
   /** Extra terms the client agreed to when booking, e.g. the colouring policy */
   servicePolicy?:     ServicePolicy | null
+  /** How to prepare for the appointment, from the service rules */
+  prepNote?:          string | null
 }): string {
   const manageUrl  = `${opts.appUrl}/manage/${opts.cancelToken}`
   const ref        = opts.bookingId.slice(0, 8).toUpperCase()
@@ -184,6 +186,14 @@ export function bookingConfirmationHtml(opts: {
               Good to Know
             </p>
             <table width="100%" cellpadding="0" cellspacing="0">
+              ${opts.prepNote ? `<tr>
+                <td style="padding:10px 0;border-bottom:1px solid #f8f6f3;vertical-align:top;width:20px">
+                  <span style="font-size:14px;color:#1A212B">·</span>
+                </td>
+                <td style="padding:10px 0 10px 10px;border-bottom:1px solid #f8f6f3;font-size:13px;color:#55504a;font-family:'Inter',Arial,sans-serif;line-height:1.6">
+                  <strong style="color:#1A212B;font-weight:500">Before your appointment.</strong> ${opts.prepNote}
+                </td>
+              </tr>` : ''}
               <tr>
                 <td style="padding:10px 0;border-bottom:1px solid #f8f6f3;vertical-align:top;width:20px">
                   <span style="font-size:14px;color:#1A212B">·</span>

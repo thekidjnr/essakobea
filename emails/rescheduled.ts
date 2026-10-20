@@ -12,6 +12,8 @@ export function rescheduledHtml(opts: {
   previousTime: string
   movedBy:      'client' | 'salon'
   manageUrl:    string
+  /** How to prepare for the appointment, from the service rules */
+  prepNote?:    string | null
 }): string {
   const sub = opts.movedBy === 'salon'
     ? 'We&rsquo;ve had to move your appointment. Here are the new details.'
@@ -63,6 +65,9 @@ export function rescheduledHtml(opts: {
             <p style="margin:0 0 12px;font-size:13px;color:#55504a;font-family:'Inter',Arial,sans-serif;line-height:1.6">
               Your payment stays with this booking. Nothing else changes.
             </p>
+            ${opts.prepNote ? `<p style="margin:0 0 12px;font-size:13px;color:#55504a;font-family:'Inter',Arial,sans-serif;line-height:1.6">
+              <strong style="color:#1A212B;font-weight:500">Before your appointment.</strong> ${opts.prepNote}
+            </p>` : ''}
             <p style="margin:0;font-size:11px;color:#B0ABA5;font-family:'Inter',Arial,sans-serif;line-height:1.8">
               <a href="${opts.manageUrl}" style="color:#1A212B;text-decoration:underline">Manage your booking →</a>
             </p>

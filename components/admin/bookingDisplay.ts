@@ -39,6 +39,11 @@ export function refundOwed(b: Pick<AdminBooking, "status" | "payment_status" | "
   return b.status === "cancelled" && b.payment_status === "paid" && b.refund_amount > 0;
 }
 
+// An upcoming booking that was rescheduled, by the client or the salon
+export function wasMoved(b: Pick<AdminBooking, "status" | "previous_booking_date">) {
+  return b.status === "confirmed" && !!b.previous_booking_date;
+}
+
 // How a booking's status reads in the dashboard. One accent only: the
 // solid warm-blue pill marks what needs the salon's attention.
 export function bookingStatus(b: AdminBooking): { label: string; tone: PillTone; faded: boolean } {

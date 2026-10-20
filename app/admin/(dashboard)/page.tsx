@@ -6,7 +6,7 @@ import Link from "next/link";
 import { whatsAppLink } from "@/lib/phone";
 import { Page, SectionTitle, Card, Pill, Skeleton, Button, ErrorNote, Empty, buttonClass } from "@/components/admin/ui";
 import {
-  type AdminBooking, bookingStatus, formatSlot, startOf, todayISO, countdown, useServices, serviceFor,
+  type AdminBooking, bookingStatus, wasMoved, formatSlot, startOf, todayISO, countdown, useServices, serviceFor,
 } from "@/components/admin/bookingDisplay";
 import { thumbUrl } from "@/lib/media";
 
@@ -201,7 +201,7 @@ export default function AdminDashboard() {
                           </span>
                         </span>
                         {/* "Booked" is the default, so only statuses worth noticing show */}
-                        {s.tone !== "outline" && <Pill tone={s.tone}>{s.label}</Pill>}
+                        {s.tone !== "outline" ? <Pill tone={s.tone}>{s.label}</Pill> : wasMoved(b) && <Pill tone="soft">Moved</Pill>}
                       </Link>
                     </li>
                   );

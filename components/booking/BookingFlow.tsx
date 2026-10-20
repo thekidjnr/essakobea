@@ -2239,6 +2239,17 @@ export default function BookingFlow() {
                 )}
               </ReviewRow>
 
+              {rules.prepNote && (
+                <div className="py-5 sm:py-6 flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-6">
+                  <p className="sm:w-32 flex-shrink-0 sm:pt-1 font-sans text-[11px] tracking-widest2 uppercase text-ink/50">
+                    Before you come
+                  </p>
+                  <p className="flex-1 min-w-0 font-sans text-[16px] font-medium text-ink leading-relaxed">
+                    {rules.prepNote}
+                  </p>
+                </div>
+              )}
+
               {/* Price breakdown */}
               <div className="py-7 flex flex-col gap-3">
                 {isRange && (

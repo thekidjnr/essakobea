@@ -12,7 +12,7 @@ import {
   ConfirmDialog, Field, Select, inputClass, ErrorNote, Empty, SkeletonRows,
 } from "@/components/admin/ui";
 import {
-  type AdminBooking, bookingStatus, refundOwed, cedis, formatSlot, startOf, dayLabel, useServices, serviceFor, todayISO,
+  type AdminBooking, bookingStatus, wasMoved, refundOwed, cedis, formatSlot, startOf, dayLabel, useServices, serviceFor, todayISO,
 } from "@/components/admin/bookingDisplay";
 import { useRefundsOwed, notifyRefundsChanged } from "@/components/admin/useRefundsOwed";
 import { thumbUrl } from "@/lib/media";
@@ -136,7 +136,9 @@ function whatsAppUrlFor(b: Booking, services: DbService[]): string {
 
   const policyLine = `*Good to know:* ${cancellationPolicyText(isDeposit ? "deposit" : "payment")}`;
 
-  const message = `Hi ${firstName}, this is Essakobea confirming your appointment:\n\n*${b.service_name}* (${b.treatment})${stylistLine}\n${date} at ${b.time_slot}${custLine}\n\n${paymentLine}\n\n${locationLine}\n\n${policyLine}\n\nSee you then!`;
+  const prepNote = getServiceRules(b.service_id).prepNote;
+  const prepLine = prepNote ? `*Before your appointment:* ${prepNote}\n\n` : "";
+  const message = `Hi ${firstName}, this is Essakobea confirming your appointment:\n\n*${b.service_name}* (${b.treatment})${stylistLine}\n${date} at ${b.time_slot}${custLine}\n\n${paymentLine}\n\n${locationLine}\n\n${prepLine}${policyLine}\n\nSee you then!`;
 
   return whatsAppLink(b.client_phone, message);
 }
@@ -214,6 +216,7 @@ function BookingDetail({
       <div className="flex items-center justify-between">
         <span className="flex flex-wrap gap-1.5">
           <Pill tone={s.tone}>{s.label}</Pill>
+          {wasMoved(b) && <Pill tone="soft">Moved</Pill>}
           {manual && <Pill tone="soft">Manual</Pill>}
           {isHomeService(b) && <Pill tone="soft">Home service</Pill>}
         </span>
@@ -566,8 +569,11 @@ export default function AdminBookings() {
                                 {b.stylist_name ?? "Any"}
                               </span>
 
-                              <span className={s.tone === "outline" || s.label === "Done" ? "hidden md:block" : ""}>
-                                <Pill tone={s.tone}>{s.label}</Pill>
+                              <span className="flex items-center gap-1.5">
+                                <span className={s.tone === "outline" || s.label === "Done" ? "hidden md:block" : ""}>
+                                  <Pill tone={s.tone}>{s.label}</Pill>
+                                </span>
+                                {wasMoved(b) && <Pill tone="soft">Moved</Pill>}
                               </span>
 
                               <span className={`hidden md:block font-sans text-[14px] text-right tabular-nums ${tone} ${compact ? "lg:hidden" : ""}`}>

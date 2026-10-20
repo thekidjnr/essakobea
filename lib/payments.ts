@@ -192,6 +192,7 @@ export async function sendBookingConfirmedEmails(booking: Row, { notifyAdmin = t
         clientName:  booking.client_name,
         cancelToken: booking.cancel_token,
         servicePolicy: getServiceRules(booking.service_id).servicePolicy ?? null,
+        prepNote:      getServiceRules(booking.service_id).prepNote ?? null,
         ...sharedFields,
       }),
     })

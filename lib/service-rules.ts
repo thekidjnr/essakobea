@@ -57,6 +57,8 @@ export interface ServiceRules {
   balanceDue: string
   /** Extra terms shown in the booking popup and the confirmation email */
   servicePolicy?: ServicePolicy
+  /** How to prepare for the appointment, shown on Review, in the confirmation email and the WhatsApp confirmation */
+  prepNote?: string
   /** Working days from drop-off until the unit is ready, when the booked date is a drop-off */
   turnaround?: Record<CustomizationType, Turnaround>
 }
@@ -101,6 +103,8 @@ const DEFAULT_RULES: ServiceRules = {
   balanceDue: 'when the service is done',
 }
 
+const PONYTAIL_PREP_NOTE = 'Please do not add any hair creams to your hair when you wash it.'
+
 const PONYTAILS: Partial<ServiceRules> = {
   hairTitle: { lead: 'Your', italic: 'extensions.' },
   hairQuestion: 'Will you be bringing your own extensions?',
@@ -115,6 +119,7 @@ const PONYTAILS: Partial<ServiceRules> = {
   unitStepIntro: 'A quick photo and bundle count so your stylist can prepare.',
   photoLabel: 'Extensions photo',
   photoHelp: 'Add at least one photo of your extensions so your stylist can see what you are bringing.',
+  prepNote: PONYTAIL_PREP_NOTE,
 }
 
 // Same extensions flow as ponytails, worded for bundles
@@ -130,6 +135,12 @@ const SEW_IN: Partial<ServiceRules> = {
   unitStepTitle: { lead: 'About your', italic: 'hair.' },
   photoLabel: 'Hair photo',
   photoHelp: 'Add at least one photo of the hair you are bringing so your stylist can prepare.',
+  prepNote: undefined,
+}
+
+// Uses the hair unit flow above, with the same prep note as regular ponytails
+const FRONTAL_PONYTAILS: Partial<ServiceRules> = {
+  prepNote: PONYTAIL_PREP_NOTE,
 }
 
 // The booked date is the drop-off day for wig making and coloring: both work
@@ -199,8 +210,8 @@ const OVERRIDES: Record<string, Partial<ServiceRules>> = {
   coloring: COLORING,
   // Clients bring extensions; the photo shows whether they're new or used,
   // so there's no new/existing split and no Standard/Express step.
-  // frontal-ponytails has no entry: it uses the hair unit flow above.
   'regular-ponytails': PONYTAILS,
+  'frontal-ponytails': FRONTAL_PONYTAILS,
   'sew-in': SEW_IN,
   // Old slugs, until migrations 017 and 018 have run on every database
   ponytails: PONYTAILS,
