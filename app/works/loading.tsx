@@ -7,7 +7,7 @@ export default function Loading() {
     <>
       <Nav />
 
-      <main className="min-h-screen bg-paper">
+      <main className="theme-gray min-h-screen bg-paper">
         {/* Hero */}
         <section className="pt-40 pb-12 md:pt-48 md:pb-16 px-6 md:px-16 max-w-[1400px] mx-auto">
           <div className="h-2.5 w-20 bg-ink/[0.08] rounded-sm mb-5 animate-pulse" />

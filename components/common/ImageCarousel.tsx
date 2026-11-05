@@ -159,13 +159,13 @@ export default function ImageCarousel({
       </div>
 
       {number && (
-        <span className="absolute top-5 left-5 font-sans text-[10px] tracking-widest text-paper/70 bg-ink/40 backdrop-blur-sm px-2.5 py-1 pointer-events-none">
+        <span className="theme-ink absolute top-5 left-5 font-sans text-[10px] tracking-widest text-paper/70 bg-ink/40 backdrop-blur-sm px-2.5 py-1 pointer-events-none">
           {number}
         </span>
       )}
 
       {images.length > 1 && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 pointer-events-none">
+        <div className="theme-ink absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 pointer-events-none">
           {images.map((_, i) => (
             <span
               key={i}

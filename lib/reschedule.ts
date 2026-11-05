@@ -20,7 +20,7 @@ import { FROM } from '@/lib/resend'
 import { sendSafely } from '@/lib/payments'
 import { formatBookingDate } from '@/lib/booking-time'
 import { rescheduledHtml } from '@/emails/rescheduled'
-import { getServiceRules } from '@/lib/service-rules'
+import { getServiceRules, prepNoteFor } from '@/lib/service-rules'
 import {
   sendSmsSafely, bookingRescheduledSms, clientRescheduledAdminSms, ADMIN_NOTIFY_PHONE,
 } from '@/lib/sms'
@@ -85,7 +85,7 @@ export async function sendRescheduledNotices(updated: Row, previous: Row, by: 'c
         previousTime: previous.time_slot,
         movedBy:      by,
         manageUrl:    manageUrl(updated.cancel_token),
-        prepNote:     getServiceRules(updated.service_id).prepNote ?? null,
+        prepNote:     prepNoteFor(updated.service_id, updated.hair_unit_type),
       }),
     })
   }

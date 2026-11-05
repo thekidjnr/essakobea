@@ -4,11 +4,11 @@ import Reveal from "@/components/common/Reveal";
 
 export default function Statement() {
   return (
-    <section id="about" className="bg-ink overflow-hidden">
+    <section id="about" className="theme-ink bg-ink overflow-hidden">
       <div className="grid grid-cols-1 md:grid-cols-2 min-h-[80vh]">
         {/* Text */}
         <Reveal className="flex flex-col justify-center px-10 md:px-20 py-24 md:py-32 order-2 md:order-1">
-          <p className="font-sans text-[10px] tracking-widest2 uppercase text-paper/30 mb-10">
+          <p className="font-sans text-[10px] tracking-widest2 uppercase text-paper/50 mb-10">
             The Essakobea Way
           </p>
           <blockquote className="font-serif text-[clamp(2rem,4vw,3.75rem)] leading-[1.1] text-paper font-light">
@@ -22,7 +22,7 @@ export default function Statement() {
           </p>
           <div className="flex items-center gap-6 mt-16">
             <div className="h-px flex-1 bg-paper/10" />
-            <p className="font-sans text-[10px] tracking-widest2 uppercase text-paper/20">
+            <p className="font-sans text-[10px] tracking-widest2 uppercase text-paper/40">
               Est. 2023
             </p>
           </div>

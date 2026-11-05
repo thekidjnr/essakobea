@@ -45,10 +45,11 @@ export default function AboutPage() {
     <>
       <Nav />
 
+      <main className="theme-gray bg-paper">
       {/* Hero */}
       <section className="pt-40 pb-0 md:pt-52 md:pb-0 overflow-hidden">
         <Reveal className="max-w-[1400px] mx-auto px-6 md:px-16">
-          <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 mb-6">
+          <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/55 mb-6">
             About Essakobea
           </p>
           <h1 className="font-serif text-[clamp(3.5rem,9vw,10rem)] leading-[0.85] font-light text-ink">
@@ -68,7 +69,7 @@ export default function AboutPage() {
             priority
             sizes="100vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-paper/60 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-paper/70 via-transparent to-transparent" />
         </Reveal>
       </section>
 
@@ -77,7 +78,7 @@ export default function AboutPage() {
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-24 items-center">
           {/* Text */}
           <Reveal>
-            <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 mb-8">
+            <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/55 mb-8">
               From The Founder
             </p>
             <div className="flex flex-col gap-6">
@@ -111,7 +112,7 @@ export default function AboutPage() {
               <p className="font-serif text-[1.1rem] font-light text-ink leading-none">
                 Vanessa Akosua Menkobea Bampoe
               </p>
-              <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 mt-2">
+              <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/55 mt-2">
                 Founder &amp; CEO
               </p>
             </div>
@@ -129,8 +130,8 @@ export default function AboutPage() {
               />
             </div>
             {/* Floating caption */}
-            <div className="absolute -bottom-6 -right-0 md:-right-6 bg-paper p-6 max-w-[220px]">
-              <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 mb-2">
+            <div className="absolute -bottom-6 -right-0 md:-right-6 bg-mist p-6 max-w-[220px]">
+              <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/55 mb-2">
                 Founder &amp; CEO
               </p>
               <p className="font-serif text-[1.1rem] font-light text-ink leading-snug">
@@ -153,7 +154,7 @@ export default function AboutPage() {
                 <p className="font-serif text-[clamp(2rem,4vw,3.5rem)] font-light text-ink leading-none mb-2">
                   {stat.value}
                 </p>
-                <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40">
+                <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/55">
                   {stat.label}
                 </p>
               </div>
@@ -167,7 +168,7 @@ export default function AboutPage() {
         <div className="max-w-[1400px] mx-auto">
           <Reveal className="flex flex-col md:flex-row md:items-end md:justify-between mb-16 gap-6">
             <div>
-              <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 mb-4">
+              <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/55 mb-4">
                 What We Stand For
               </p>
               <h2 className="font-serif text-[clamp(2.5rem,5vw,5rem)] leading-none font-light text-ink">
@@ -183,7 +184,7 @@ export default function AboutPage() {
                 delay={i * 80}
                 className="py-10 md:py-0 md:px-12 first:md:pl-0 last:md:pr-0"
               >
-                <span className="font-sans text-[10px] tracking-widest text-ink/25 block mb-8">
+                <span className="font-sans text-[10px] tracking-widest text-ink/45 block mb-8">
                   {pillar.number}
                 </span>
                 <h3 className="font-serif text-[clamp(1.75rem,2.5vw,2.5rem)] font-light text-ink leading-none mb-5">
@@ -199,10 +200,10 @@ export default function AboutPage() {
       </section>
 
       {/* The platform section */}
-      <section className="bg-ink py-28 md:py-36 px-6 md:px-16 overflow-hidden">
+      <section className="theme-ink bg-ink py-28 md:py-36 px-6 md:px-16 overflow-hidden">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
           <Reveal>
-            <p className="font-sans text-[10px] tracking-widest2 uppercase text-paper/30 mb-6">
+            <p className="font-sans text-[10px] tracking-widest2 uppercase text-paper/50 mb-6">
               The Platform
             </p>
             <h2 className="font-serif text-[clamp(2.5rem,5vw,5rem)] leading-[0.9] font-light text-paper mb-8">
@@ -210,11 +211,11 @@ export default function AboutPage() {
               <br />
               <span className="italic">Everything.</span>
             </h2>
-            <p className="font-sans text-[14px] text-paper/65 font-light leading-relaxed mb-6 max-w-sm">
+            <p className="font-sans text-[14px] text-paper/70 font-light leading-relaxed mb-6 max-w-sm">
               Essakobea is not just a salon. It&apos;s a complete beauty system:
               choose your service, pick your stylist and book, all from your phone.
             </p>
-            <p className="font-sans text-[14px] text-paper/65 font-light leading-relaxed max-w-sm">
+            <p className="font-sans text-[14px] text-paper/70 font-light leading-relaxed max-w-sm">
               We built the digital side of Essakobea so that our clients never
               have to chase us down. Your booking, your payment, your appointment details,
               all in one place.
@@ -255,7 +256,7 @@ export default function AboutPage() {
               <Reveal key={title} delay={i * 80} className="py-8 flex gap-6 items-start">
                 <div className="w-1.5 h-1.5 rounded-full bg-paper/30 flex-shrink-0 mt-2" />
                 <div>
-                  <p className="font-sans text-[12px] tracking-wide uppercase text-paper/60 mb-2">
+                  <p className="font-sans text-[12px] tracking-wide uppercase text-paper/80 mb-2">
                     {title}
                   </p>
                   <p className="font-sans text-[14px] text-paper/60 font-light leading-relaxed">
@@ -272,7 +273,7 @@ export default function AboutPage() {
       <section className="bg-paper py-28 md:py-36 px-6 md:px-16">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-end">
           <Reveal>
-            <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 mb-6">
+            <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/55 mb-6">
               Find Us
             </p>
             <h2 className="font-serif text-[clamp(2.5rem,5vw,5rem)] leading-none font-light text-ink mb-8">
@@ -283,7 +284,7 @@ export default function AboutPage() {
 
             <div className="flex flex-col gap-6">
               <div>
-                <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-2">
+                <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/55 mb-2">
                   Address
                 </p>
                 <p className="font-sans text-[14px] text-ink/70 font-light">
@@ -293,7 +294,7 @@ export default function AboutPage() {
                 </p>
               </div>
               <div>
-                <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-2">
+                <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/55 mb-2">
                   Hours
                 </p>
                 <p className="font-sans text-[14px] text-ink/70 font-light">
@@ -303,7 +304,7 @@ export default function AboutPage() {
                 </p>
               </div>
               <div>
-                <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-2">
+                <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/55 mb-2">
                   Contact
                 </p>
                 <a
@@ -328,7 +329,7 @@ export default function AboutPage() {
               &ldquo;We don&apos;t just do hair. We give women a reason to walk
               in the room first.&rdquo;
             </blockquote>
-            <p className="font-sans text-[11px] tracking-widest uppercase text-ink/45">
+            <p className="font-sans text-[11px] tracking-widest uppercase text-ink/60">
               Essakobea
             </p>
             <div className="mt-12 flex flex-col sm:flex-row gap-3">
@@ -342,6 +343,7 @@ export default function AboutPage() {
           </Reveal>
         </div>
       </section>
+      </main>
 
       <Footer />
     </>

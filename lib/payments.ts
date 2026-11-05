@@ -11,7 +11,7 @@ import { formatBookingDate } from '@/lib/booking-time'
 import { isPriceRange } from '@/lib/booking-fees'
 import { bookingConfirmationHtml } from '@/emails/booking-confirmation'
 import { bookingAdminAlertHtml } from '@/emails/booking-admin-alert'
-import { customizationLabel, formatReadyEstimate, getServiceRules, readyEstimate } from '@/lib/service-rules'
+import { customizationLabel, formatReadyEstimate, getServiceRules, prepNoteFor, readyEstimate } from '@/lib/service-rules'
 import { orderConfirmationHtml } from '@/emails/order-confirmation'
 import { balanceDue, paymentMethodLabel } from '@/lib/manual-bookings'
 import { sendSmsSafely, bookingConfirmedSms, bookingAdminSms, ADMIN_NOTIFY_PHONE } from '@/lib/sms'
@@ -192,7 +192,7 @@ export async function sendBookingConfirmedEmails(booking: Row, { notifyAdmin = t
         clientName:  booking.client_name,
         cancelToken: booking.cancel_token,
         servicePolicy: getServiceRules(booking.service_id).servicePolicy ?? null,
-        prepNote:      getServiceRules(booking.service_id).prepNote ?? null,
+        prepNote:      prepNoteFor(booking.service_id, booking.hair_unit_type),
         ...sharedFields,
       }),
     })

@@ -28,11 +28,13 @@ export function payoutStatusUpdateHtml(opts: {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Withdrawal Update | Essakobea</title>
+  <meta name="color-scheme" content="light only">
+  <meta name="supported-color-schemes" content="light only">
 </head>
-<body style="margin:0;padding:0;background:#f4f2ef;font-family:Georgia,serif">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f2ef;padding:48px 16px">
+<body style="margin:0;padding:0;background:#4A4B4E;font-family:Georgia,serif">
+  <table width="100%" cellpadding="0" cellspacing="0" bgcolor="#4A4B4E" style="background:#4A4B4E;padding:48px 16px">
     <tr><td align="center">
-      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff">
+      <table width="100%" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="max-width:560px;background:#ffffff">
 
         <!-- Top accent bar -->
         <tr><td style="background:#1A212B;height:3px;font-size:0">&nbsp;</td></tr>

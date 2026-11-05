@@ -7,6 +7,38 @@
   --paper: #ffffff;
   --mist: #F7F6F4;
   --stone: #9A9590;
+  /* Channels behind the Tailwind ink / paper / mist colors */
+  --ink-rgb: 26 33 43;
+  --paper-rgb: 255 255 255;
+  --mist-rgb: 247 246 244;
+}
+
+/* Gray theme (the public site and booking): soft charcoal page, light text. Swapping
+   the channels turns every ink / paper / mist utility inside it, buttons included. */
+.theme-gray {
+  --ink: #EDECEA;
+  --paper: #4A4B4E;
+  --mist: #56575A;
+  --ink-rgb: 237 236 234;
+  --paper-rgb: 74 75 78;
+  --mist-rgb: 86 87 90;
+  color: var(--ink);
+  color-scheme: dark;
+}
+/* Back to the default ink / paper inside a gray page, for things that must stay
+   dark with white text: the hero, deep bands, the mobile menu, photo overlays. */
+.theme-ink {
+  --ink: #1A212B;
+  --paper: #ffffff;
+  --mist: #F7F6F4;
+  --ink-rgb: 26 33 43;
+  --paper-rgb: 255 255 255;
+  --mist-rgb: 247 246 244;
+  color-scheme: light;
+}
+html:has(.theme-gray),
+html:has(.theme-gray) body {
+  background-color: #4A4B4E;
 }
 
 * {
@@ -34,6 +66,15 @@ body {
    use smaller text. */
 input:not(.admin-ui *), textarea:not(.admin-ui *), select:not(.admin-ui *) {
   font-size: 16px !important;
+}
+
+/* Visible keyboard focus. In the base layer so a component's own
+   focus:outline-none (form fields with their own focus border) still wins. */
+@layer base {
+  :focus-visible:not(.admin-ui *) {
+    outline: 1px solid currentColor;
+    outline-offset: 3px;
+  }
 }
 
 ::selection {

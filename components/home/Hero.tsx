@@ -5,7 +5,7 @@ import HeroVideo from "./HeroVideo";
 
 export default function Hero() {
   return (
-    <section className="relative w-full h-screen min-h-[700px] overflow-hidden">
+    <section className="theme-ink relative w-full h-screen min-h-[700px] overflow-hidden">
       {/* Background: poster image (LCP + reduced-motion fallback) with video on top */}
       <div className="absolute inset-0">
         {/* Mobile: native portrait framing */}
@@ -38,7 +38,7 @@ export default function Hero() {
       {/* Content */}
       <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-6 md:px-16 max-w-[1400px] mx-auto">
         {/* Headline */}
-        <h1 className="fade-up fade-up-delay-2 font-serif text-[clamp(3rem,8vw,7.5rem)] leading-[0.9] text-paper font-light">
+        <h1 className="fade-up fade-up-delay-2 font-serif text-[clamp(3rem,8vw,7.5rem)] leading-[0.9] tracking-[-0.02em] text-paper font-light">
           Welcome to{" "}
           <span className="italic">Essakobea</span>
         </h1>

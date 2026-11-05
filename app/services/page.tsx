@@ -41,6 +41,7 @@ export default async function ServicesPage() {
     <>
       <Nav />
 
+      <main className="theme-gray bg-paper">
       {/* Page hero */}
       <section className="pt-28 pb-16 md:pt-48 md:pb-20 px-6 md:px-16 max-w-[1400px] mx-auto">
         <Reveal>
@@ -78,28 +79,28 @@ export default async function ServicesPage() {
                 {/* Pricing */}
                 <div className="mb-8">
                   <div className="flex items-center gap-3 mb-4">
-                    <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 flex-shrink-0">
+                    <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/55 flex-shrink-0">
                       Pricing
                     </p>
-                    <div className="h-px flex-1 bg-ink/8" />
+                    <div className="h-px flex-1 bg-ink/10" />
                   </div>
                   <div className="flex flex-col">
                     {service.booking_options.map((opt) => (
                       <div
                         key={opt.id}
-                        className="flex items-start justify-between py-3 border-b border-ink/[0.05] last:border-0 gap-4"
+                        className="flex items-start justify-between py-4 md:py-3 border-b border-ink/[0.08] last:border-0 gap-4"
                       >
                         <div>
-                          <span className="font-sans text-[13px] text-ink/75 font-light block">
+                          <span className="font-sans text-[16px] md:text-[14px] text-ink/90 block">
                             {opt.name}
                           </span>
                           {opt.note && (
-                            <span className="font-sans text-[11px] text-ink/50 italic">
+                            <span className="font-sans text-[14px] md:text-[12px] text-ink/65 italic leading-snug block mt-1">
                               {opt.note}
                             </span>
                           )}
                         </div>
-                        <span className="font-sans text-[13px] text-ink/90 font-medium flex-shrink-0">
+                        <span className="font-sans text-[16px] md:text-[14px] text-ink font-medium flex-shrink-0">
                           {opt.price}
                         </span>
                       </div>
@@ -121,16 +122,16 @@ export default async function ServicesPage() {
           })}
         </div>
 
-        <p className="font-sans text-[11px] text-ink/40 font-light mt-16 md:mt-20">
+        <p className="font-sans text-[11px] text-ink/55 font-light mt-16 md:mt-20">
           Prices are subject to change based on hair length, density, and condition.
         </p>
       </section>
 
       {/* Bottom contact CTA */}
-      <section className="bg-ink py-24 md:py-32 px-6 md:px-16">
+      <section className="theme-ink bg-ink py-24 md:py-32 px-6 md:px-16">
         <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row md:items-end md:justify-between gap-10">
           <div>
-            <p className="font-sans text-[10px] tracking-widest2 uppercase text-paper/30 mb-5">
+            <p className="font-sans text-[10px] tracking-widest2 uppercase text-paper/50 mb-5">
               Get in Touch
             </p>
             <h2 className="font-serif text-[clamp(2.5rem,5vw,5rem)] leading-none font-light text-paper">
@@ -149,19 +150,22 @@ export default async function ServicesPage() {
               >
                 Book an Appointment
               </Link>
-              <Link
-                href="mailto:essakobea@gmail.com"
+              <a
+                href="https://wa.me/233557205803"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="inline-block border border-paper text-paper font-sans text-[11px] tracking-widest uppercase px-8 py-4 hover:bg-paper hover:text-ink transition-all duration-300"
               >
-                Email Us
-              </Link>
+                WhatsApp Us
+              </a>
             </div>
-            <p className="font-sans text-[10px] tracking-widest text-paper/20 uppercase">
-              Accra, East Legon &nbsp;·&nbsp; 0557205803
+            <p className="font-sans text-[10px] tracking-widest text-paper/50 uppercase">
+              Accra, East Legon &nbsp;·&nbsp; <a href="tel:0557205803" className="hover:text-paper transition-colors">0557205803</a>
             </p>
           </div>
         </div>
       </section>
+      </main>
 
       <Footer />
     </>

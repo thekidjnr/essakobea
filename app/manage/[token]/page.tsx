@@ -194,13 +194,13 @@ export default function ManageBookingPage({ params, searchParams }: {
   const go = (v: View) => { setSubmitError(""); setSavedNote(""); setView(v); window.scrollTo({ top: 0 }); };
 
   if (loadState === "loading") return (
-    <div className="min-h-screen bg-paper flex items-center justify-center">
+    <div className="theme-gray min-h-screen bg-paper flex items-center justify-center">
       <p className="font-sans text-[12px] text-ink/40">Loading…</p>
     </div>
   );
 
   if (loadState === "error" || !booking) return (
-    <div className="min-h-screen bg-paper flex items-center justify-center px-6">
+    <div className="theme-gray min-h-screen bg-paper flex items-center justify-center px-6">
       <div className="text-center max-w-sm">
         <p className="font-serif text-[2rem] font-light text-ink mb-4">Something went wrong.</p>
         <p className="font-sans text-[13px] text-ink/50 mb-8">{errorMsg}</p>
@@ -221,7 +221,7 @@ export default function ManageBookingPage({ params, searchParams }: {
 
   // ── Finished states ────────────────────────────────────────────────────────
   if (view === "cancelled" || booking.status === "cancelled") return (
-    <div className="min-h-screen bg-paper flex items-center justify-center px-6 py-24">
+    <div className="theme-gray min-h-screen bg-paper flex items-center justify-center px-6 py-24">
       <div className="max-w-[480px] w-full text-center">
         <p className={`${label} mb-6`}>Appointment Cancelled</p>
         <h1 className="font-serif text-[clamp(2rem,5vw,4rem)] font-light text-ink leading-none mb-6">
@@ -241,7 +241,7 @@ export default function ManageBookingPage({ params, searchParams }: {
   );
 
   if (booking.status === "completed") return (
-    <div className="min-h-screen bg-paper flex items-center justify-center px-6">
+    <div className="theme-gray min-h-screen bg-paper flex items-center justify-center px-6">
       <div className="text-center max-w-sm">
         <p className="font-serif text-[2rem] font-light text-ink mb-4">Already completed.</p>
         <p className="font-sans text-[13px] text-ink/50 mb-8">This appointment has already taken place, so it can&apos;t be changed.</p>
@@ -253,7 +253,7 @@ export default function ManageBookingPage({ params, searchParams }: {
   );
 
   if (view === "rescheduled") return (
-    <div className="min-h-screen bg-paper flex items-center justify-center px-6 py-24">
+    <div className="theme-gray min-h-screen bg-paper flex items-center justify-center px-6 py-24">
       <div className="max-w-[480px] w-full">
         <p className={`${label} mb-6 text-center`}>Appointment Moved</p>
         <h1 className="font-serif text-[clamp(2rem,5vw,4rem)] font-light text-ink leading-none mb-6 text-center">
@@ -278,7 +278,7 @@ export default function ManageBookingPage({ params, searchParams }: {
   if (view === "reschedule") {
     const newWhen = date && time ? `${shortDate(toDateStr(date))}, ${time}` : null;
     return (
-      <div className="min-h-screen bg-paper px-6 pt-24 pb-40 md:pb-24">
+      <div className="theme-gray min-h-screen bg-paper px-6 pt-24 pb-40 md:pb-24">
         <div className="max-w-[820px] mx-auto">
           <button onClick={() => go("overview")} className="font-sans text-[11px] tracking-widest uppercase text-ink/50 hover:text-ink transition-colors mb-8">
             ‹ Back
@@ -328,7 +328,7 @@ export default function ManageBookingPage({ params, searchParams }: {
           </div>
 
           {/* Confirm: pinned to the bottom on phones, inline on larger screens */}
-          <div className="fixed md:static inset-x-0 bottom-0 z-20 bg-paper border-t border-ink/10 md:border-0 px-6 md:px-0 pt-4 pb-[calc(16px+env(safe-area-inset-bottom))] md:pt-12 md:pb-0">
+          <div className="fixed md:static inset-x-0 bottom-0 z-20 bg-paper/90 backdrop-blur-md md:bg-transparent md:backdrop-blur-none border-t border-ink/10 md:border-0 px-6 md:px-0 pt-4 pb-[calc(16px+env(safe-area-inset-bottom))] md:pt-12 md:pb-0">
             <div className="max-w-[820px] mx-auto md:border-t md:border-ink/10 md:pt-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div className="font-sans text-[13px] leading-relaxed">
                 <span className="text-ink/40 line-through">{shortDate(booking.booking_date)}, {booking.time_slot}</span>
@@ -358,7 +358,7 @@ export default function ManageBookingPage({ params, searchParams }: {
           : "Your appointment time has passed, so this cancellation isn't refunded.";
 
     return (
-      <div className="min-h-screen bg-paper flex items-center justify-center px-6 py-24">
+      <div className="theme-gray min-h-screen bg-paper flex items-center justify-center px-6 py-24">
         <div className="max-w-[480px] w-full">
           <p className={`${label} mb-2`}>Cancel Appointment</p>
           <h1 className="font-serif text-[clamp(2rem,5vw,3.5rem)] font-light text-ink leading-none mb-8">
@@ -368,7 +368,7 @@ export default function ManageBookingPage({ params, searchParams }: {
           <div className="mb-8"><Summary rows={summaryRows} /></div>
 
           {!booking.rescheduleBlock && (
-            <div className="border border-ink/10 px-4 py-3 mb-4 flex items-center justify-between gap-4">
+            <div className="bg-paper border border-ink/10 px-4 py-3 mb-4 flex items-center justify-between gap-4">
               <p className="font-sans text-[13px] text-ink leading-relaxed">Can&apos;t make this time? You can move it instead.</p>
               <button onClick={() => go("reschedule")} className="flex-shrink-0 font-sans text-[11px] tracking-widest uppercase text-ink border-b border-ink pb-px hover:opacity-60 transition-opacity">
                 Reschedule
@@ -376,7 +376,7 @@ export default function ManageBookingPage({ params, searchParams }: {
             </div>
           )}
 
-          <div className="border border-ink/10 px-4 py-3 mb-8">
+          <div className="bg-paper border border-ink/10 px-4 py-3 mb-8">
             <p className={`${label} mb-1`}>Refund</p>
             <p className="font-sans text-[13px] text-ink leading-relaxed">{refundLine}</p>
           </div>
@@ -389,7 +389,7 @@ export default function ManageBookingPage({ params, searchParams }: {
               onChange={e => setReason(e.target.value)}
               placeholder="Let us know why you're cancelling…"
               rows={3}
-              className="w-full border border-ink/15 px-4 py-3 font-sans text-[13px] text-ink placeholder:text-ink/25 font-light focus:outline-none focus:border-ink transition-colors resize-none bg-transparent"
+              className="w-full border border-ink/15 px-4 py-3 font-sans text-[13px] text-ink placeholder:text-ink/25 font-light focus:outline-none focus:border-ink transition-colors resize-none bg-paper"
             />
           </div>
 
@@ -416,7 +416,7 @@ export default function ManageBookingPage({ params, searchParams }: {
 
   // ── Update details ─────────────────────────────────────────────────────────
   if (view === "details" && token) return (
-    <div className="min-h-screen bg-paper flex justify-center px-6 py-24">
+    <div className="theme-gray min-h-screen bg-paper flex justify-center px-6 py-24">
       <UpdateDetails
         token={token}
         initial={booking}
@@ -434,7 +434,7 @@ export default function ManageBookingPage({ params, searchParams }: {
   const canMove = !booking.rescheduleBlock;
   const canEdit = !booking.editBlock;
   return (
-    <div className="min-h-screen bg-paper flex items-center justify-center px-6 py-24">
+    <div className="theme-gray min-h-screen bg-paper flex items-center justify-center px-6 py-24">
       <div className="max-w-[480px] w-full">
         <p className={`${label} mb-2`}>Your Booking</p>
         <h1 className="font-serif text-[clamp(2rem,5vw,3.5rem)] font-light text-ink leading-none mb-8">
@@ -444,7 +444,7 @@ export default function ManageBookingPage({ params, searchParams }: {
         <div className="mb-8"><Summary rows={summaryRows} /></div>
 
         {savedNote && (
-          <p role="status" className="font-sans text-[13px] text-ink border border-ink/10 px-4 py-3 mb-6">{savedNote}</p>
+          <p role="status" className="font-sans text-[13px] text-ink bg-paper border border-ink/10 px-4 py-3 mb-6">{savedNote}</p>
         )}
 
         <div className="flex flex-col gap-3">

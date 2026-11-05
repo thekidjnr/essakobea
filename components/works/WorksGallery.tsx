@@ -38,7 +38,7 @@ export default function WorksGallery({ photos, serviceName }: { photos: Photo[];
               sizes="(max-width: 768px) 50vw, 33vw"
             />
             {/* Hover overlay — thin cross expand icon */}
-            <div className="absolute inset-0 bg-ink/0 group-hover:bg-ink/25 transition-all duration-500 ease-out flex items-center justify-center">
+            <div className="theme-ink absolute inset-0 bg-ink/0 group-hover:bg-ink/25 transition-all duration-500 ease-out flex items-center justify-center">
               <div className="opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 transition-all duration-400 ease-out">
                 <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
                   <circle cx="11" cy="11" r="10" stroke="white" strokeOpacity="0.6" strokeWidth="0.8"/>
@@ -53,7 +53,7 @@ export default function WorksGallery({ photos, serviceName }: { photos: Photo[];
       {/* Lightbox — mounted while index set, visibility controlled by CSS */}
       {lightboxIndex !== null && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center"
+          className="theme-ink fixed inset-0 z-[100] flex items-center justify-center"
           style={{
             backgroundColor: `rgba(10,10,10,${visible ? 0.96 : 0})`,
             transition: isTouch.current ? "none" : "background-color 350ms cubic-bezier(0.4,0,0.2,1)",
@@ -68,12 +68,12 @@ export default function WorksGallery({ photos, serviceName }: { photos: Photo[];
             className="absolute top-0 left-0 right-0 flex items-center justify-between px-6 md:px-8 py-5 z-10"
             style={{ opacity: visible ? 1 : 0, transition: isTouch.current ? "none" : "opacity 400ms ease 100ms" }}
           >
-            <p className="font-sans text-[10px] tracking-widest2 uppercase text-paper/25">
+            <p className="font-sans text-[10px] tracking-widest2 uppercase text-paper/45">
               {(lightboxIndex + 1).toString().padStart(2, "0")} / {photos.length.toString().padStart(2, "0")}
             </p>
             <button
               onClick={close}
-              className="text-paper/30 hover:text-paper transition-colors duration-300"
+              className="text-paper/50 hover:text-paper transition-colors duration-300"
               aria-label="Close"
             >
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">

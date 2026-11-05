@@ -46,11 +46,11 @@ export default async function WorksPage() {
     <>
       <Nav />
 
-      <main className="min-h-screen bg-paper">
+      <main className="theme-gray min-h-screen bg-paper">
         {/* Hero */}
         <section className="pt-40 pb-12 md:pt-48 md:pb-16 px-6 md:px-16 max-w-[1400px] mx-auto">
           <div>
-            <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 mb-5">
+            <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/55 mb-5">
               Portfolio
             </p>
             <h1 className="font-serif text-[clamp(3.5rem,8vw,8rem)] leading-[0.88] font-light text-ink whitespace-nowrap">
@@ -63,7 +63,7 @@ export default async function WorksPage() {
         <section className="px-6 md:px-16 max-w-[1400px] mx-auto pb-32">
           {photos.length === 0 ? (
             <div className="py-32 text-center">
-              <p className="font-sans text-[14px] text-ink/45">Photos coming soon.</p>
+              <p className="font-sans text-[14px] text-ink/60">Photos coming soon.</p>
             </div>
           ) : (
             <WorksIndexClient photos={photos} services={services} />

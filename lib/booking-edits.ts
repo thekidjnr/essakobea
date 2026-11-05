@@ -4,7 +4,7 @@
 // (Edit booking in the admin). No server imports, so the manage page shares it.
 
 import { appointmentStart } from '@/lib/booking-time'
-import { bringsHair, getServiceRules } from '@/lib/service-rules'
+import { bringsHair, getServiceRules, inspoPhotoFor } from '@/lib/service-rules'
 
 export const MAX_NOTES_LENGTH = 1000
 export const MAX_PHOTOS = 6
@@ -32,6 +32,6 @@ export function editablePhotos(b: EditableBooking) {
   const bringing = bringsHair(b.hair_unit_type)
   return {
     unit:  bringing ? { label: rules.photoLabel, help: rules.photoHelp } : null,
-    inspo: bringing && rules.inspoPhoto ? rules.inspoPhoto : null,
+    inspo: inspoPhotoFor(b.service_id, b.hair_unit_type),
   }
 }

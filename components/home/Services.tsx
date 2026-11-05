@@ -32,7 +32,7 @@ export default async function Services() {
       {/* Header */}
       <Reveal className="px-6 md:px-16 max-w-[1400px] mx-auto mb-8">
         <div>
-          <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 mb-4">
+          <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/55 mb-4">
             What We Do
           </p>
           <h2 className="font-serif text-[clamp(2.5rem,5vw,5rem)] leading-none font-light text-ink">

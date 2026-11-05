@@ -50,7 +50,7 @@ function BookingSuccess() {
   }, [reference]);
 
   if (loading) return (
-    <div className="min-h-screen bg-paper flex items-center justify-center">
+    <div className="theme-gray min-h-screen bg-paper flex items-center justify-center">
       <p className="font-sans text-[12px] text-ink/40">Confirming your booking…</p>
     </div>
   );
@@ -62,7 +62,7 @@ function BookingSuccess() {
       : failure.code === "pending" ? "Payment processing."
       : "Something went wrong.";
     return (
-      <div className="min-h-screen bg-paper flex items-center justify-center px-6">
+      <div className="theme-gray min-h-screen bg-paper flex items-center justify-center px-6">
         <div className="text-center max-w-sm">
           <p className="font-serif text-[2rem] font-light text-ink mb-4">{title}</p>
           <p className="font-sans text-[13px] text-ink/60 leading-relaxed mb-8">
@@ -92,7 +92,7 @@ function BookingSuccess() {
   const clientName = booking?.client_name ?? "there";
 
   return (
-    <div className="min-h-screen bg-paper flex items-center justify-center px-6 py-24">
+    <div className="theme-gray min-h-screen bg-paper flex items-center justify-center px-6 py-24">
       <div className="max-w-[560px] w-full text-center">
         <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 mb-6">
           Booking Confirmed

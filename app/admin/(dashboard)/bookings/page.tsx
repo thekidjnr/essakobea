@@ -5,7 +5,7 @@ import Image from "next/image";
 import { whatsAppLink } from "@/lib/phone";
 import { isPriceRange } from "@/lib/booking-fees";
 import { cancellationPolicyText } from "@/lib/refunds";
-import { customizationLabel, getServiceRules } from "@/lib/service-rules";
+import { customizationLabel, getServiceRules, prepNoteFor } from "@/lib/service-rules";
 import type { DbService } from "@/lib/supabase/types";
 import {
   Page, PageHeader, Segmented, SearchInput, Pill, Button, buttonClass, IconButton, CloseIcon,
@@ -136,7 +136,7 @@ function whatsAppUrlFor(b: Booking, services: DbService[]): string {
 
   const policyLine = `*Good to know:* ${cancellationPolicyText(isDeposit ? "deposit" : "payment")}`;
 
-  const prepNote = getServiceRules(b.service_id).prepNote;
+  const prepNote = prepNoteFor(b.service_id, b.hair_unit_type);
   const prepLine = prepNote ? `*Before your appointment:* ${prepNote}\n\n` : "";
   const message = `Hi ${firstName}, this is Essakobea confirming your appointment:\n\n*${b.service_name}* (${b.treatment})${stylistLine}\n${date} at ${b.time_slot}${custLine}\n\n${paymentLine}\n\n${locationLine}\n\n${prepLine}${policyLine}\n\nSee you then!`;
 

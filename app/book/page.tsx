@@ -10,11 +10,11 @@ export const metadata: Metadata = {
 
 export default function BookPage() {
   return (
-    <>
+    <div className="theme-gray">
       <Nav />
       <Suspense fallback={<div className="min-h-screen bg-paper" />}>
         <BookingFlow />
       </Suspense>
-    </>
+    </div>
   );
 }

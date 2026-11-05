@@ -48,12 +48,12 @@ export default async function WorksPage({ params }: { params: Promise<{ slug: st
   const photos = works ?? [];
 
   return (
-    <main className="min-h-screen bg-paper">
+    <main className="theme-gray min-h-screen bg-paper">
       {/* Minimal fixed header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-paper border-b border-ink/[0.07] px-6 md:px-12 h-14 flex items-center justify-between">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-paper/90 backdrop-blur-md border-b border-ink/[0.07] px-6 md:px-12 h-14 flex items-center justify-between">
         <Link
           href="/services"
-          className="flex items-center gap-2.5 font-sans text-[10px] tracking-widest uppercase text-ink/40 hover:text-ink transition-colors"
+          className="flex items-center gap-2.5 font-sans text-[10px] tracking-widest uppercase text-ink/55 hover:text-ink transition-colors"
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path d="M9 11L5 7l4-4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -74,7 +74,7 @@ export default async function WorksPage({ params }: { params: Promise<{ slug: st
       {/* Hero */}
       <div className="pt-14">
         <div className="px-6 md:px-12 max-w-[1400px] mx-auto pt-16 pb-12 md:pt-20 md:pb-16">
-          <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-4">
+          <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/55 mb-4">
             {service.number} · Our Work
           </p>
           <h1 className="font-serif text-[clamp(3rem,7vw,7rem)] font-light text-ink leading-none">
@@ -91,7 +91,7 @@ export default async function WorksPage({ params }: { params: Promise<{ slug: st
       {/* Gallery */}
       {photos.length === 0 ? (
         <div className="px-6 md:px-12 pb-32 text-center">
-          <p className="font-sans text-[14px] text-ink/45 py-24">
+          <p className="font-sans text-[14px] text-ink/60 py-24">
             Photos coming soon.
           </p>
         </div>
@@ -105,7 +105,7 @@ export default async function WorksPage({ params }: { params: Promise<{ slug: st
       <div className="border-t border-ink/[0.07] bg-paper px-6 md:px-12 py-16 md:py-20">
         <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div>
-            <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/35 mb-2">Ready?</p>
+            <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/55 mb-2">Ready?</p>
             <h2 className="font-serif text-[clamp(1.75rem,3vw,2.5rem)] font-light text-ink leading-none">
               Book your <span className="italic">{service.name}</span>
             </h2>

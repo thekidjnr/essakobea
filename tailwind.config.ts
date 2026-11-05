@@ -9,9 +9,11 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#1A212B",
-        paper: "#FFFFFF",
-        mist: "#F7F6F4",
+        // ink, paper and mist read from CSS variables (app/globals.css) so a page can
+        // swap them, e.g. the gray booking page (.theme-gray). Defaults stay the same.
+        ink: "rgb(var(--ink-rgb) / <alpha-value>)",
+        paper: "rgb(var(--paper-rgb) / <alpha-value>)",
+        mist: "rgb(var(--mist-rgb) / <alpha-value>)",
         stone: "#9A9590",
         // Admin dashboard neutrals, built around the brand warm blue (ink).
         graphite: "#36363A",

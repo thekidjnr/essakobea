@@ -5,7 +5,7 @@ import { settleBookingPayment, TIMEOUT_CANCEL_REASON } from '@/lib/payments'
 import { dayOfWeek, slotToMinutes, appointmentStart, EMERGENCY_HOURS } from '@/lib/booking-time'
 import { isActiveBooking, optionDuration, peakOccupancy, stylistBusy, type ActiveBooking } from '@/lib/booking-duration'
 import { bookingTotals } from '@/lib/booking-fees'
-import { getServiceRules, bringsHair, BUNDLE_OPTIONS } from '@/lib/service-rules'
+import { getServiceRules, bringsHair, inspoPhotoFor, BUNDLE_OPTIONS } from '@/lib/service-rules'
 import type { ServiceBookingOption, Stylist } from '@/lib/supabase/types'
 
 // How long a pending+unpaid booking holds a slot before it's freed (30 min)
@@ -102,7 +102,7 @@ export async function POST(req: Request) {
         ? bundleCount
         : null
     const inspo: string[] | null =
-      bringing && rules.inspoPhoto && Array.isArray(inspoPhotos)
+      inspoPhotoFor(serviceId, hairType) && Array.isArray(inspoPhotos)
         ? inspoPhotos.filter((u: unknown): u is string => typeof u === 'string')
         : null
 

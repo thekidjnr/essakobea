@@ -28,8 +28,11 @@ export function cancellationHtml(opts: {
 
   return `<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><style>
-  body{font-family:Georgia,serif;background:#f7f6f4;margin:0;padding:40px 20px;color:#1A212B}
+<head><meta charset="utf-8">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
+<style>
+  body{font-family:Georgia,serif;background:#4A4B4E;margin:0;padding:0;color:#1A212B}
   .card{background:#fff;max-width:560px;margin:0 auto;padding:48px}
   .brand{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#9A9590;margin-bottom:40px}
   h1{font-size:32px;font-weight:300;margin:0 0 8px}
@@ -41,6 +44,7 @@ export function cancellationHtml(opts: {
   a{color:#1A212B}
 </style></head>
 <body>
+<table width="100%" cellpadding="0" cellspacing="0" bgcolor="#4A4B4E" style="background:#4A4B4E;padding:40px 20px"><tr><td>
 <div class="card">
   <p class="brand">Essakobea</p>
   <h1>Appointment <em>cancelled,</em><br>${esc(opts.clientName)}.</h1>
@@ -57,5 +61,6 @@ export function cancellationHtml(opts: {
     We&rsquo;d love to have you back. <a href="${process.env.NEXT_PUBLIC_APP_URL ?? ''}/book">Book a new appointment →</a>
   </p>
 </div>
+</td></tr></table>
 </body></html>`
 }

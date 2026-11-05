@@ -2,9 +2,9 @@ const MASONRY_HEIGHTS = [420, 300, 500, 360, 440, 320, 480, 380];
 
 export default function Loading() {
   return (
-    <main className="min-h-screen bg-paper">
+    <main className="theme-gray min-h-screen bg-paper">
       {/* Minimal fixed header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-paper border-b border-ink/[0.07] px-6 md:px-12 h-14 flex items-center justify-between">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-paper/90 backdrop-blur-md border-b border-ink/[0.07] px-6 md:px-12 h-14 flex items-center justify-between">
         <div className="h-2.5 w-16 bg-ink/[0.08] rounded-sm animate-pulse" />
         <div className="h-2.5 w-20 bg-ink/[0.08] rounded-sm animate-pulse" />
         <div className="h-8 w-24 bg-ink/[0.08] animate-pulse" />

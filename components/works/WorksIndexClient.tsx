@@ -47,7 +47,7 @@ export default function WorksIndexClient({
           className={`font-sans text-[11px] tracking-widest uppercase px-5 py-2 border transition-all duration-300 ${
             activeFilter === "all"
               ? "bg-ink text-paper border-ink"
-              : "text-ink/40 border-ink/15 hover:border-ink/40 hover:text-ink"
+              : "text-ink/55 border-ink/15 hover:border-ink/40 hover:text-ink"
           }`}
         >
           All
@@ -59,7 +59,7 @@ export default function WorksIndexClient({
             className={`font-sans text-[11px] tracking-widest uppercase px-5 py-2 border transition-all duration-300 ${
               activeFilter === svc.id
                 ? "bg-ink text-paper border-ink"
-                : "text-ink/40 border-ink/15 hover:border-ink/40 hover:text-ink"
+                : "text-ink/55 border-ink/15 hover:border-ink/40 hover:text-ink"
             }`}
           >
             {svc.name}
@@ -70,7 +70,7 @@ export default function WorksIndexClient({
       {/* Grid */}
       {filtered.length === 0 ? (
         <div className="py-24 text-center">
-          <p className="font-sans text-[14px] text-ink/45">No photos yet for this service.</p>
+          <p className="font-sans text-[14px] text-ink/60">No photos yet for this service.</p>
         </div>
       ) : (
         <div className="columns-2 md:columns-3 lg:columns-4 gap-3 md:gap-4 space-y-3 md:space-y-4">
@@ -89,7 +89,7 @@ export default function WorksIndexClient({
                 sizes="(max-width: 768px) 50vw, 25vw"
               />
               {/* Hover overlay */}
-              <div className="absolute inset-0 bg-ink/0 group-hover:bg-ink/30 transition-all duration-500 ease-out flex flex-col items-start justify-end p-4">
+              <div className="theme-ink absolute inset-0 bg-ink/0 group-hover:bg-ink/30 transition-all duration-500 ease-out flex flex-col items-start justify-end p-4">
                 <p className="opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-300 font-sans text-[9px] tracking-widest uppercase text-paper/70">
                   {photo.service_name}
                 </p>
@@ -102,7 +102,7 @@ export default function WorksIndexClient({
       {/* Lightbox */}
       {lightboxIndex !== null && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center"
+          className="theme-ink fixed inset-0 z-[100] flex items-center justify-center"
           style={{
             backgroundColor: `rgba(10,10,10,${visible ? 0.96 : 0})`,
             transition: isTouch.current ? "none" : "background-color 350ms cubic-bezier(0.4,0,0.2,1)",
@@ -118,16 +118,16 @@ export default function WorksIndexClient({
             style={{ opacity: visible ? 1 : 0, transition: isTouch.current ? "none" : "opacity 400ms ease 100ms" }}
           >
             <div className="flex items-center gap-4">
-              <p className="font-sans text-[10px] tracking-widest2 uppercase text-paper/25">
+              <p className="font-sans text-[10px] tracking-widest2 uppercase text-paper/45">
                 {(lightboxIndex + 1).toString().padStart(2, "0")} / {filtered.length.toString().padStart(2, "0")}
               </p>
               {current && (
-                <p className="font-sans text-[10px] tracking-widest uppercase text-paper/20">
+                <p className="font-sans text-[10px] tracking-widest uppercase text-paper/40">
                   {current.service_name}
                 </p>
               )}
             </div>
-            <button onClick={close} className="text-paper/30 hover:text-paper transition-colors duration-300" aria-label="Close">
+            <button onClick={close} className="text-paper/50 hover:text-paper transition-colors duration-300" aria-label="Close">
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                 <path d="M2 2l14 14M16 2L2 16" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
               </svg>

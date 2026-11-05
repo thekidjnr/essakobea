@@ -5,6 +5,8 @@ export default function Loading() {
     <>
       <Nav />
 
+      <main className="theme-gray bg-paper min-h-screen">
+
       {/* Page hero */}
       <section className="pt-28 pb-16 md:pt-48 md:pb-20 px-6 md:px-16 max-w-[1400px] mx-auto">
         <div className="h-[3.2rem] md:h-[6.5rem] w-2/3 max-w-lg bg-ink/[0.06] rounded-sm animate-pulse" />
@@ -21,7 +23,7 @@ export default function Loading() {
                 <div className="mb-8">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="h-2.5 w-14 bg-ink/[0.08] rounded-sm flex-shrink-0" />
-                    <div className="h-px flex-1 bg-ink/8" />
+                    <div className="h-px flex-1 bg-ink/10" />
                   </div>
                   <div className="flex flex-col gap-4">
                     {Array.from({ length: 3 }).map((_, j) => (
@@ -38,6 +40,7 @@ export default function Loading() {
           ))}
         </div>
       </section>
+      </main>
     </>
   );
 }

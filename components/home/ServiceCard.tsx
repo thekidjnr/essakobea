@@ -54,7 +54,7 @@ export default function ServiceCard({
           imageClassName={`transition-transform duration-700 ${dragging ? "" : "group-hover:scale-105"}`}
         />
         )}
-        <div className="absolute inset-0 bg-ink/0 group-hover:bg-ink/15 transition-colors duration-500 pointer-events-none" />
+        <div className="theme-ink absolute inset-0 bg-ink/0 group-hover:bg-ink/15 transition-colors duration-500 pointer-events-none" />
       </div>
 
       <div className="pt-5 pb-2">

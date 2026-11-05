@@ -29,6 +29,8 @@ import {
   bringsHair,
   formatReadyEstimate,
   getServiceRules,
+  inspoPhotoFor,
+  prepNoteFor,
   readyEstimate,
   type HairOption,
   type HairUnitType,
@@ -779,6 +781,10 @@ export default function BookingFlow() {
   const customizationType = rules.customization ? booking.customizationType : "";
   const bundleCount = rules.askBundles ? booking.bundleCount : null;
   const showUnitStep = bringsHair(hairUnitType);
+  // "Just the service" can still ask for an inspo photo, right on the hair step
+  const serviceOnlyInspo = hairUnitType === "none" ? rules.serviceOnly?.inspoPhoto ?? null : null;
+  const inspoRule = inspoPhotoFor(booking.serviceId, hairUnitType);
+  const prepNote = prepNoteFor(booking.serviceId, hairUnitType);
   // Drop-off services: when the unit should be ready, from the picked date
   const ready = readyEstimate(
     booking.serviceId,
@@ -1034,7 +1040,11 @@ export default function BookingFlow() {
   // ── Validation
   function stepDone(s: number) {
     if (s === 0) return !!booking.serviceId && !!booking.optionId;
-    if (s === 1) return !!hairUnitType;
+    if (s === 1)
+      return (
+        !!hairUnitType &&
+        (!serviceOnlyInspo || (booking.inspoPhotos.length > 0 && !inspoUploading))
+      );
     if (s === 2)
       return (
         (!rules.customization || !!customizationType) &&
@@ -1091,7 +1101,7 @@ export default function BookingFlow() {
           stylistFeeAdjustment: booking.stylistFeeAdj,
           hairUnitType: hairUnitType || null,
           unitPhotos: showUnitStep ? booking.unitPhotos : [],
-          inspoPhotos: showUnitStep && rules.inspoPhoto ? booking.inspoPhotos : [],
+          inspoPhotos: inspoRule ? booking.inspoPhotos : [],
           bundleCount,
           customizationType: customizationType || null,
           isEmergency: booking.isEmergency,
@@ -1437,7 +1447,7 @@ export default function BookingFlow() {
                   aria-pressed={hairUnitType === opt.id}
                   onClick={() => {
                     set("hairUnitType", opt.id);
-                    if (opt.id === "none") {
+                    if (opt.id === "none" && hairUnitType !== "none") {
                       set("customizationType", "");
                       set("unitPhotos", []);
                       set("inspoPhotos", []);
@@ -1467,6 +1477,33 @@ export default function BookingFlow() {
                 </button>
               ))}
             </div>
+
+            {serviceOnlyInspo && (
+              <div className="border border-ink/10 p-6 mb-10 motion-safe:animate-reveal">
+                <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/55 mb-2">
+                  {serviceOnlyInspo.label}{" "}
+                  <span className="normal-case tracking-normal text-red-500/80">
+                    *required
+                  </span>
+                </p>
+                <p className="font-sans text-[14px] text-ink/65 mb-5 leading-relaxed">
+                  {serviceOnlyInspo.help}
+                </p>
+                <PhotoUpload
+                  photos={booking.inspoPhotos}
+                  onAdd={(url) =>
+                    setBooking((b) => ({ ...b, inspoPhotos: [...b.inspoPhotos, url] }))
+                  }
+                  onRemove={(i) =>
+                    setBooking((b) => ({
+                      ...b,
+                      inspoPhotos: b.inspoPhotos.filter((_, j) => j !== i),
+                    }))
+                  }
+                  onUploadingChange={setInspoUploading}
+                />
+              </div>
+            )}
 
             {rules.hairNote && (
               <p className="font-sans text-[14px] text-ink/65 -mt-4 mb-10">
@@ -2130,7 +2167,7 @@ export default function BookingFlow() {
                   id="booking-notes"
                   value={booking.notes}
                   onChange={(e) => set("notes", e.target.value)}
-                  placeholder="Allergies, preferences, or anything you'd like us to have ready for you…"
+                  placeholder="Preferred style, allergies, or anything you'd like us to have ready for you…"
                   rows={4}
                   className="w-full border border-ink/20 hover:border-ink/35 focus:border-ink px-4 py-4 font-sans text-[16px] text-ink placeholder:text-ink/30 bg-transparent focus:outline-none transition-colors resize-none leading-relaxed"
                 />
@@ -2171,8 +2208,13 @@ export default function BookingFlow() {
                       ? "Existing unit (bringing)"
                       : hairUnitType === "own_extensions"
                         ? "Bringing extensions"
-                        : "Service only"}
+                        : rules.hairOptions.find((o) => o.id === "none")?.label ?? "Service only"}
                 </p>
+                {serviceOnlyInspo && booking.inspoPhotos.length > 0 && (
+                  <p className="font-sans text-[14px] text-ink/60">
+                    {booking.inspoPhotos.length} inspo photo{booking.inspoPhotos.length > 1 ? "s" : ""} attached
+                  </p>
+                )}
                 {showUnitStep && booking.unitPhotos.length > 0 && (
                   <p className="font-sans text-[14px] text-ink/60">
                     {bundleCount
@@ -2239,13 +2281,13 @@ export default function BookingFlow() {
                 )}
               </ReviewRow>
 
-              {rules.prepNote && (
+              {prepNote && (
                 <div className="py-5 sm:py-6 flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-6">
                   <p className="sm:w-32 flex-shrink-0 sm:pt-1 font-sans text-[11px] tracking-widest2 uppercase text-ink/50">
                     Before you come
                   </p>
                   <p className="flex-1 min-w-0 font-sans text-[16px] font-medium text-ink leading-relaxed">
-                    {rules.prepNote}
+                    {prepNote}
                   </p>
                 </div>
               )}
@@ -2404,7 +2446,7 @@ export default function BookingFlow() {
       {/* Service photo preview */}
       {preview.lightboxIndex !== null && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center"
+          className="theme-ink fixed inset-0 z-[100] flex items-center justify-center"
           style={{
             backgroundColor: `rgba(10,10,10,${preview.visible ? 0.96 : 0})`,
             transition: preview.isTouch.current ? "none" : "background-color 350ms cubic-bezier(0.4,0,0.2,1)",

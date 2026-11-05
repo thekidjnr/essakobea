@@ -59,6 +59,8 @@ export interface ServiceRules {
   servicePolicy?: ServicePolicy
   /** How to prepare for the appointment, shown on Review, in the confirmation email and the WhatsApp confirmation */
   prepNote?: string
+  /** When the client picks "just the service": a required inspo upload on the hair step, and a prep note in place of `prepNote` */
+  serviceOnly?: { inspoPhoto: { label: string; help: string }; prepNote: string }
   /** Working days from drop-off until the unit is ready, when the booked date is a drop-off */
   turnaround?: Record<CustomizationType, Turnaround>
 }
@@ -103,7 +105,7 @@ const DEFAULT_RULES: ServiceRules = {
   balanceDue: 'when the service is done',
 }
 
-const PONYTAIL_PREP_NOTE = 'Please do not add any hair creams to your hair when you wash it.'
+const PONYTAIL_PREP_NOTE = 'Please come with your hair completely washed, with absolutely no product in it: no creams, oils or gels.'
 
 const PONYTAILS: Partial<ServiceRules> = {
   hairTitle: { lead: 'Your', italic: 'extensions.' },
@@ -141,6 +143,18 @@ const SEW_IN: Partial<ServiceRules> = {
 // Uses the hair unit flow above, with the same prep note as regular ponytails
 const FRONTAL_PONYTAILS: Partial<ServiceRules> = {
   prepNote: PONYTAIL_PREP_NOTE,
+}
+
+// "Just the service" means the client brings a unit that is already done, so
+// they show the look they want instead of the unit itself.
+const INSTALLATIONS: Partial<ServiceRules> = {
+  hairOptions: DEFAULT_RULES.hairOptions.map((o) =>
+    o.id === 'none' ? { ...o, label: 'Just the install', sub: 'My unit is washed, plucked, bleached and ready' } : o,
+  ),
+  serviceOnly: {
+    inspoPhoto: { label: 'Your inspo', help: 'A photo of the look you want, so your stylist can plan the install.' },
+    prepNote: 'Please bring your unit already washed, clean, plucked, bleached and ready to install.',
+  },
 }
 
 // The booked date is the drop-off day for wig making and coloring: both work
@@ -207,6 +221,7 @@ const COLORING: Partial<ServiceRules> = {
 
 const OVERRIDES: Record<string, Partial<ServiceRules>> = {
   'wig-making': WIG_MAKING,
+  installations: INSTALLATIONS,
   coloring: COLORING,
   // Clients bring extensions; the photo shows whether they're new or used,
   // so there's no new/existing split and no Standard/Express step.
@@ -233,6 +248,20 @@ export function customizationLabel(slug: string | null | undefined, type: string
 /** True when the chosen hair option means the client is bringing hair */
 export function bringsHair(type: string | null | undefined): boolean {
   return !!type && type !== 'none'
+}
+
+/** The inspo upload this booking asks for, given the hair option chosen, or null */
+export function inspoPhotoFor(slug: string | null | undefined, type: string | null | undefined) {
+  const rules = getServiceRules(slug)
+  if (bringsHair(type)) return rules.inspoPhoto ?? null
+  return type === 'none' ? rules.serviceOnly?.inspoPhoto ?? null : null
+}
+
+/** How to prepare for the appointment, given the hair option chosen, or null */
+export function prepNoteFor(slug: string | null | undefined, type: string | null | undefined): string | null {
+  const rules = getServiceRules(slug)
+  if (type === 'none' && rules.serviceOnly) return rules.serviceOnly.prepNote
+  return rules.prepNote ?? null
 }
 
 // The salon works Tuesday to Saturday
