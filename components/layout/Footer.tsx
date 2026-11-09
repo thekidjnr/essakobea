@@ -4,7 +4,7 @@ import { logo } from "@/public/images";
 
 export default function Footer() {
   return (
-    <footer className="bg-ink text-paper">
+    <footer className="theme-ink bg-ink text-paper border-t border-paper/10">
       {/* Top strip */}
       <div className="border-b border-paper/10 px-6 md:px-16 py-16 max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-12">
         {/* Brand */}
