@@ -1,3 +1,4 @@
+import { normalizeHandle, isValidHandle } from '@/lib/socials'
 import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/supabase/admin'
 import { initializePayment, generateReference, verifyPayment } from '@/lib/paystack'
@@ -22,7 +23,14 @@ export async function POST(req: Request) {
       stylistId,
       hairUnitType, unitPhotos, inspoPhotos, bundleCount,
       customizationType, isEmergency,
+      clientInstagram, clientTiktok,
     } = body
+
+    const instagram = normalizeHandle(clientInstagram)
+    const tiktok = normalizeHandle(clientTiktok)
+    if (!isValidHandle(instagram) || !isValidHandle(tiktok)) {
+      return NextResponse.json({ error: 'Social handles can only use letters, numbers, dots and underscores.' }, { status: 400 })
+    }
 
     if (!clientName || !clientPhone || !serviceId || !optionId || !bookingDate || !timeSlot) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -251,6 +259,9 @@ export async function POST(req: Request) {
         customization_fee: customizationFeeGHS * 100,
         emergency_fee: emergencyFeeGHS * 100,
         service_charge: serviceChargeGHS * 100,
+        // Only sent when set, so bookings without socials still insert before migration 026 runs
+        ...(instagram && { client_instagram: instagram }),
+        ...(tiktok && { client_tiktok: tiktok }),
         // Only sent when set, so bookings without a stylist fee still insert before migration 023 runs
         ...(stylistAdj !== 0 && { stylist_fee: stylistAdj * 100 }),
       })

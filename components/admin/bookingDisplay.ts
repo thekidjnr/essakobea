@@ -7,6 +7,7 @@ import type { DbService } from "@/lib/supabase/types";
 
 export interface AdminBooking {
   id: string; client_name: string; client_email: string; client_phone: string;
+  client_instagram?: string | null; client_tiktok?: string | null;
   service_id: string; service_name: string; treatment: string; booking_date: string; time_slot: string;
   notes: string | null; status: string; payment_status: string; amount: number; created_at: string;
   refund_amount: number; refunded_at: string | null; cancellation_reason: string | null;

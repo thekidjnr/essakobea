@@ -206,6 +206,8 @@ export async function sendBookingConfirmedEmails(booking: Row, { notifyAdmin = t
       clientName:  booking.client_name,
       clientPhone: booking.client_phone,
       clientEmail: booking.client_email,
+      clientInstagram: booking.client_instagram ?? null,
+      clientTiktok: booking.client_tiktok ?? null,
       notes:       booking.notes ?? null,
       ...sharedFields,
     }),
