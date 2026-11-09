@@ -13,6 +13,8 @@ export interface Booking {
   client_name:         string
   client_email:        string
   client_phone:        string
+  client_instagram?:   string | null
+  client_tiktok?:      string | null
   service_id:          string
   service_name:        string
   treatment:           string

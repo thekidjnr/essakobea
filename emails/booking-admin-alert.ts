@@ -1,6 +1,8 @@
 export function bookingAdminAlertHtml(opts: {
   clientName:         string
   clientPhone:        string
+  clientInstagram?:   string | null
+  clientTiktok?:      string | null
   clientEmail:        string
   serviceName:        string
   treatment:          string
@@ -37,6 +39,8 @@ export function bookingAdminAlertHtml(opts: {
     ['Client',    opts.clientName],
     ['Phone',     opts.clientPhone],
     ['Email',     opts.clientEmail],
+    ...(opts.clientInstagram ? [['Instagram', `@${opts.clientInstagram}`]] : []),
+    ...(opts.clientTiktok ? [['TikTok', `@${opts.clientTiktok}`]] : []),
     ['Service',   opts.serviceName],
     ['Treatment', opts.treatment],
     opts.stylistName ? ['Stylist', opts.stylistName] : ['Stylist', 'Any Available'],

@@ -9,6 +9,7 @@ import type {
 } from "@/lib/supabase/types";
 import PhoneInput from "@/components/common/PhoneInput";
 import { formatPhoneDisplay, isPhoneComplete } from "@/lib/phone";
+import { isValidHandle, normalizeHandle, MAX_HANDLE_LENGTH } from "@/lib/socials";
 import { useLightboxSwipe } from "@/components/works/useLightboxSwipe";
 import {
   EMERGENCY_HOURS,
@@ -367,6 +368,8 @@ interface BookingState {
   lastName: string;
   phone: string;
   email: string;
+  instagram: string;
+  tiktok: string;
   notes: string;
 }
 
@@ -392,6 +395,8 @@ function loadDraft(): { booking: BookingState; step: number } | null {
       booking: {
         bundleCount: null,
         inspoPhotos: [],
+        instagram: "",
+        tiktok: "",
         ...d,
         date: y && m && day ? new Date(y, m - 1, day) : null,
       },
@@ -711,6 +716,8 @@ export default function BookingFlow() {
     lastName: "",
     phone: "",
     email: "",
+    instagram: "",
+    tiktok: "",
     notes: "",
   });
 
@@ -1060,7 +1067,9 @@ export default function BookingFlow() {
       return (
         !!booking.firstName.trim() &&
         phoneComplete &&
-        EMAIL_REGEX.test(booking.email.trim())
+        EMAIL_REGEX.test(booking.email.trim()) &&
+        isValidHandle(normalizeHandle(booking.instagram)) &&
+        isValidHandle(normalizeHandle(booking.tiktok))
       );
     return false;
   }
@@ -1095,6 +1104,8 @@ export default function BookingFlow() {
           treatment: selectedOption?.name,
           bookingDate: booking.date ? toDateStr(booking.date) : undefined,
           timeSlot: booking.time,
+          clientInstagram: normalizeHandle(booking.instagram) || null,
+          clientTiktok: normalizeHandle(booking.tiktok) || null,
           notes: booking.notes || null,
           stylistId: booking.stylistId || null,
           stylistName: booking.stylistId ? booking.stylistName : null,
@@ -2158,6 +2169,50 @@ export default function BookingFlow() {
                 )}
               </div>
 
+              {/* Socials (optional) */}
+              <div>
+                <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/55 mb-2.5">
+                  Socials{" "}
+                  <span className="normal-case tracking-normal text-ink/50">(optional)</span>
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {([
+                    ["instagram", "Instagram", "akua.hair"],
+                    ["tiktok", "TikTok", "akua.hair"],
+                  ] as const).map(([key, name, placeholder]) => {
+                    const invalid = !isValidHandle(normalizeHandle(booking[key]));
+                    return (
+                      <div key={key}>
+                        <label htmlFor={`booking-${key}`} className="sr-only">{name} handle</label>
+                        <div className={`flex items-center border transition-colors ${invalid ? "border-red-400 focus-within:border-red-500" : "border-ink/20 hover:border-ink/35 focus-within:border-ink"}`}>
+                          <span className="pl-4 font-sans text-[16px] text-ink/45 select-none">@</span>
+                          <input
+                            id={`booking-${key}`}
+                            autoCapitalize="none"
+                            autoCorrect="off"
+                            spellCheck={false}
+                            maxLength={MAX_HANDLE_LENGTH + 30}
+                            aria-invalid={invalid}
+                            value={booking[key]}
+                            onChange={(e) => set(key, e.target.value)}
+                            placeholder={`${name.toLowerCase()} handle`}
+                            className="w-full min-w-0 pl-1 pr-4 py-4 font-sans text-[16px] text-ink placeholder:text-ink/30 bg-transparent focus:outline-none"
+                          />
+                        </div>
+                        {invalid && (
+                          <p role="alert" className="font-sans text-[13px] text-red-500 mt-2">
+                            {name}: letters, numbers, dots and underscores only.
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="font-sans text-[13px] text-ink/60 mt-2">
+                  Share your page so we can see your hair and style.
+                </p>
+              </div>
+
               {/* Notes */}
               <div>
                 <label htmlFor="booking-notes" className="font-sans text-[11px] tracking-widest2 uppercase text-ink/55 block mb-2.5">
@@ -2274,6 +2329,14 @@ export default function BookingFlow() {
                 <p className="font-sans text-[14px] text-ink/60">
                   {booking.email}
                 </p>
+                {(normalizeHandle(booking.instagram) || normalizeHandle(booking.tiktok)) && (
+                  <p className="font-sans text-[14px] text-ink/60">
+                    {[
+                      normalizeHandle(booking.instagram) && `Instagram @${normalizeHandle(booking.instagram)}`,
+                      normalizeHandle(booking.tiktok) && `TikTok @${normalizeHandle(booking.tiktok)}`,
+                    ].filter(Boolean).join(" · ")}
+                  </p>
+                )}
                 {booking.notes && (
                   <p className="font-sans text-[14px] text-ink/60 italic mt-1">
                     "{booking.notes}"

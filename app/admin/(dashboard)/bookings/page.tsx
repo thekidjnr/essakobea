@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import Image from "next/image";
 import { whatsAppLink } from "@/lib/phone";
+import { instagramUrl, tiktokUrl } from "@/lib/socials";
 import { isPriceRange } from "@/lib/booking-fees";
 import { cancellationPolicyText } from "@/lib/refunds";
 import { customizationLabel, getServiceRules, prepNoteFor } from "@/lib/service-rules";
@@ -302,6 +303,16 @@ function BookingDetail({
         <div className="mt-3 flex flex-col items-center gap-0.5 font-sans text-[13px] text-muted text-center">
           <span>{b.client_phone}</span>
           {b.client_email && <span className="break-all">{b.client_email}</span>}
+          {(b.client_instagram || b.client_tiktok) && (
+            <span className="flex gap-3">
+              {b.client_instagram && (
+                <a href={instagramUrl(b.client_instagram)} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">Instagram @{b.client_instagram}</a>
+              )}
+              {b.client_tiktok && (
+                <a href={tiktokUrl(b.client_tiktok)} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">TikTok @{b.client_tiktok}</a>
+              )}
+            </span>
+          )}
         </div>
 
         {b.notes && (
