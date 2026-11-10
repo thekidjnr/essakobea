@@ -14,7 +14,7 @@ import UpdateDetails, { type EditableDetails } from "@/components/booking/Update
 // and photos (lib/booking-edits) or cancel it.
 
 interface BookingPreview extends EditableDetails {
-  id: string; client_name: string; service_name: string; treatment: string; stylist_name: string | null;
+  id: string; client_name: string; service_name: string; treatment: string; stylist_name: string | null; stylist_id?: string | null;
   booking_date: string; time_slot: string; status: string;
   paid: boolean; paidPesewas: number; refundShare: number; refundPesewas: number;
   rescheduleBlock: string | null;
@@ -67,7 +67,7 @@ export default function ManageBookingPage({ params, searchParams }: {
   const [savedNote, setSavedNote] = useState("");
 
   // Reschedule
-  const [blockedDates, setBlockedDates] = useState<string[]>([]);
+  const [blockedRows, setBlockedRows] = useState<{ date: string; except_stylist_id?: string | null }[]>([]);
   const [closedDays, setClosedDays]     = useState<number[]>([]);
   const [date, setDate] = useState<Date | null>(null);
   const [time, setTime] = useState("");
@@ -107,7 +107,7 @@ export default function ManageBookingPage({ params, searchParams }: {
     if (view !== "reschedule") return;
     fetch("/api/availability/blocked")
       .then(r => r.json())
-      .then((d: { date: string }[]) => { if (Array.isArray(d)) setBlockedDates(d.map(x => x.date)); })
+      .then((d: { date: string; except_stylist_id?: string | null }[]) => { if (Array.isArray(d)) setBlockedRows(d); })
       .catch(() => {});
     fetch("/api/availability/settings")
       .then(r => r.json())
@@ -295,7 +295,7 @@ export default function ManageBookingPage({ params, searchParams }: {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-14">
             <div>
               <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/55 mb-5">Date</p>
-              <MiniCalendar selected={date} onSelect={pickDate} blocked={blockedDates} disabledDays={closedDays} />
+              <MiniCalendar selected={date} onSelect={pickDate} blocked={blockedRows.filter(x => !x.except_stylist_id || x.except_stylist_id !== booking.stylist_id).map(x => x.date)} disabledDays={closedDays} />
             </div>
 
             <div ref={timesRef} className="scroll-mt-24">

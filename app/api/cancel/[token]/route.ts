@@ -30,6 +30,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
     service_name: booking.service_name,
     treatment:    booking.treatment,
     stylist_name: booking.stylist_name,
+    stylist_id: booking.stylist_id,
     booking_date: booking.booking_date,
     time_slot:    booking.time_slot,
     status:       booking.status,

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Suspense } from "react";
 import Image from "next/image";
-import { homeImages, logo } from "@/public/images";
+import { logo } from "@/public/images";
 import { Button, Field, ErrorNote, inputClass } from "@/components/admin/ui";
 
 function LoginForm() {
@@ -38,12 +38,12 @@ function LoginForm() {
       {/* Photo: full height on md+, a rounded band on mobile */}
       <div className="relative h-[220px] md:h-auto md:min-h-screen overflow-hidden bg-ink rounded-b-[32px] md:rounded-none">
         <Image
-          src={homeImages.hero}
+          src="/images/admin/login-space.jpg"
           alt=""
           fill
           priority
           sizes="(min-width: 768px) 50vw, 100vw"
-          className="object-cover opacity-40 md:opacity-100"
+          className="object-cover object-[center_42%] opacity-40 md:opacity-100 md:object-center"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/25 to-transparent" />
         <div className="absolute top-8 left-6 md:top-10 md:left-12">

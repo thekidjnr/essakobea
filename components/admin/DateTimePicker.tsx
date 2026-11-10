@@ -46,7 +46,10 @@ export function DateTimePicker({
   excludeId?: string;
   home: boolean;
 }) {
-  const [blocked, setBlocked] = useState<string[]>([]);
+  const [blockedRows, setBlockedRows] = useState<{ date: string; except_stylist_id?: string | null }[]>([]);
+  const blocked = blockedRows
+    .filter((x) => !x.except_stylist_id || x.except_stylist_id !== stylistId)
+    .map((x) => x.date);
   const [closedDays, setClosedDays] = useState<number[]>([]);
   const [day, setDay] = useState<Day | "loading" | "error">("loading");
   const [retry, setRetry] = useState(0);
@@ -55,7 +58,7 @@ export function DateTimePicker({
   useEffect(() => {
     fetch("/api/availability/blocked")
       .then((r) => (r.ok ? r.json() : []))
-      .then((d: { date: string }[]) => { if (Array.isArray(d)) setBlocked(d.map((x) => x.date)); })
+      .then((d: { date: string; except_stylist_id?: string | null }[]) => { if (Array.isArray(d)) setBlockedRows(d); })
       .catch(() => {});
     fetch("/api/availability/settings")
       .then((r) => (r.ok ? r.json() : []))

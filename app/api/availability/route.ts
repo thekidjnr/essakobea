@@ -29,7 +29,7 @@ export async function GET(req: Request) {
 
   const [{ data: avail }, { data: blocked }, { data: bookings, error: bookingsError }, { data: stylists }, { data: svc }] = await Promise.all([
     adminDb.from('availability').select('*').eq('day_of_week', weekday).maybeSingle(),
-    adminDb.from('blocked_dates').select('id').eq('date', date).maybeSingle(),
+    adminDb.from('blocked_dates').select('id, except_stylist_id').eq('date', date).maybeSingle(),
     adminDb
       .from('bookings')
       // '*' so location_type is read once migration 024 has run, and nothing breaks before
@@ -63,7 +63,9 @@ export async function GET(req: Request) {
   // Home service visits keep their stylist busy but don't take a seat in the salon
   const inSalon = activeBookings.filter((b) => b.location_type !== 'home')
 
-  const dayIsOpen = !blocked && (avail?.is_available ?? false)
+  // A blocked day can stay open for one named stylist; "Any Available" stays closed
+  const blockedForClient = !!blocked && blocked.except_stylist_id !== stylistId
+  const dayIsOpen = !blockedForClient && (avail?.is_available ?? false)
   let dayFull = maxPerDay > 0 && inSalon.length >= maxPerDay
 
   const allStylists = (stylists as Stylist[] | null) ?? []

@@ -78,6 +78,8 @@ export interface BlockedDate {
   id:         string
   date:       string
   reason:     string | null
+  /** When set, the date is closed for everyone except this stylist */
+  except_stylist_id: string | null
   created_at: string
 }
 
