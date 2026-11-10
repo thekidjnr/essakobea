@@ -23,10 +23,10 @@ export interface SlotStylist {
   daily_capacity: number | null
 }
 
-async function loadDay(date: string, excludeId?: string) {
+async function loadDay(date: string, excludeId?: string, stylistId?: string | null) {
   const [{ data: avail }, { data: blocked }, { data: sameDay, error }] = await Promise.all([
     adminDb.from('availability').select('*').eq('day_of_week', dayOfWeek(date)).maybeSingle(),
-    adminDb.from('blocked_dates').select('id').eq('date', date).maybeSingle(),
+    adminDb.from('blocked_dates').select('id, except_stylist_id').eq('date', date).maybeSingle(),
     adminDb.from('bookings').select('*').eq('booking_date', date).in('status', ['pending', 'confirmed']),
   ])
   // Never treat a day as free because its bookings couldn't be read
@@ -35,7 +35,8 @@ async function loadDay(date: string, excludeId?: string) {
     .filter((b) => b.id !== excludeId && isActiveBooking(b, SLOT_HOLD_MS))
   return {
     avail,
-    closed: !!blocked || !avail?.is_available,
+    // A blocked day can stay open for one stylist
+    closed: (!!blocked && blocked.except_stylist_id !== (stylistId ?? null)) || !avail?.is_available,
     interval: (avail?.slot_interval_minutes as number | undefined) ?? 60,
     active,
     // Home service visits keep their stylist busy but don't take a seat in the salon
@@ -96,7 +97,7 @@ export async function availabilityWarnings({ start, excludeId, ...args }: SlotAr
   start: number
   excludeId?: string
 }): Promise<string[]> {
-  const day = await loadDay(args.date, excludeId)
+  const day = await loadDay(args.date, excludeId, args.stylist?.id)
   const passed = appointmentStart(args.date, minutesToSlot(start)) <= Date.now()
   return [
     ...(passed ? ['This date and time have already passed.'] : []),
@@ -142,7 +143,7 @@ export async function freeStartTimes({ date, duration: length, stylist, home, ex
   home: boolean
   excludeId?: string
 }): Promise<{ closed: boolean; full: boolean; times: string[] }> {
-  const { avail, closed, interval, active, inSalon } = await loadDay(date, excludeId)
+  const { avail, closed, interval, active, inSalon } = await loadDay(date, excludeId, stylist?.id)
   if (closed) return { closed: true, full: false, times: [] }
 
   const duration = length && length > 0 ? length : interval

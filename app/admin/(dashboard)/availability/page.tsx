@@ -23,7 +23,26 @@ interface AvailDay {
   open_time: string;
   close_time: string;
 }
-interface BlockedDate { id: string; date: string; reason: string | null; }
+interface BlockedDate { id: string; date: string; reason: string | null; except_stylist_id: string | null; }
+// Consecutive days with the same reason and stylist, shown as one range
+interface BlockedRange extends BlockedDate { endDate: string; days: number; }
+
+function groupBlocked(rows: BlockedDate[]): BlockedRange[] {
+  const out: BlockedRange[] = [];
+  for (const r of [...rows].sort((a, b) => a.date.localeCompare(b.date))) {
+    const last = out[out.length - 1];
+    const next = last && new Date(new Date(last.endDate + "T00:00:00Z").getTime() + 86400000).toISOString().slice(0, 10);
+    if (last && next === r.date && last.reason === r.reason && last.except_stylist_id === r.except_stylist_id) {
+      last.endDate = r.date;
+      last.days += 1;
+    } else {
+      out.push({ ...r, endDate: r.date, days: 1 });
+    }
+  }
+  return out;
+}
+
+interface StylistOption { id: string; name: string; }
 
 // Mon → Sun display order
 const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
@@ -79,11 +98,14 @@ export default function AdminAvailability() {
   const [newDate, setNewDate]     = useState("");
   const [newEndDate, setNewEndDate] = useState("");
   const [newReason, setNewReason] = useState("");
+  const [newStylist, setNewStylist] = useState("");
+  const [editing, setEditing]   = useState<BlockedRange | null>(null);
+  const [stylists, setStylists]   = useState<StylistOption[]>([]);
   const [blocking, setBlocking]   = useState(false);
   const [loading, setLoading]     = useState(true);
   const [scheduleError, setScheduleError] = useState("");
   const [blockedError, setBlockedError]   = useState("");
-  const [removeTarget, setRemoveTarget]   = useState<BlockedDate | null>(null);
+  const [removeTarget, setRemoveTarget]   = useState<BlockedRange | null>(null);
   const [removing, setRemoving]           = useState(false);
 
   const loadSchedule = useCallback(() => {
@@ -108,6 +130,13 @@ export default function AdminAvailability() {
   }, []);
 
   useEffect(() => { loadSchedule(); loadBlocked(); }, [loadSchedule, loadBlocked]);
+
+  useEffect(() => {
+    fetch("/api/stylists")
+      .then((r) => r.json())
+      .then((d: StylistOption[]) => { if (Array.isArray(d)) setStylists(d); })
+      .catch(() => {});
+  }, []);
 
   const toggleDay = (dow: number) =>
     setSchedule((prev) => prev.map((d) => d.day_of_week === dow ? { ...d, is_available: !d.is_available } : d));
@@ -137,20 +166,44 @@ export default function AdminAvailability() {
     const res = await fetch("/api/availability/blocked", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date: newDate, endDate: newEndDate || null, reason: newReason || null }),
+      body: JSON.stringify({ date: newDate, endDate: newEndDate || null, reason: newReason || null, exceptStylistId: newStylist || null }),
     }).catch(() => null);
     const data = res ? await res.json().catch(() => ({})) : {};
+    if (!res?.ok) { setBlocking(false); setBlockedError(data.error ?? "Could not block date. Please try again."); return; }
+
+    // Editing: the save above covered the new range, so drop any old days it no longer includes
+    if (editing) {
+      const newLast = newEndDate || newDate;
+      const day = (d: string, n: number) => new Date(new Date(d + "T00:00:00Z").getTime() + n * 86400000).toISOString().slice(0, 10);
+      const drop: [string, string][] = [];
+      if (editing.date < newDate) drop.push([editing.date, day(newDate, -1)]);
+      if (editing.endDate > newLast) drop.push([day(newLast, 1), editing.endDate]);
+      for (const [from, to] of drop) await unblockDate(from, to);
+    }
     setBlocking(false);
-    if (!res?.ok) { setBlockedError(data.error ?? "Could not block date. Please try again."); return; }
-    setNewDate(""); setNewEndDate(""); setNewReason(""); loadBlocked();
+    resetForm(); loadBlocked();
   };
 
-  const unblockDate = async (date: string) => {
+  const resetForm = () => {
+    setNewDate(""); setNewEndDate(""); setNewReason(""); setNewStylist(""); setEditing(null);
+  };
+
+  const startEdit = (r: BlockedRange) => {
+    setEditing(r);
+    setNewDate(r.date);
+    setNewEndDate(r.days > 1 ? r.endDate : "");
+    setNewReason(r.reason ?? "");
+    setNewStylist(r.except_stylist_id ?? "");
+    setBlockedError("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const unblockDate = async (date: string, endDate?: string) => {
     setBlockedError("");
     const res = await fetch("/api/availability/blocked", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date }),
+      body: JSON.stringify({ date, endDate }),
     }).catch(() => null);
     const data = res ? await res.json().catch(() => ({})) : {};
     if (!res?.ok) { setBlockedError(data.error ?? "Could not remove blocked date. Please try again."); return; }
@@ -166,10 +219,18 @@ export default function AdminAvailability() {
       weekday: "short", day: "numeric", month: "long", year: "numeric", timeZone: "UTC",
     });
 
+  const formatRange = (r: BlockedRange) => {
+    if (r.days === 1) return formatDate(r.date);
+    const short = (d: string) =>
+      new Date(d + "T00:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "long", timeZone: "UTC" });
+    const year = new Date(r.endDate + "T00:00:00Z").getUTCFullYear();
+    return `${short(r.date)} to ${short(r.endDate)} ${year}`;
+  };
+
   const confirmRemove = async () => {
     if (!removeTarget) return;
     setRemoving(true);
-    await unblockDate(removeTarget.date);
+    await unblockDate(removeTarget.date, removeTarget.endDate);
     setRemoving(false);
     setRemoveTarget(null);
   };
@@ -258,7 +319,7 @@ export default function AdminAvailability() {
                   <input
                     type="date"
                     value={newDate}
-                    min={new Date().toISOString().slice(0, 10)}
+                    min={editing ? undefined : new Date().toISOString().slice(0, 10)}
                     onChange={(e) => {
                       setNewDate(e.target.value);
                       if (newEndDate && e.target.value > newEndDate) setNewEndDate("");
@@ -270,7 +331,7 @@ export default function AdminAvailability() {
                   <input
                     type="date"
                     value={newEndDate}
-                    min={newDate || new Date().toISOString().slice(0, 10)}
+                    min={newDate || (editing ? undefined : new Date().toISOString().slice(0, 10))}
                     onChange={(e) => setNewEndDate(e.target.value)}
                     className={inputClass}
                   />
@@ -285,9 +346,26 @@ export default function AdminAvailability() {
                   />
                 </Field>
               </div>
-              <div className="mt-3 flex justify-end">
+              <Field label="Still bookable with (optional)" className="mt-3">
+                <select
+                  value={newStylist}
+                  onChange={(e) => setNewStylist(e.target.value)}
+                  className={inputClass}
+                >
+                  <option value="">No one, the whole salon is off</option>
+                  {stylists.map((s) => (
+                    <option key={s.id} value={s.id}>{s.name} only</option>
+                  ))}
+                </select>
+              </Field>
+              <div className="mt-3 flex justify-end gap-3">
+                {editing && (
+                  <Button variant="ghost" onClick={resetForm} disabled={blocking} className="w-full sm:w-auto">
+                    Cancel
+                  </Button>
+                )}
                 <Button onClick={blockDate} disabled={!newDate || blocking} className="w-full sm:w-auto">
-                  {blocking ? "Blocking…" : newEndDate && newEndDate !== newDate ? "Block dates" : "Block date"}
+                  {blocking ? "Saving…" : editing ? "Save changes" : newEndDate && newEndDate !== newDate ? "Block dates" : "Block date"}
                 </Button>
               </div>
 
@@ -298,17 +376,29 @@ export default function AdminAvailability() {
                   <Empty title="No days off" />
                 ) : (
                   <div className="flex flex-col divide-y divide-line">
-                    {[...blocked]
-                      .sort((a, b) => a.date.localeCompare(b.date))
+                    {groupBlocked(blocked)
                       .map((b) => (
                         <div key={b.id} className="flex items-center justify-between gap-4 py-4">
                           <div className="min-w-0">
-                            <p className="font-serif text-[19px] leading-snug text-ink">{formatDate(b.date)}</p>
-                            {b.reason && <p className="font-sans text-[13px] text-muted mt-0.5 truncate">{b.reason}</p>}
+                            <p className="font-serif text-[19px] leading-snug text-ink">{formatRange(b)}</p>
+                            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 font-sans text-[13px] text-muted">
+                              {b.days > 1 && <span className="tabular-nums">{b.days} days</span>}
+                              {b.reason && <span className="min-w-0 truncate">{b.reason}</span>}
+                              {b.except_stylist_id && (
+                                <span className="inline-flex items-center rounded-full border border-line bg-mist px-3 py-1 text-[12px] font-medium text-ink">
+                                  Open for {stylists.find((s) => s.id === b.except_stylist_id)?.name.trim() ?? "one stylist"} only
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          <Button variant="ghost" size="sm" onClick={() => setRemoveTarget(b)} className="h-11 flex-shrink-0">
-                            Remove
-                          </Button>
+                          <div className="flex flex-shrink-0 items-center">
+                            <Button variant="ghost" size="sm" onClick={() => startEdit(b)} className="h-11">
+                              Edit
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => setRemoveTarget(b)} className="h-11">
+                              Remove
+                            </Button>
+                          </div>
                         </div>
                       ))}
                   </div>
@@ -321,8 +411,8 @@ export default function AdminAvailability() {
 
       <ConfirmDialog
         open={!!removeTarget}
-        title="Remove day off?"
-        body={removeTarget ? `${formatDate(removeTarget.date)} will open for bookings again.` : undefined}
+        title={removeTarget && removeTarget.days > 1 ? "Remove days off?" : "Remove day off?"}
+        body={removeTarget ? `${formatRange(removeTarget)} will open for bookings again.` : undefined}
         confirmLabel="Remove"
         busy={removing}
         onConfirm={confirmRemove}

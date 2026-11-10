@@ -51,9 +51,9 @@ export async function POST(req: Request) {
     const emergency = isEmergency === true
     const [{ data: avail }, { data: blocked }] = await Promise.all([
       adminDb.from('availability').select('*').eq('day_of_week', dayOfWeek(bookingDate)).maybeSingle(),
-      adminDb.from('blocked_dates').select('id').eq('date', bookingDate).maybeSingle(),
+      adminDb.from('blocked_dates').select('id, except_stylist_id').eq('date', bookingDate).maybeSingle(),
     ])
-    if (!emergency && (!avail?.is_available || blocked)) {
+    if (!emergency && (!avail?.is_available || (blocked && blocked.except_stylist_id !== (stylistId || null)))) {
       return NextResponse.json({ error: 'We are closed on that day. Please choose another date.' }, { status: 409 })
     }
     const slotMins  = slotToMinutes(timeSlot)!

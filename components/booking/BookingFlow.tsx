@@ -678,7 +678,7 @@ export default function BookingFlow() {
   >([]);
   const [previewName, setPreviewName] = useState("");
   const [previewLoadingSlug, setPreviewLoadingSlug] = useState("");
-  const [blockedDates, setBlocked] = useState<string[]>([]);
+  const [blockedRows, setBlocked] = useState<{ date: string; except_stylist_id?: string | null }[]>([]);
   const [bookedSlots, setBooked] = useState<string[]>([]);
   const [dayAvail, setDayAvail] = useState<{
     openTime: string;
@@ -733,6 +733,11 @@ export default function BookingFlow() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [showTerms, setShowTerms] = useState(false);
+
+  // A day off can stay open for one stylist; "Any Available" never gets it
+  const blockedDates = blockedRows
+    .filter((x) => !x.except_stylist_id || x.except_stylist_id !== booking.stylistId)
+    .map((x) => x.date);
 
   // ── Derived
   const selectedService = services.find((s) => s.id === booking.serviceId);
@@ -909,8 +914,8 @@ export default function BookingFlow() {
 
     fetch("/api/availability/blocked")
       .then((r) => r.json())
-      .then((d: { date: string }[]) => {
-        if (Array.isArray(d)) setBlocked(d.map((x) => x.date));
+      .then((d: { date: string; except_stylist_id?: string | null }[]) => {
+        if (Array.isArray(d)) setBlocked(d);
       })
       .catch(() => {});
 
