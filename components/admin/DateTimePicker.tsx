@@ -117,6 +117,7 @@ export function DateTimePicker({
           onSelect={(d) => onDate(toISO(d))}
           blocked={blocked}
           disabledDays={closedDays}
+          openDates={blockedRows.filter((x) => x.except_stylist_id && x.except_stylist_id === stylistId).map((x) => x.date)}
         />
         {date && (
           <p className="mt-4 font-sans text-[14px] font-medium text-ink">{formatBookingDate(date)}</p>

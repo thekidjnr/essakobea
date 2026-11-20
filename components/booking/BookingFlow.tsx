@@ -18,7 +18,7 @@ import {
   todayInAccra,
 } from "@/lib/booking-time";
 import { cancellationPolicyText } from "@/lib/refunds";
-import type { ServicePolicy } from "@/lib/policies";
+import { SAME_DAY_CHANGE_TEXT, type ServicePolicy } from "@/lib/policies";
 import {
   bookingTotals,
   EMERGENCY_FEE,
@@ -480,7 +480,7 @@ function TermsModal({
         className="bg-paper w-full max-w-[520px] max-h-[90vh] overflow-y-auto"
       >
         <div className="p-8">
-          <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/50 mb-4">
+          <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/75 mb-4">
             Booking Policy
           </p>
           <h2 id="terms-title" className="font-serif text-[1.75rem] font-light text-ink leading-snug mb-6">
@@ -503,18 +503,18 @@ function TermsModal({
               ],
               [
                 "Changes on the day",
-                "Any changes to your service on arrival may affect pricing. Our team will advise you before proceeding.",
+                SAME_DAY_CHANGE_TEXT,
               ],
             ].map(([title, body], i) => (
               <div key={title} className="flex gap-4">
-                <span className="font-sans text-[11px] text-ink/40 tabular-nums flex-shrink-0 pt-0.5 w-5">
+                <span className="font-sans text-[11px] text-ink/75 tabular-nums flex-shrink-0 pt-0.5 w-5">
                   {String(i + 1).padStart(2, "0")}
                 </span>
                 <div>
                   <p className="font-sans text-[15px] font-medium text-ink mb-1">
                     {title}
                   </p>
-                  <p className="font-sans text-[14px] text-ink/65 leading-relaxed">
+                  <p className="font-sans text-[14px] text-ink/75 leading-relaxed">
                     {body}
                   </p>
                 </div>
@@ -533,7 +533,7 @@ function TermsModal({
             </button>
             <button
               onClick={onClose}
-              className="w-full border border-ink/20 text-ink/65 font-sans text-[12px] tracking-widest uppercase py-3.5 hover:text-ink hover:border-ink/40 transition-colors"
+              className="w-full border border-ink/20 text-ink/75 font-sans text-[12px] tracking-widest uppercase py-3.5 hover:text-ink hover:border-ink/40 transition-colors"
             >
               Go Back
             </button>
@@ -545,10 +545,10 @@ function TermsModal({
 }
 
 function ServicePolicyBlock({ policy }: { policy: ServicePolicy }) {
-  const body = "font-sans text-[14px] text-ink/65 leading-relaxed";
+  const body = "font-sans text-[14px] text-ink/75 leading-relaxed";
   return (
     <section aria-labelledby="service-policy-title" className="border-t border-ink/10 pt-6 mb-8">
-      <p id="service-policy-title" className="font-sans text-[11px] tracking-widest2 uppercase text-ink/50 mb-2">
+      <p id="service-policy-title" className="font-sans text-[11px] tracking-widest2 uppercase text-ink/75 mb-2">
         {policy.title}
       </p>
       <p className={`${body} mb-5`}>{policy.intro}</p>
@@ -562,14 +562,14 @@ function ServicePolicyBlock({ policy }: { policy: ServicePolicy }) {
               <p key={p} className={body}>{p}</p>
             ))}
             {section.bullets && (
-              <ul className="flex flex-col gap-3 list-disc pl-5 marker:text-ink/40">
+              <ul className="flex flex-col gap-3 list-disc pl-5 marker:text-ink/60">
                 {section.bullets.map((b) => (
                   <li key={b} className={body}>{b}</li>
                 ))}
               </ul>
             )}
             {section.numbered && (
-              <ol className="flex flex-col gap-2 list-decimal pl-5 marker:text-ink/40">
+              <ol className="flex flex-col gap-2 list-decimal pl-5 marker:text-ink/60">
                 {section.numbered.map((n) => (
                   <li key={n} className={body}>{n}</li>
                 ))}
@@ -615,7 +615,7 @@ function StepFooter({
           <button
             onClick={onBack}
             disabled={backDisabled}
-            className="font-sans text-[12px] tracking-widest uppercase text-ink/55 hover:text-ink transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            className="font-sans text-[12px] tracking-widest uppercase text-ink/75 hover:text-ink transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           >
             ← Back
           </button>
@@ -646,14 +646,14 @@ function ReviewRow({
   return (
     <div className="py-5 sm:py-6 flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-6 relative">
       <div className="sm:w-32 flex-shrink-0 sm:pt-1 pr-14 sm:pr-0">
-        <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/50">
+        <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/75">
           {label}
         </p>
       </div>
       <div className="flex-1 min-w-0 flex flex-col gap-1">{children}</div>
       <button
         onClick={onEdit}
-        className="absolute right-0 top-5 sm:static font-sans text-[11px] tracking-widest uppercase text-ink/55 hover:text-ink border-b border-ink/20 hover:border-ink pb-px transition-colors flex-shrink-0 sm:mt-1"
+        className="absolute right-0 top-5 sm:static font-sans text-[11px] tracking-widest uppercase text-ink/75 hover:text-ink border-b border-ink/20 hover:border-ink pb-px transition-colors flex-shrink-0 sm:mt-1"
       >
         Edit
       </button>
@@ -738,6 +738,10 @@ export default function BookingFlow() {
   const blockedDates = blockedRows
     .filter((x) => !x.except_stylist_id || x.except_stylist_id !== booking.stylistId)
     .map((x) => x.date);
+  // Days kept open for the chosen stylist stay bookable even on a closed weekday
+  const stylistOpenDates = booking.stylistId
+    ? blockedRows.filter((x) => x.except_stylist_id === booking.stylistId).map((x) => x.date)
+    : [];
 
   // ── Derived
   const selectedService = services.find((s) => s.id === booking.serviceId);
@@ -1157,7 +1161,7 @@ export default function BookingFlow() {
             <p className="font-sans text-[12px] font-medium tracking-widest uppercase text-ink">
               {stepLabels[barIndex]}
             </p>
-            <p className="font-sans text-[12px] text-ink/50 tabular-nums">
+            <p className="font-sans text-[12px] text-ink/75 tabular-nums">
               {barIndex + 1} / {totalSteps}
             </p>
           </div>
@@ -1181,7 +1185,7 @@ export default function BookingFlow() {
                     className={`w-6 h-6 rounded-full flex items-center justify-center font-sans text-[11px] tabular-nums flex-shrink-0 transition-all duration-300 ${
                       i <= barIndex
                         ? "bg-ink text-paper"
-                        : "border border-ink/25 text-ink/45"
+                        : "border border-ink/25 text-ink/75"
                     }`}
                   >
                     {i < barIndex ? (
@@ -1203,8 +1207,8 @@ export default function BookingFlow() {
                       i === barIndex
                         ? "text-ink font-medium"
                         : i < barIndex
-                          ? "text-ink/60 group-hover:text-ink"
-                          : "text-ink/35"
+                          ? "text-ink/75 group-hover:text-ink"
+                          : "text-ink/60"
                     }`}
                   >
                     {label}
@@ -1233,7 +1237,7 @@ export default function BookingFlow() {
         {/* ─ STEP 0: Service ─────────────────────────────────────────────────── */}
         {step === 0 && (
           <div>
-            <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/50 mb-4">
+            <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/75 mb-4">
               Step 1 of {totalSteps}
             </p>
 
@@ -1311,7 +1315,7 @@ export default function BookingFlow() {
                 </div>
                 <button
                   onClick={() => setShowAllServices(true)}
-                  className="mt-6 font-sans text-[12px] tracking-widest uppercase text-ink/60 hover:text-ink border-b border-ink/25 hover:border-ink pb-px transition-colors"
+                  className="mt-6 font-sans text-[12px] tracking-widest uppercase text-ink/75 hover:text-ink border-b border-ink/25 hover:border-ink pb-px transition-colors"
                 >
                   See all services
                 </button>
@@ -1379,7 +1383,7 @@ export default function BookingFlow() {
                         >
                           <div className="flex items-start justify-between gap-4">
                             <div className="min-w-0">
-                              <span className="block font-sans text-[11px] tracking-widest text-ink/40 tabular-nums mb-1.5">
+                              <span className="block font-sans text-[11px] tracking-widest text-ink/75 tabular-nums mb-1.5">
                                 {svc.number}
                               </span>
                               <span className="block font-serif text-[1.375rem] sm:text-[1.625rem] text-ink leading-tight">
@@ -1394,7 +1398,7 @@ export default function BookingFlow() {
                                   }`}
                                 >
                                   <div className="overflow-hidden">
-                                    <p className="font-sans text-[13px] sm:text-[14px] text-ink/65 leading-relaxed pt-2">
+                                    <p className="font-sans text-[13px] sm:text-[14px] text-ink/75 leading-relaxed pt-2">
                                       {svc.description}
                                     </p>
                                   </div>
@@ -1416,7 +1420,7 @@ export default function BookingFlow() {
 
                       {selected && svc.options.length > 0 && (
                         <div className="border-t border-ink/15 motion-safe:animate-reveal">
-                          <p className="px-5 pt-4 font-sans text-[11px] tracking-widest2 uppercase text-ink/50">
+                          <p className="px-5 pt-4 font-sans text-[11px] tracking-widest2 uppercase text-ink/75">
                             Choose an option
                           </p>
                           <div className="grid grid-cols-1 sm:grid-cols-2 mt-1 [&>*]:border-ink/[0.08] [&>*+*]:border-t sm:[&>*:nth-child(2)]:border-t-0 sm:[&>*:nth-child(odd)]:border-r">
@@ -1443,14 +1447,14 @@ export default function BookingFlow() {
         {/* ─ STEP 1: Hair ────────────────────────────────────────────────────── */}
         {step === 1 && (
           <div>
-            <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/50 mb-4">
+            <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/75 mb-4">
               Step 2 of {totalSteps}
             </p>
             <h2 className="font-serif text-[clamp(2rem,5vw,3.5rem)] font-light text-ink leading-none mb-3">
               {rules.hairTitle.lead}{" "}
               <span className="italic">{rules.hairTitle.italic}</span>
             </h2>
-            <p className="font-sans text-[15px] text-ink/65 mb-10 max-w-md leading-relaxed">
+            <p className="font-sans text-[15px] text-ink/75 mb-10 max-w-md leading-relaxed">
               {rules.hairQuestion}
             </p>
 
@@ -1478,7 +1482,7 @@ export default function BookingFlow() {
                 >
                   <HairIcon
                     icon={opt.icon}
-                    className={`mb-4 block ${hairUnitType === opt.id ? "text-paper/60" : "text-ink/45"}`}
+                    className={`mb-4 block ${hairUnitType === opt.id ? "text-paper/80" : "text-ink/75"}`}
                   />
                   <p
                     className={`font-sans text-[16px] font-medium mb-1 ${hairUnitType === opt.id ? "text-paper" : "text-ink"}`}
@@ -1486,7 +1490,7 @@ export default function BookingFlow() {
                     {opt.label}
                   </p>
                   <p
-                    className={`font-sans text-[14px] ${hairUnitType === opt.id ? "text-paper/70" : "text-ink/60"}`}
+                    className={`font-sans text-[14px] ${hairUnitType === opt.id ? "text-paper/70" : "text-ink/75"}`}
                   >
                     {opt.sub}
                   </p>
@@ -1496,13 +1500,13 @@ export default function BookingFlow() {
 
             {serviceOnlyInspo && (
               <div className="border border-ink/10 p-6 mb-10 motion-safe:animate-reveal">
-                <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/55 mb-2">
+                <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/75 mb-2">
                   {serviceOnlyInspo.label}{" "}
                   <span className="normal-case tracking-normal text-red-500/80">
                     *required
                   </span>
                 </p>
-                <p className="font-sans text-[14px] text-ink/65 mb-5 leading-relaxed">
+                <p className="font-sans text-[14px] text-ink/75 mb-5 leading-relaxed">
                   {serviceOnlyInspo.help}
                 </p>
                 <PhotoUpload
@@ -1522,7 +1526,7 @@ export default function BookingFlow() {
             )}
 
             {rules.hairNote && (
-              <p className="font-sans text-[14px] text-ink/65 -mt-4 mb-10">
+              <p className="font-sans text-[14px] text-ink/75 -mt-4 mb-10">
                 {rules.hairNote}{" "}
                 <a
                   href={SALON_WHATSAPP}
@@ -1540,14 +1544,14 @@ export default function BookingFlow() {
         {/* ─ STEP 2: Unit (customization / extensions) ───────────────────────── */}
         {step === 2 && (
           <div>
-            <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/50 mb-4">
+            <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/75 mb-4">
               Step 3 of {totalSteps}
             </p>
             <h2 className="font-serif text-[clamp(2rem,5vw,3.5rem)] font-light text-ink leading-none mb-3">
               {rules.unitStepTitle.lead}{" "}
               <span className="italic">{rules.unitStepTitle.italic}</span>
             </h2>
-            <p className="font-sans text-[15px] text-ink/65 mb-10 max-w-md leading-relaxed">
+            <p className="font-sans text-[15px] text-ink/75 mb-10 max-w-md leading-relaxed">
               {rules.unitStepIntro}
             </p>
 
@@ -1564,7 +1568,7 @@ export default function BookingFlow() {
                 }`}
               >
                 <IconClock
-                  className={`mb-4 block ${customizationType === "standard" ? "text-paper/60" : "text-ink/45"}`}
+                  className={`mb-4 block ${customizationType === "standard" ? "text-paper/80" : "text-ink/75"}`}
                 />
                 <p
                   className={`font-sans text-[16px] font-medium mb-1 ${customizationType === "standard" ? "text-paper" : "text-ink"}`}
@@ -1572,7 +1576,7 @@ export default function BookingFlow() {
                   Standard
                 </p>
                 <p
-                  className={`font-sans text-[14px] leading-relaxed mb-4 ${customizationType === "standard" ? "text-paper/70" : "text-ink/60"}`}
+                  className={`font-sans text-[14px] leading-relaxed mb-4 ${customizationType === "standard" ? "text-paper/70" : "text-ink/75"}`}
                 >
                   {rules.customizationCopy.standard.sub}
                 </p>
@@ -1593,7 +1597,7 @@ export default function BookingFlow() {
                 }`}
               >
                 <IconBolt
-                  className={`mb-4 block ${customizationType === "express" ? "text-paper/60" : "text-ink/45"}`}
+                  className={`mb-4 block ${customizationType === "express" ? "text-paper/80" : "text-ink/75"}`}
                 />
                 <p
                   className={`font-sans text-[16px] font-medium mb-1 ${customizationType === "express" ? "text-paper" : "text-ink"}`}
@@ -1601,7 +1605,7 @@ export default function BookingFlow() {
                   Express
                 </p>
                 <p
-                  className={`font-sans text-[14px] leading-relaxed mb-4 ${customizationType === "express" ? "text-paper/70" : "text-ink/60"}`}
+                  className={`font-sans text-[14px] leading-relaxed mb-4 ${customizationType === "express" ? "text-paper/70" : "text-ink/75"}`}
                 >
                   {rules.customizationCopy.express.sub}
                 </p>
@@ -1611,7 +1615,7 @@ export default function BookingFlow() {
                   Double the price
                 </p>
                 <p
-                  className={`font-sans text-[13px] tabular-nums mt-0.5 ${customizationType === "express" ? "text-paper/60" : "text-ink/50"}`}
+                  className={`font-sans text-[13px] tabular-nums mt-0.5 ${customizationType === "express" ? "text-paper/80" : "text-ink/75"}`}
                 >
                   {!rules.customizationFees
                     ? "Paid with your balance"
@@ -1624,12 +1628,12 @@ export default function BookingFlow() {
 
             {customizationType && (
               <div
-                className={`border p-5 mb-10 flex gap-3 motion-safe:animate-reveal ${customizationType === "standard" ? "border-ink/10 bg-ink/[0.02]" : "border-amber-200 bg-amber-50/60"}`}
+                className={`border p-5 mb-10 flex gap-3 motion-safe:animate-reveal ${customizationType === "standard" ? "border-ink/10 bg-ink/[0.02]" : "border-amber-300/40 bg-amber-300/10"}`}
               >
-                <span className="text-[0.95rem] flex-shrink-0 text-ink/45">
+                <span className="text-[0.95rem] flex-shrink-0 text-ink/75">
                   ℹ
                 </span>
-                <p className="font-sans text-[14px] text-ink/70 leading-relaxed">
+                <p className="font-sans text-[14px] text-ink/90 leading-relaxed">
                   {rules.customizationCopy[customizationType].info}
                   {customizationType === "express" && rules.customizationFees && (
                     isRange
@@ -1643,13 +1647,13 @@ export default function BookingFlow() {
             )}
 
             <div className="border border-ink/10 p-6 mb-10">
-              <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/55 mb-2">
+              <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/75 mb-2">
                 {rules.photoLabel}{" "}
                 <span className="normal-case tracking-normal text-red-500/80">
                   *required
                 </span>
               </p>
-              <p className="font-sans text-[14px] text-ink/65 mb-5 leading-relaxed">
+              <p className="font-sans text-[14px] text-ink/75 mb-5 leading-relaxed">
                 {rules.photoHelp}
               </p>
               <PhotoUpload
@@ -1669,13 +1673,13 @@ export default function BookingFlow() {
 
             {rules.inspoPhoto && (
               <div className="border border-ink/10 p-6 mb-10">
-                <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/55 mb-2">
+                <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/75 mb-2">
                   {rules.inspoPhoto.label}{" "}
                   <span className="normal-case tracking-normal text-red-500/80">
                     *required
                   </span>
                 </p>
-                <p className="font-sans text-[14px] text-ink/65 mb-5 leading-relaxed">
+                <p className="font-sans text-[14px] text-ink/75 mb-5 leading-relaxed">
                   {rules.inspoPhoto.help}
                 </p>
                 <PhotoUpload
@@ -1698,14 +1702,14 @@ export default function BookingFlow() {
               <div className="border border-ink/10 p-6 mb-10">
                 <p
                   id="bundle-count-label"
-                  className="font-sans text-[11px] tracking-widest2 uppercase text-ink/55 mb-2"
+                  className="font-sans text-[11px] tracking-widest2 uppercase text-ink/75 mb-2"
                 >
                   How many bundles?{" "}
                   <span className="normal-case tracking-normal text-red-500/80">
                     *required
                   </span>
                 </p>
-                <p className="font-sans text-[14px] text-ink/65 mb-5 leading-relaxed">
+                <p className="font-sans text-[14px] text-ink/75 mb-5 leading-relaxed">
                   So your stylist knows what to expect. It doesn&apos;t change
                   the price.
                 </p>
@@ -1738,7 +1742,7 @@ export default function BookingFlow() {
         {/* ─ STEP 4: Schedule ────────────────────────────────────────────────── */}
         {step === 4 && (
           <div>
-            <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/50 mb-4">
+            <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/75 mb-4">
               Step {stepNum} of {totalSteps}
             </p>
             <h2
@@ -1747,7 +1751,7 @@ export default function BookingFlow() {
               Pick a <span className="italic">date & time.</span>
             </h2>
             {rules.scheduleNote && (
-              <p className="font-sans text-[15px] text-ink/65 mb-10 max-w-md leading-relaxed">
+              <p className="font-sans text-[15px] text-ink/75 mb-10 max-w-md leading-relaxed">
                 {rules.scheduleNote}
               </p>
             )}
@@ -1772,7 +1776,7 @@ export default function BookingFlow() {
                 }`}
               >
                 <IconBolt
-                  className={`flex-shrink-0 ${booking.isEmergency ? "text-paper/60" : "text-ink/50"}`}
+                  className={`flex-shrink-0 ${booking.isEmergency ? "text-paper/80" : "text-ink/75"}`}
                 />
                 <div className="flex-1 min-w-0">
                   <p
@@ -1781,7 +1785,7 @@ export default function BookingFlow() {
                     Emergency Booking
                   </p>
                   <p
-                    className={`font-sans text-[14px] ${booking.isEmergency ? "text-paper/70" : "text-ink/60"}`}
+                    className={`font-sans text-[14px] ${booking.isEmergency ? "text-paper/70" : "text-ink/75"}`}
                   >
                     Book any date & time, priority handling.{" "}
                     <span
@@ -1805,7 +1809,7 @@ export default function BookingFlow() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-14">
               <div>
-                <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/55 mb-5">
+                <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/75 mb-5">
                   Date
                 </p>
                 <MiniCalendar
@@ -1824,18 +1828,19 @@ export default function BookingFlow() {
                   }}
                   blocked={booking.isEmergency ? [] : blockedDates}
                   disabledDays={booking.isEmergency ? [] : disabledDays}
+                  openDates={booking.isEmergency ? [] : stylistOpenDates}
                 />
                 {booking.date && (
                   <p className="font-sans text-[14px] font-medium text-ink mt-4">
                     {ready && (
-                      <span className="text-ink/55 font-normal">Drop-off day: </span>
+                      <span className="text-ink/75 font-normal">Drop-off day: </span>
                     )}
                     {formatDate(booking.date)}
                   </p>
                 )}
                 {ready && (
                   <div className="mt-4 rounded-2xl bg-mist px-5 py-4 flex gap-3 fade-up">
-                    <span className="text-[0.95rem] flex-shrink-0 text-ink/60">◉</span>
+                    <span className="text-[0.95rem] flex-shrink-0 text-ink/75">◉</span>
                     <p className="font-sans text-[14px] text-ink/80 leading-relaxed">
                       <span className="font-medium text-ink">Estimated ready: </span>
                       {formatReadyEstimate(ready)}. We&apos;ll message you on
@@ -1846,15 +1851,15 @@ export default function BookingFlow() {
               </div>
 
               <div ref={timeSectionRef} className="scroll-mt-36">
-                <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/55 mb-5">
+                <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/75 mb-5">
                   Time
                 </p>
                 {!booking.date ? (
-                  <p className="font-sans text-[14px] text-ink/55 mt-2">
+                  <p className="font-sans text-[14px] text-ink/75 mt-2">
                     Select a date first
                   </p>
                 ) : dayStatus === "loading" ? (
-                  <p className="font-sans text-[14px] text-ink/55 mt-2">
+                  <p className="font-sans text-[14px] text-ink/75 mt-2">
                     Checking available times…
                   </p>
                 ) : dayStatus === "error" ? (
@@ -1899,7 +1904,7 @@ export default function BookingFlow() {
         {/* ─ STEP 3: Stylist ─────────────────────────────────────────────────── */}
         {step === 3 && (
           <div>
-            <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/50 mb-4">
+            <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/75 mb-4">
               Step {stepNum} of {totalSteps}
             </p>
             <h2 className="font-serif text-[clamp(2rem,5vw,3.5rem)] font-light text-ink leading-none mb-10">
@@ -1932,7 +1937,7 @@ export default function BookingFlow() {
                 >
                   <IconPerson
                     className={
-                      booking.stylistId === "" ? "text-paper/70" : "text-ink/50"
+                      booking.stylistId === "" ? "text-paper/70" : "text-ink/75"
                     }
                   />
                 </div>
@@ -1943,12 +1948,12 @@ export default function BookingFlow() {
                   Any Available
                 </p>
                 <p
-                  className={`font-sans text-[14px] ${booking.stylistId === "" ? "text-paper/70" : "text-ink/60"}`}
+                  className={`font-sans text-[14px] ${booking.stylistId === "" ? "text-paper/70" : "text-ink/75"}`}
                 >
                   We'll assign the best fit
                 </p>
                 <p
-                  className={`sm:mt-auto pt-2 sm:pt-5 font-sans text-[14px] font-medium ${booking.stylistId === "" ? "text-paper/80" : "text-ink/55"}`}
+                  className={`sm:mt-auto pt-2 sm:pt-5 font-sans text-[14px] font-medium ${booking.stylistId === "" ? "text-paper/80" : "text-ink/75"}`}
                 >
                   No additional fee
                 </p>
@@ -1989,7 +1994,7 @@ export default function BookingFlow() {
                         className={`w-full h-full flex items-center justify-center ${booking.stylistId === s.id ? "bg-paper/15" : "bg-mist border border-ink/[0.08] rounded-full"}`}
                       >
                         <span
-                          className={`font-serif text-[1.5rem] tracking-wide ${booking.stylistId === s.id ? "text-paper/80" : "text-ink/60"}`}
+                          className={`font-serif text-[1.5rem] tracking-wide ${booking.stylistId === s.id ? "text-paper/80" : "text-ink/75"}`}
                         >
                           {initials(s.name)}
                         </span>
@@ -2003,7 +2008,7 @@ export default function BookingFlow() {
                     {displayName(s.name)}
                   </p>
                   <p
-                    className={`font-sans text-[14px] ${booking.stylistId === s.id ? "text-paper/70" : "text-ink/60"}`}
+                    className={`font-sans text-[14px] ${booking.stylistId === s.id ? "text-paper/70" : "text-ink/75"}`}
                   >
                     {s.title}
                   </p>
@@ -2040,7 +2045,7 @@ export default function BookingFlow() {
                   {booking.stylistFeeAdj !== 0 &&
                     ` ${booking.stylistFeeAdj > 0 ? "+" : "−"} ₵${Math.abs(booking.stylistFeeAdj)} stylist fee`}
                 </p>
-                {/* <p className="font-sans text-[13px] text-ink/60 font-light max-w-xs leading-relaxed mt-4">
+                {/* <p className="font-sans text-[13px] text-ink/75 font-light max-w-xs leading-relaxed mt-4">
                   {isRange
                     ? "This confirms your booking today."
                     : "Pay this in full to confirm your booking."}
@@ -2051,7 +2056,7 @@ export default function BookingFlow() {
                   </p>
                 )}
                 {isRange && booking.stylistFeeAdj > 0 && (
-                  <p className="font-sans text-[13px] text-ink/60 max-w-xs leading-relaxed mt-2">
+                  <p className="font-sans text-[13px] text-ink/75 max-w-xs leading-relaxed mt-2">
                     The stylist fee is added to your service price. It is not deducted from your balance.
                   </p>
                 )}
@@ -2063,7 +2068,7 @@ export default function BookingFlow() {
         {/* ─ STEP 5: Details ─────────────────────────────────────────────────── */}
         {step === 5 && (
           <div>
-            <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/50 mb-4">
+            <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/75 mb-4">
               Step {stepNum} of {totalSteps}
             </p>
             <h2 className="font-serif text-[clamp(2rem,5vw,3.5rem)] font-light text-ink leading-none mb-10">
@@ -2073,9 +2078,9 @@ export default function BookingFlow() {
             <div className="max-w-[560px] flex flex-col gap-7">
               {/* Phone first — enables lookup */}
               <div className="relative">
-                <label htmlFor="booking-phone" className="font-sans text-[11px] tracking-widest2 uppercase text-ink/55 block mb-2.5">
+                <label htmlFor="booking-phone" className="font-sans text-[11px] tracking-widest2 uppercase text-ink/75 block mb-2.5">
                   Phone *{" "}
-                  <span className="normal-case tracking-normal text-ink/50">
+                  <span className="normal-case tracking-normal text-ink/75">
                     (WhatsApp number recommended)
                   </span>
                 </label>
@@ -2085,12 +2090,12 @@ export default function BookingFlow() {
                   onChange={(v) => set("phone", v)}
                 />
                 {lookingUp && (
-                  <span className="absolute right-0 -bottom-5 font-sans text-[11px] text-ink/50 tracking-widest uppercase">
+                  <span className="absolute right-0 -bottom-5 font-sans text-[11px] text-ink/75 tracking-widest uppercase">
                     Checking…
                   </span>
                 )}
                 {booking.phone && !phoneComplete && (
-                  <p className="font-sans text-[13px] text-ink/60 mt-2">
+                  <p className="font-sans text-[13px] text-ink/75 mt-2">
                     Enter your full number so we can reach you on WhatsApp.
                   </p>
                 )}
@@ -2099,7 +2104,7 @@ export default function BookingFlow() {
               {/* Returning client banner */}
               {foundClient && (
                 <div className="bg-mist border border-ink/10 px-5 py-4 flex items-start gap-3 motion-safe:animate-reveal">
-                  <span className="text-ink/50 text-[0.95rem] flex-shrink-0">
+                  <span className="text-ink/75 text-[0.95rem] flex-shrink-0">
                     ◎
                   </span>
                   <p className="font-sans text-[14px] text-ink/70 leading-relaxed">
@@ -2115,7 +2120,7 @@ export default function BookingFlow() {
               {/* Name */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="booking-first-name" className="font-sans text-[11px] tracking-widest2 uppercase text-ink/55 block mb-2.5">
+                  <label htmlFor="booking-first-name" className="font-sans text-[11px] tracking-widest2 uppercase text-ink/75 block mb-2.5">
                     First name *
                   </label>
                   <input
@@ -2124,11 +2129,11 @@ export default function BookingFlow() {
                     value={booking.firstName}
                     onChange={(e) => set("firstName", e.target.value)}
                     placeholder="Akua"
-                    className="w-full border border-ink/20 hover:border-ink/35 focus:border-ink px-4 py-4 font-sans text-[16px] text-ink placeholder:text-ink/30 bg-transparent focus:outline-none transition-colors"
+                    className="w-full border border-ink/20 hover:border-ink/35 focus:border-ink px-4 py-4 font-sans text-[16px] text-ink placeholder:text-ink/55 bg-transparent focus:outline-none transition-colors"
                   />
                 </div>
                 <div>
-                  <label htmlFor="booking-last-name" className="font-sans text-[11px] tracking-widest2 uppercase text-ink/55 block mb-2.5">
+                  <label htmlFor="booking-last-name" className="font-sans text-[11px] tracking-widest2 uppercase text-ink/75 block mb-2.5">
                     Last name
                   </label>
                   <input
@@ -2137,14 +2142,14 @@ export default function BookingFlow() {
                     value={booking.lastName}
                     onChange={(e) => set("lastName", e.target.value)}
                     placeholder="Mensah"
-                    className="w-full border border-ink/20 hover:border-ink/35 focus:border-ink px-4 py-4 font-sans text-[16px] text-ink placeholder:text-ink/30 bg-transparent focus:outline-none transition-colors"
+                    className="w-full border border-ink/20 hover:border-ink/35 focus:border-ink px-4 py-4 font-sans text-[16px] text-ink placeholder:text-ink/55 bg-transparent focus:outline-none transition-colors"
                   />
                 </div>
               </div>
 
               {/* Email */}
               <div>
-                <label htmlFor="booking-email" className="font-sans text-[11px] tracking-widest2 uppercase text-ink/55 block mb-2.5">
+                <label htmlFor="booking-email" className="font-sans text-[11px] tracking-widest2 uppercase text-ink/75 block mb-2.5">
                   Email *
                 </label>
                 <input
@@ -2157,7 +2162,7 @@ export default function BookingFlow() {
                   value={booking.email}
                   onChange={(e) => set("email", e.target.value)}
                   placeholder="akua@example.com"
-                  className={`w-full border px-4 py-4 font-sans text-[16px] text-ink placeholder:text-ink/30 bg-transparent focus:outline-none transition-colors ${
+                  className={`w-full border px-4 py-4 font-sans text-[16px] text-ink placeholder:text-ink/55 bg-transparent focus:outline-none transition-colors ${
                     emailInvalid
                       ? "border-red-400 focus:border-red-500"
                       : "border-ink/20 hover:border-ink/35 focus:border-ink"
@@ -2168,7 +2173,7 @@ export default function BookingFlow() {
                     Please enter a valid email address.
                   </p>
                 ) : (
-                  <p id="booking-email-help" className="font-sans text-[13px] text-ink/60 mt-2">
+                  <p id="booking-email-help" className="font-sans text-[13px] text-ink/75 mt-2">
                     Confirmation and receipt sent here.
                   </p>
                 )}
@@ -2176,9 +2181,9 @@ export default function BookingFlow() {
 
               {/* Socials (optional) */}
               <div>
-                <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/55 mb-2.5">
+                <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/75 mb-2.5">
                   Socials{" "}
-                  <span className="normal-case tracking-normal text-ink/50">(optional)</span>
+                  <span className="normal-case tracking-normal text-ink/75">(optional)</span>
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {([
@@ -2190,7 +2195,7 @@ export default function BookingFlow() {
                       <div key={key}>
                         <label htmlFor={`booking-${key}`} className="sr-only">{name} handle</label>
                         <div className={`flex items-center border transition-colors ${invalid ? "border-red-400 focus-within:border-red-500" : "border-ink/20 hover:border-ink/35 focus-within:border-ink"}`}>
-                          <span className="pl-4 font-sans text-[16px] text-ink/45 select-none">@</span>
+                          <span className="pl-4 font-sans text-[16px] text-ink/75 select-none">@</span>
                           <input
                             id={`booking-${key}`}
                             autoCapitalize="none"
@@ -2201,7 +2206,7 @@ export default function BookingFlow() {
                             value={booking[key]}
                             onChange={(e) => set(key, e.target.value)}
                             placeholder={`${name.toLowerCase()} handle`}
-                            className="w-full min-w-0 pl-1 pr-4 py-4 font-sans text-[16px] text-ink placeholder:text-ink/30 bg-transparent focus:outline-none"
+                            className="w-full min-w-0 pl-1 pr-4 py-4 font-sans text-[16px] text-ink placeholder:text-ink/55 bg-transparent focus:outline-none"
                           />
                         </div>
                         {invalid && (
@@ -2213,14 +2218,14 @@ export default function BookingFlow() {
                     );
                   })}
                 </div>
-                <p className="font-sans text-[13px] text-ink/60 mt-2">
+                <p className="font-sans text-[13px] text-ink/75 mt-2">
                   Share your page so we can see your hair and style.
                 </p>
               </div>
 
               {/* Notes */}
               <div>
-                <label htmlFor="booking-notes" className="font-sans text-[11px] tracking-widest2 uppercase text-ink/55 block mb-2.5">
+                <label htmlFor="booking-notes" className="font-sans text-[11px] tracking-widest2 uppercase text-ink/75 block mb-2.5">
                   Special notes
                 </label>
                 <textarea
@@ -2229,9 +2234,9 @@ export default function BookingFlow() {
                   onChange={(e) => set("notes", e.target.value)}
                   placeholder="Preferred style, allergies, or anything you'd like us to have ready for you…"
                   rows={4}
-                  className="w-full border border-ink/20 hover:border-ink/35 focus:border-ink px-4 py-4 font-sans text-[16px] text-ink placeholder:text-ink/30 bg-transparent focus:outline-none transition-colors resize-none leading-relaxed"
+                  className="w-full border border-ink/20 hover:border-ink/35 focus:border-ink px-4 py-4 font-sans text-[16px] text-ink placeholder:text-ink/55 bg-transparent focus:outline-none transition-colors resize-none leading-relaxed"
                 />
-                <p className="font-sans text-[13px] text-ink/60 mt-2 leading-relaxed">
+                <p className="font-sans text-[13px] text-ink/75 mt-2 leading-relaxed">
                   We offer complimentary drinks and light refreshments, just
                   ask. Let us know about allergies or preferences too.
                 </p>
@@ -2243,7 +2248,7 @@ export default function BookingFlow() {
         {/* ─ STEP 6: Review ──────────────────────────────────────────────────── */}
         {step === 6 && (
           <div>
-            <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/50 mb-4">
+            <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/75 mb-4">
               Step {stepNum} of {totalSteps}
             </p>
             <h2 className="font-serif text-[clamp(2rem,5vw,3.5rem)] font-light text-ink leading-none mb-10">
@@ -2255,7 +2260,7 @@ export default function BookingFlow() {
                 <p className="font-serif text-[1.375rem] text-ink leading-tight">
                   {selectedService ? displayName(selectedService.name) : ""}
                 </p>
-                <p className="font-sans text-[14px] text-ink/60">
+                <p className="font-sans text-[14px] text-ink/75">
                   {selectedOption?.name} · {selectedOption?.price}
                 </p>
               </ReviewRow>
@@ -2271,12 +2276,12 @@ export default function BookingFlow() {
                         : rules.hairOptions.find((o) => o.id === "none")?.label ?? "Service only"}
                 </p>
                 {serviceOnlyInspo && booking.inspoPhotos.length > 0 && (
-                  <p className="font-sans text-[14px] text-ink/60">
+                  <p className="font-sans text-[14px] text-ink/75">
                     {booking.inspoPhotos.length} inspo photo{booking.inspoPhotos.length > 1 ? "s" : ""} attached
                   </p>
                 )}
                 {showUnitStep && booking.unitPhotos.length > 0 && (
-                  <p className="font-sans text-[14px] text-ink/60">
+                  <p className="font-sans text-[14px] text-ink/75">
                     {bundleCount
                       ? `${bundleCount} bundle${bundleCount > 1 ? "s" : ""} · `
                       : ""}
@@ -2291,7 +2296,7 @@ export default function BookingFlow() {
                   <p className="font-sans text-[16px] font-medium text-ink capitalize">
                     {customizationType}
                   </p>
-                  <p className="font-sans text-[14px] text-ink/60">
+                  <p className="font-sans text-[14px] text-ink/75">
                     {rules.customizationCopy[customizationType].short}
                   </p>
                 </ReviewRow>
@@ -2314,11 +2319,11 @@ export default function BookingFlow() {
                     </span>
                   )}
                 </div>
-                <p className="font-sans text-[14px] text-ink/60">
+                <p className="font-sans text-[14px] text-ink/75">
                   {ready ? `Drop-off at ${booking.time}` : booking.time}
                 </p>
                 {ready && (
-                  <p className="font-sans text-[14px] text-ink/60">
+                  <p className="font-sans text-[14px] text-ink/75">
                     Estimated ready: {formatReadyEstimate(ready)}
                   </p>
                 )}
@@ -2328,14 +2333,14 @@ export default function BookingFlow() {
                 <p className="font-sans text-[16px] font-medium text-ink">
                   {`${booking.firstName} ${booking.lastName}`.trim()}
                 </p>
-                <p className="font-sans text-[14px] text-ink/60 tabular-nums">
+                <p className="font-sans text-[14px] text-ink/75 tabular-nums">
                   {formatPhoneDisplay(booking.phone)}
                 </p>
-                <p className="font-sans text-[14px] text-ink/60">
+                <p className="font-sans text-[14px] text-ink/75">
                   {booking.email}
                 </p>
                 {(normalizeHandle(booking.instagram) || normalizeHandle(booking.tiktok)) && (
-                  <p className="font-sans text-[14px] text-ink/60">
+                  <p className="font-sans text-[14px] text-ink/75">
                     {[
                       normalizeHandle(booking.instagram) && `Instagram @${normalizeHandle(booking.instagram)}`,
                       normalizeHandle(booking.tiktok) && `TikTok @${normalizeHandle(booking.tiktok)}`,
@@ -2343,7 +2348,7 @@ export default function BookingFlow() {
                   </p>
                 )}
                 {booking.notes && (
-                  <p className="font-sans text-[14px] text-ink/60 italic mt-1">
+                  <p className="font-sans text-[14px] text-ink/75 italic mt-1">
                     "{booking.notes}"
                   </p>
                 )}
@@ -2351,7 +2356,7 @@ export default function BookingFlow() {
 
               {prepNote && (
                 <div className="py-5 sm:py-6 flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-6">
-                  <p className="sm:w-32 flex-shrink-0 sm:pt-1 font-sans text-[11px] tracking-widest2 uppercase text-ink/50">
+                  <p className="sm:w-32 flex-shrink-0 sm:pt-1 font-sans text-[11px] tracking-widest2 uppercase text-ink/75">
                     Before you come
                   </p>
                   <p className="flex-1 min-w-0 font-sans text-[16px] font-medium text-ink leading-relaxed">
@@ -2363,11 +2368,11 @@ export default function BookingFlow() {
               {/* Price breakdown */}
               <div className="py-7 flex flex-col gap-3">
                 {isRange && (
-                  <div className="border border-amber-200 bg-amber-50/60 px-5 py-4 mb-2 flex gap-3">
-                    <span className="text-[0.95rem] flex-shrink-0 text-amber-600">
+                  <div className="border border-amber-300/40 bg-amber-300/10 px-5 py-4 mb-2 flex gap-3">
+                    <span className="text-[0.95rem] flex-shrink-0 text-amber-300">
                       ◉
                     </span>
-                    <p className="font-sans text-[14px] text-amber-900 leading-relaxed">
+                    <p className="font-sans text-[14px] text-ink/90 leading-relaxed">
                       This service has a price range. You pay the{" "}
                       <span className="font-semibold">deposit</span> now to
                       confirm your booking, and the remaining balance is settled
@@ -2376,7 +2381,7 @@ export default function BookingFlow() {
                   </div>
                 )}
                 <div className="flex items-center justify-between">
-                  <p className="font-sans text-[14px] text-ink/60">
+                  <p className="font-sans text-[14px] text-ink/75">
                     {isRange ? "Deposit" : "Full Price"}
                   </p>
                   <p className="font-sans text-[14px] text-ink tabular-nums">
@@ -2386,7 +2391,7 @@ export default function BookingFlow() {
                 {booking.stylistFeeAdj !== 0 && (
                   <div>
                     <div className="flex items-center justify-between">
-                      <p className="font-sans text-[14px] text-ink/60">
+                      <p className="font-sans text-[14px] text-ink/75">
                         {booking.stylistFeeAdj > 0 ? "Stylist fee" : "Stylist discount"} ({displayName(booking.stylistName)})
                       </p>
                       <p className="font-sans text-[14px] text-ink tabular-nums">
@@ -2394,7 +2399,7 @@ export default function BookingFlow() {
                       </p>
                     </div>
                     {isRange && booking.stylistFeeAdj > 0 && (
-                      <p className="font-sans text-[13px] text-ink/50 mt-1">
+                      <p className="font-sans text-[13px] text-ink/75 mt-1">
                         Added to your service price. Not deducted from your balance.
                       </p>
                     )}
@@ -2402,7 +2407,7 @@ export default function BookingFlow() {
                 )}
                 {customizationFee > 0 && (
                   <div className="flex items-center justify-between">
-                    <p className="font-sans text-[14px] text-ink/60">
+                    <p className="font-sans text-[14px] text-ink/75">
                       Customization ({customizationType})
                     </p>
                     <p className="font-sans text-[14px] text-ink tabular-nums">
@@ -2412,7 +2417,7 @@ export default function BookingFlow() {
                 )}
                 {emergencyFee > 0 && (
                   <div className="flex items-center justify-between">
-                    <p className="font-sans text-[14px] text-ink/60">
+                    <p className="font-sans text-[14px] text-ink/75">
                       Emergency fee
                     </p>
                     <p className="font-sans text-[14px] text-ink tabular-nums">
@@ -2421,7 +2426,7 @@ export default function BookingFlow() {
                   </div>
                 )}
                 <div className="flex items-center justify-between">
-                  <p className="font-sans text-[14px] text-ink/60">
+                  <p className="font-sans text-[14px] text-ink/75">
                     Service charge (5%)
                   </p>
                   <p className="font-sans text-[14px] text-ink tabular-nums">
@@ -2430,10 +2435,10 @@ export default function BookingFlow() {
                 </div>
                 <div className="flex items-end justify-between pt-5 mt-2 border-t border-ink/[0.1]">
                   <div>
-                    <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/55 mb-1.5">
+                    <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/75 mb-1.5">
                       {isRange ? "Deposit Due Now" : "Total Due Now"}
                     </p>
-                    <p className="font-sans text-[13px] text-ink/60">
+                    <p className="font-sans text-[13px] text-ink/75">
                       {isRange
                         ? "Balance settled once your service is complete"
                         : ""}
@@ -2469,7 +2474,7 @@ export default function BookingFlow() {
             <div className="mt-6 max-w-[620px]">
               <button
                 onClick={back}
-                className="font-sans text-[12px] tracking-widest uppercase text-ink/55 hover:text-ink transition-colors"
+                className="font-sans text-[12px] tracking-widest uppercase text-ink/75 hover:text-ink transition-colors"
               >
                 ← Back
               </button>
@@ -2529,14 +2534,14 @@ export default function BookingFlow() {
             style={{ opacity: preview.visible ? 1 : 0, transition: preview.isTouch.current ? "none" : "opacity 400ms ease 100ms" }}
           >
             <div className="flex items-center gap-4">
-              <p className="font-sans text-[10px] tracking-widest2 uppercase text-paper/25">
+              <p className="font-sans text-[10px] tracking-widest2 uppercase text-paper/60">
                 {(preview.lightboxIndex + 1).toString().padStart(2, "0")} / {previewPhotos.length.toString().padStart(2, "0")}
               </p>
-              <p className="font-sans text-[10px] tracking-widest uppercase text-paper/20">
+              <p className="font-sans text-[10px] tracking-widest uppercase text-paper/60">
                 {previewName}
               </p>
             </div>
-            <button onClick={preview.close} className="text-paper/30 hover:text-paper transition-colors duration-300" aria-label="Close">
+            <button onClick={preview.close} className="text-paper/60 hover:text-paper transition-colors duration-300" aria-label="Close">
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                 <path d="M2 2l14 14M16 2L2 16" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
               </svg>
@@ -2576,7 +2581,7 @@ export default function BookingFlow() {
                   className="max-w-[82vw] max-h-[78vh] w-auto h-auto object-contain"
                 />
                 {previewCurrent.caption && (
-                  <p className="mt-5 font-sans text-[12px] tracking-wide text-paper/55 text-center max-w-[340px] leading-relaxed">
+                  <p className="mt-5 font-sans text-[12px] tracking-wide text-paper/80 text-center max-w-[340px] leading-relaxed">
                     {previewCurrent.caption}
                   </p>
                 )}

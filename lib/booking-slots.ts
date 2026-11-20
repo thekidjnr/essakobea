@@ -36,7 +36,8 @@ async function loadDay(date: string, excludeId?: string, stylistId?: string | nu
   return {
     avail,
     // A blocked day can stay open for one stylist
-    closed: (!!blocked && blocked.except_stylist_id !== (stylistId ?? null)) || !avail?.is_available,
+    closed: !(!!blocked?.except_stylist_id && blocked.except_stylist_id === (stylistId ?? null)) &&
+      (!!blocked || !avail?.is_available),
     interval: (avail?.slot_interval_minutes as number | undefined) ?? 60,
     active,
     // Home service visits keep their stylist busy but don't take a seat in the salon

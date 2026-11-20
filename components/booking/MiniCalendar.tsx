@@ -39,12 +39,15 @@ export default function MiniCalendar({
   onSelect,
   blocked,
   disabledDays,
+  openDates = [],
   staff = false,
 }: {
   selected: Date | null;
   onSelect: (d: Date) => void;
   blocked: string[];
   disabledDays: number[];
+  /** Dates open even though their weekday is closed (a stylist's own days) */
+  openDates?: string[];
   staff?: boolean;
 }) {
   const today = new Date();
@@ -66,7 +69,7 @@ export default function MiniCalendar({
     `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
   const isBlocked = (day: number) => {
     const dow = new Date(year, month, day).getDay();
-    return blocked.includes(dateStr(day)) || disabledDays.includes(dow);
+    return blocked.includes(dateStr(day)) || (disabledDays.includes(dow) && !openDates.includes(dateStr(day)));
   };
   const isPast = (day: number) => dateStr(day) < salonToday;
   // Clients can't browse back before the current month

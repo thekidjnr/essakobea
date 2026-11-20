@@ -22,8 +22,8 @@ export interface EditableDetails {
   };
 }
 
-const label = "font-sans text-[10px] tracking-widest2 uppercase text-ink/40 block mb-2";
-const input = "w-full border border-ink/15 px-4 py-3 font-sans text-[14px] text-ink placeholder:text-ink/25 focus:outline-none focus:border-ink transition-colors bg-transparent";
+const label = "font-sans text-[10px] tracking-widest2 uppercase text-ink/75 block mb-2";
+const input = "w-full border border-ink/15 px-4 py-3 font-sans text-[14px] text-ink placeholder:text-ink/55 focus:outline-none focus:border-ink transition-colors bg-transparent";
 
 export default function UpdateDetails({
   token, initial, onBack, onSaved,
@@ -82,7 +82,7 @@ export default function UpdateDetails({
   ) => (
     <div className="mb-8">
       <span className={label}>{info.label}</span>
-      <p className="font-sans text-[13px] text-ink/55 mb-4 leading-relaxed">{info.help}</p>
+      <p className="font-sans text-[13px] text-ink/75 mb-4 leading-relaxed">{info.help}</p>
       <PhotoUpload
         photos={photos}
         onAdd={(url) => setPhotos((p) => (p.length >= MAX_PHOTOS ? p : [...p, url]))}
@@ -94,15 +94,15 @@ export default function UpdateDetails({
 
   return (
     <div className="max-w-[480px] w-full">
-      <button onClick={onBack} className="font-sans text-[11px] tracking-widest uppercase text-ink/50 hover:text-ink transition-colors mb-8">
+      <button onClick={onBack} className="font-sans text-[11px] tracking-widest uppercase text-ink/75 hover:text-ink transition-colors mb-8">
         ‹ Back
       </button>
-      <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/40 mb-2">Update Details</p>
+      <p className="font-sans text-[10px] tracking-widest2 uppercase text-ink/75 mb-2">Update Details</p>
       <h1 className="font-serif text-[clamp(2rem,5vw,3.5rem)] font-light text-ink leading-none mb-4">
         Your <span className="italic">details.</span>
       </h1>
-      <p className="font-sans text-[13px] text-ink/50 leading-relaxed mb-10">
-        Change how we reach you, add a note for your stylist, or swap your photos. To change your style, message us on WhatsApp.
+      <p className="font-sans text-[13px] text-ink/75 leading-relaxed mb-10">
+        Change how we reach you, add a note for your stylist, or swap your photos. To change your style, message us on WhatsApp. Changes made on the day of your appointment carry an extra charge.
       </p>
 
       <div className="mb-6">

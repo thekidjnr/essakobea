@@ -65,7 +65,9 @@ export async function GET(req: Request) {
 
   // A blocked day can stay open for one named stylist; "Any Available" stays closed
   const blockedForClient = !!blocked && blocked.except_stylist_id !== stylistId
-  const dayIsOpen = !blockedForClient && (avail?.is_available ?? false)
+  // ...and it opens that stylist's day even when the weekday is normally closed
+  const openForStylist = !!blocked?.except_stylist_id && blocked.except_stylist_id === stylistId
+  const dayIsOpen = !blockedForClient && ((avail?.is_available ?? false) || openForStylist)
   let dayFull = maxPerDay > 0 && inSalon.length >= maxPerDay
 
   const allStylists = (stylists as Stylist[] | null) ?? []

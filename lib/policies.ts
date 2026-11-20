@@ -6,6 +6,10 @@
 // the client agrees to the same wording they later receive. Attached to a
 // service through `servicePolicy` in lib/service-rules.ts.
 
+/** Applies to every booking. Shown in the booking popup, confirmation email and WhatsApp confirmation. */
+export const SAME_DAY_CHANGE_TEXT =
+  'If you change your style on the day of your appointment, an extra charge will apply. Our team will confirm the new price with you before we start.'
+
 export interface PolicySection {
   heading?: string
   paragraphs?: string[]

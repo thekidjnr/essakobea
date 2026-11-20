@@ -21,6 +21,7 @@ import { balanceDue, isHomeService, paymentMethodLabel, PAYMENT_METHODS, type Ma
 import { ManualBookingForm } from "@/components/admin/ManualBookingForm";
 import { RescheduleDialog } from "@/components/admin/RescheduleDialog";
 import { EditBookingDialog } from "@/components/admin/EditBookingDialog";
+import { SAME_DAY_CHANGE_TEXT } from "@/lib/policies";
 
 type Booking = AdminBooking;
 type Tab = "upcoming" | "past" | "attention";
@@ -135,7 +136,7 @@ function whatsAppUrlFor(b: Booking, services: DbService[]): string {
   const custLabel = customizationLabel(b.service_id, b.customization_type);
   const custLine = custLabel ? `\n\n*${getServiceRules(b.service_id).unitStepLabel}:* ${custLabel}` : "";
 
-  const policyLine = `*Good to know:* ${cancellationPolicyText(isDeposit ? "deposit" : "payment")}`;
+  const policyLine = `*Good to know:* ${cancellationPolicyText(isDeposit ? "deposit" : "payment")}\n\n*Changes on the day:* ${SAME_DAY_CHANGE_TEXT}`;
 
   const prepNote = prepNoteFor(b.service_id, b.hair_unit_type);
   const prepLine = prepNote ? `*Before your appointment:* ${prepNote}\n\n` : "";

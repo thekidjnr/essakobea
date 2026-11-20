@@ -53,7 +53,9 @@ export async function POST(req: Request) {
       adminDb.from('availability').select('*').eq('day_of_week', dayOfWeek(bookingDate)).maybeSingle(),
       adminDb.from('blocked_dates').select('id, except_stylist_id').eq('date', bookingDate).maybeSingle(),
     ])
-    if (!emergency && (!avail?.is_available || (blocked && blocked.except_stylist_id !== (stylistId || null)))) {
+    // A day kept open for one stylist is bookable with them even on a closed weekday
+    const openForStylist = !!blocked?.except_stylist_id && blocked.except_stylist_id === (stylistId || null)
+    if (!emergency && ((!avail?.is_available && !openForStylist) || (blocked && !openForStylist))) {
       return NextResponse.json({ error: 'We are closed on that day. Please choose another date.' }, { status: 409 })
     }
     const slotMins  = slotToMinutes(timeSlot)!

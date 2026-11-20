@@ -295,7 +295,7 @@ export default function ManageBookingPage({ params, searchParams }: {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-14">
             <div>
               <p className="font-sans text-[11px] tracking-widest2 uppercase text-ink/55 mb-5">Date</p>
-              <MiniCalendar selected={date} onSelect={pickDate} blocked={blockedRows.filter(x => !x.except_stylist_id || x.except_stylist_id !== booking.stylist_id).map(x => x.date)} disabledDays={closedDays} />
+              <MiniCalendar selected={date} onSelect={pickDate} blocked={blockedRows.filter(x => !x.except_stylist_id || x.except_stylist_id !== booking.stylist_id).map(x => x.date)} disabledDays={closedDays} openDates={blockedRows.filter(x => x.except_stylist_id && x.except_stylist_id === booking.stylist_id).map(x => x.date)} />
             </div>
 
             <div ref={timesRef} className="scroll-mt-24">
