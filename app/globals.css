@@ -164,3 +164,28 @@ input:not(.admin-ui *), textarea:not(.admin-ui *), select:not(.admin-ui *) {
     transform: none;
   }
 }
+
+/* Christmas snowfall over the home hero (components/home/HolidayBanner) */
+@keyframes snowfall {
+  0%   { transform: translate3d(0, -10vh, 0); opacity: 0; }
+  10%  { opacity: var(--flake-opacity, 0.8); }
+  90%  { opacity: var(--flake-opacity, 0.8); }
+  100% { transform: translate3d(var(--flake-drift, 20px), 105vh, 0); opacity: 0; }
+}
+.snowflake {
+  position: absolute;
+  top: 0;
+  border-radius: 9999px;
+  background: #fff;
+  will-change: transform;
+  animation: snowfall linear infinite;
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.55; transform: scale(0.9); }
+  50%      { opacity: 1;    transform: scale(1); }
+}
+.twinkle { animation: twinkle 3.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .snowflake { display: none; }
+  .twinkle { animation: none; }
+}
