@@ -165,27 +165,15 @@ input:not(.admin-ui *), textarea:not(.admin-ui *), select:not(.admin-ui *) {
   }
 }
 
-/* Christmas snowfall over the home hero (components/home/HolidayBanner) */
-@keyframes snowfall {
-  0%   { transform: translate3d(0, -10vh, 0); opacity: 0; }
-  10%  { opacity: var(--flake-opacity, 0.8); }
-  90%  { opacity: var(--flake-opacity, 0.8); }
-  100% { transform: translate3d(var(--flake-drift, 20px), 105vh, 0); opacity: 0; }
+
+/* Christmas greeting modal (components/common/ChristmasGreeting) */
+@keyframes greetingPop {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
 }
-.snowflake {
-  position: absolute;
-  top: 0;
-  border-radius: 9999px;
-  background: #fff;
-  will-change: transform;
-  animation: snowfall linear infinite;
-}
-@keyframes twinkle {
-  0%, 100% { opacity: 0.55; transform: scale(0.9); }
-  50%      { opacity: 1;    transform: scale(1); }
-}
-.twinkle { animation: twinkle 3.2s ease-in-out infinite; }
+.greeting-pop { animation: greetingPop 450ms cubic-bezier(0.22, 1, 0.36, 1); }
+.greeting-pop::backdrop { animation: fadeIn 450ms ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
-  .snowflake { display: none; }
-  .twinkle { animation: none; }
+  .greeting-pop, .greeting-pop::backdrop { animation: none; }
 }

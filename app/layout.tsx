@@ -3,6 +3,7 @@ import { Cormorant, Manrope } from "next/font/google";
 import "./globals.css";
 import { BagProvider } from "@/contexts/BagContext";
 import TopLoader from "@/components/admin/TopLoader";
+import ChristmasGreeting from "@/components/common/ChristmasGreeting";
 
 const manrope = Manrope({
   variable: "--font-sans",
@@ -51,6 +52,7 @@ export default function RootLayout({
       <body className="antialiased">
         <TopLoader />
         <BagProvider>{children}</BagProvider>
+        <ChristmasGreeting />
       </body>
     </html>
   );
