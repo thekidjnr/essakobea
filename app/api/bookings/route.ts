@@ -8,6 +8,7 @@ import { isActiveBooking, optionDuration, peakOccupancy, stylistBusy, type Activ
 import { bookingTotals } from '@/lib/booking-fees'
 import { getServiceRules, bringsHair, inspoPhotoFor, BUNDLE_OPTIONS } from '@/lib/service-rules'
 import type { ServiceBookingOption, Stylist } from '@/lib/supabase/types'
+import { isWalkInOnly, WALK_IN_MESSAGE, WALK_IN_MONTH } from '@/lib/walk-in'
 
 // How long a pending+unpaid booking holds a slot before it's freed (30 min)
 const SLOT_HOLD_MS = 30 * 60 * 1000
@@ -43,6 +44,16 @@ export async function POST(req: Request) {
     }
     if (appointmentStart(bookingDate, timeSlot) <= Date.now()) {
       return NextResponse.json({ error: 'That time has already passed. Please choose another.' }, { status: 400 })
+    }
+
+    // Walk-in month: only the Head Stylist, emergency bookings included
+    if (bookingDate.startsWith(WALK_IN_MONTH)) {
+      const { data: chosen } = stylistId
+        ? await adminDb.from('stylists').select('title').eq('id', stylistId).maybeSingle()
+        : { data: null }
+      if (isWalkInOnly(bookingDate, chosen)) {
+        return NextResponse.json({ error: WALK_IN_MESSAGE }, { status: 409 })
+      }
     }
 
     // ── 0. Salon open that day, at that time? ────────────────────────────────

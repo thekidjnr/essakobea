@@ -17,7 +17,7 @@ async function load(token: string) {
   // Clients keep their stylist, so the new time must suit them
   let stylist: SlotStylist | null = null
   if (booking.stylist_id) {
-    const { data } = await adminDb.from('stylists').select('id, name, daily_capacity, is_available').eq('id', booking.stylist_id).maybeSingle()
+    const { data } = await adminDb.from('stylists').select('id, name, title, daily_capacity, is_available').eq('id', booking.stylist_id).maybeSingle()
     if (!data?.is_available) {
       return { error: NextResponse.json({ error: 'Your stylist isn\'t taking new times right now. Message us on WhatsApp and we\'ll help.' }, { status: 409 }) }
     }

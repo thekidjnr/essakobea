@@ -11,6 +11,7 @@
 import { adminDb } from '@/lib/supabase/admin'
 import { appointmentStart, dayOfWeek, minutesToSlot, slotGrid, slotToMinutes } from '@/lib/booking-time'
 import { isActiveBooking, peakOccupancy, stylistBusy, type ActiveBooking } from '@/lib/booking-duration'
+import { isWalkInOnly } from '@/lib/walk-in'
 
 // Matches the hold window in the bookings API
 const SLOT_HOLD_MS = 30 * 60 * 1000
@@ -20,6 +21,7 @@ type DayBooking = ActiveBooking & { id: string; location_type?: string }
 export interface SlotStylist {
   id: string
   name: string
+  title?: string | null
   daily_capacity: number | null
 }
 
@@ -143,8 +145,10 @@ export async function freeStartTimes({ date, duration: length, stylist, home, ex
   stylist: SlotStylist | null
   home: boolean
   excludeId?: string
-}): Promise<{ closed: boolean; full: boolean; times: string[] }> {
+}): Promise<{ closed: boolean; walkIn?: boolean; full: boolean; times: string[] }> {
   const { avail, closed, interval, active, inSalon } = await loadDay(date, excludeId, stylist?.id)
+  // Clients can't move a booking into the walk-in month, except with the Head Stylist
+  if (isWalkInOnly(date, stylist)) return { closed: true, walkIn: true, full: false, times: [] }
   if (closed) return { closed: true, full: false, times: [] }
 
   const duration = length && length > 0 ? length : interval

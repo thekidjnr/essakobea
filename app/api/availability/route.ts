@@ -5,6 +5,7 @@ import { dayOfWeek, minutesToSlot, slotGrid, slotToMinutes, EMERGENCY_HOURS } fr
 import {
   isActiveBooking, optionDuration, peakOccupancy, stylistBusy, type ActiveBooking,
 } from '@/lib/booking-duration'
+import { isWalkInOnly } from '@/lib/walk-in'
 
 // Matches the hold window in the bookings API
 const SLOT_HOLD_MS = 30 * 60 * 1000
@@ -67,10 +68,11 @@ export async function GET(req: Request) {
   const blockedForClient = !!blocked && blocked.except_stylist_id !== stylistId
   // ...and it opens that stylist's day even when the weekday is normally closed
   const openForStylist = !!blocked?.except_stylist_id && blocked.except_stylist_id === stylistId
-  const dayIsOpen = !blockedForClient && ((avail?.is_available ?? false) || openForStylist)
   let dayFull = maxPerDay > 0 && inSalon.length >= maxPerDay
 
   const allStylists = (stylists as Stylist[] | null) ?? []
+  const walkInOnly = isWalkInOnly(date, allStylists.find((s) => s.id === stylistId))
+  const dayIsOpen = !walkInOnly && !blockedForClient && ((avail?.is_available ?? false) || openForStylist)
   const underCap = (s: Stylist) =>
     !s.daily_capacity || activeBookings.filter((b) => b.stylist_id === s.id).length < s.daily_capacity
 

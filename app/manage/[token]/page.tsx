@@ -24,7 +24,7 @@ interface BookingPreview extends EditableDetails {
 type View = "overview" | "reschedule" | "details" | "cancel" | "rescheduled" | "cancelled";
 type DayState =
   | { status: "idle" } | { status: "loading" } | { status: "error" }
-  | { status: "ready"; closed: boolean; full: boolean; times: string[] };
+  | { status: "ready"; closed: boolean; walkIn?: boolean; full: boolean; times: string[] };
 
 const SALON_WHATSAPP = "https://wa.me/233557205803";
 
@@ -126,7 +126,7 @@ export default function ManageBookingPage({ params, searchParams }: {
       .then(async r => {
         const d = await r.json().catch(() => null);
         if (!r.ok || !d || d.error) throw new Error(d?.error);
-        if (!stale) setDay({ status: "ready", closed: d.closed, full: d.full, times: d.times ?? [] });
+        if (!stale) setDay({ status: "ready", closed: d.closed, walkIn: d.walkIn, full: d.full, times: d.times ?? [] });
       })
       .catch(() => { if (!stale) setDay({ status: "error" }); });
     return () => { stale = true; };
@@ -312,7 +312,7 @@ export default function ManageBookingPage({ params, searchParams }: {
                   </button>
                 </div>
               ) : day.closed ? (
-                <p className="font-sans text-[14px] text-ink/70">We&apos;re closed on this day. Please choose another date.</p>
+                <p className="font-sans text-[14px] text-ink/70">{day.walkIn ? "December is walk-in only, so bookings can't be moved into it. Please choose another date." : "We're closed on this day. Please choose another date."}</p>
               ) : day.full || day.times.length === 0 ? (
                 <p className="font-sans text-[14px] text-ink/70 leading-relaxed">
                   {booking.stylist_name ? `${booking.stylist_name} is fully booked on this day.` : "This day is fully booked."} Please choose another date.

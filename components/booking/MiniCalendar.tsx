@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { todayInAccra } from "@/lib/booking-time";
 
 // Month calendar for picking an appointment day. Shared by the booking form,
@@ -41,6 +41,7 @@ export default function MiniCalendar({
   disabledDays,
   openDates = [],
   staff = false,
+  onMonthChange,
 }: {
   selected: Date | null;
   onSelect: (d: Date) => void;
@@ -49,6 +50,8 @@ export default function MiniCalendar({
   /** Dates open even though their weekday is closed (a stylist's own days) */
   openDates?: string[];
   staff?: boolean;
+  /** Told the month on show ("YYYY-MM"), on opening and on every change */
+  onMonthChange?: (month: string) => void;
 }) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -58,6 +61,13 @@ export default function MiniCalendar({
   });
 
   const { year, month } = view;
+  const monthStr = `${year}-${String(month + 1).padStart(2, "0")}`;
+  useEffect(() => {
+    onMonthChange?.(monthStr);
+    // Only a change of month matters, not a new callback each render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [monthStr]);
+
   const first = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 

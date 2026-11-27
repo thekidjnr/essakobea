@@ -2,10 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { homeImages } from "@/public/images";
 import HeroVideo from "./HeroVideo";
+import HolidayBanner from "./HolidayBanner";
 
 export default function Hero() {
   return (
     <section className="theme-ink relative w-full h-screen min-h-[700px] overflow-hidden">
+      <HolidayBanner />
+
       {/* Background: poster image (LCP + reduced-motion fallback) with video on top */}
       <div className="absolute inset-0">
         {/* Mobile: native portrait framing */}
