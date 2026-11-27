@@ -38,6 +38,13 @@ import {
 } from "@/lib/service-rules";
 import { thumbUrl } from "@/lib/media";
 import MiniCalendar from "@/components/booking/MiniCalendar";
+import WalkInDialog from "@/components/booking/WalkInDialog";
+import {
+  isHeadStylist,
+  isWalkInOnly,
+  WALK_IN_DATES,
+  WALK_IN_MONTH,
+} from "@/lib/walk-in";
 import PhotoUpload from "@/components/booking/PhotoUpload";
 import TimeSlots, { groupByPeriod } from "@/components/booking/TimeSlots";
 
@@ -733,6 +740,12 @@ export default function BookingFlow() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [showTerms, setShowTerms] = useState(false);
+  const [showWalkIn, setShowWalkIn] = useState(false);
+
+  // Walk-in month: only the Head Stylist can be booked
+  const headStylist = stylists.find(isHeadStylist);
+  const chosenStylist = stylists.find((s) => s.id === booking.stylistId);
+  const walkInDates = isHeadStylist(chosenStylist) ? [] : WALK_IN_DATES;
 
   // A day off can stay open for one stylist; "Any Available" never gets it
   const blockedDates = blockedRows
@@ -742,6 +755,15 @@ export default function BookingFlow() {
   const stylistOpenDates = booking.stylistId
     ? blockedRows.filter((x) => x.except_stylist_id === booking.stylistId).map((x) => x.date)
     : [];
+
+  // A walk-in date picked earlier (before switching stylist, or from a saved
+  // draft) no longer stands. Waits for the stylists, to know who is chosen.
+  useEffect(() => {
+    if (!booking.date || (booking.stylistId && stylists.length === 0)) return;
+    if (!isWalkInOnly(toDateStr(booking.date), chosenStylist)) return;
+    setBooking((b) => ({ ...b, date: null, time: "" }));
+    setStep((s) => (s > 4 ? 4 : s));
+  }, [booking.date, booking.stylistId, chosenStylist, stylists.length]);
 
   // ── Derived
   const selectedService = services.find((s) => s.id === booking.serviceId);
@@ -1826,7 +1848,14 @@ export default function BookingFlow() {
                       80,
                     );
                   }}
-                  blocked={booking.isEmergency ? [] : blockedDates}
+                  blocked={[
+                    ...walkInDates,
+                    ...(booking.isEmergency ? [] : blockedDates),
+                  ]}
+                  onMonthChange={(m) => {
+                    if (m === WALK_IN_MONTH && walkInDates.length > 0)
+                      setShowWalkIn(true);
+                  }}
                   disabledDays={booking.isEmergency ? [] : disabledDays}
                   openDates={booking.isEmergency ? [] : stylistOpenDates}
                 />
@@ -2513,6 +2542,30 @@ export default function BookingFlow() {
           policy={rules.servicePolicy}
           onAgree={handlePayNow}
           onClose={() => setShowTerms(false)}
+        />
+      )}
+
+      {showWalkIn && (
+        <WalkInDialog
+          headStylist={
+            headStylist && {
+              name: displayName(headStylist.name.trim()),
+              fee: headStylist.fee_adjustment,
+            }
+          }
+          onBookHead={() => {
+            if (headStylist)
+              setBooking((b) => ({
+                ...b,
+                stylistId: headStylist.id,
+                stylistName: headStylist.name,
+                stylistFeeAdj: headStylist.fee_adjustment,
+                date: null,
+                time: "",
+              }));
+            setShowWalkIn(false);
+          }}
+          onClose={() => setShowWalkIn(false)}
         />
       )}
 
